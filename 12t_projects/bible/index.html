@@ -13999,6 +13999,88 @@ function getStatusDesc(name, sLv, lck, server){
   return typeof entry === "function" ? entry(sLv, lck) : entry;
 }
 
+// <SG:data>
+// ===== Status glossary (tool "status-glossary", user 2026-11-16; spec docs/superpowers/specs/2026-11-16-status-glossary-design.md) =====
+// Every status of every server, in the games' own spelling, from their status tables:
+//   og     = BB StatusData.getStatusCode (StatusData.cs:50-2333), 205 keys (ToT uses the same list: its client is encrypted and names none of its own);
+//   tto    = the 48 keys TTO1102 adds to them (enum eStatus, TTO1102 dump.cs:409378; it also has all 205 of BB's);
+//   reborn = the 8 keys Reborn1027 adds (StatusData.getStatusCode, Reborn1027:StatusData.cs:902-928; its other 205 decode to BB's exactly).
+const STATUS_GAME_KEYS = {
+  og: [
+    "hide", "noDamage", "noKo", "noHate", "noForce", "lifeBoost", "magicBoost", "speedBoost", "eraseBoost", "atkUp", "defUp", "agiUp", "vitUp",
+    "magUp", "chaUp", "talUp", "lckUp", "atkDown", "defDown", "agiDown", "vitDown", "magDown", "chaDown", "talDown", "lckDown", "hpSap", "mpSap",
+    "spSap", "koSap", "hpDrain", "mpDrain", "spDrain", "koDrain", "ko", "lock", "reflect", "awake", "happy", "sad", "hpRegen", "mpRegen", "mount",
+    "transform", "valor", "powerBreak", "armorBreak", "artCancel", "provoke", "darkEdge", "lunarEclipse", "holySword", "holyArmor", "holyWolf",
+    "holdCharge", "enrage", "berserkerRush", "furyTrance", "overPower", "fear", "ironShield", "diamondShield", "perfectShield", "titanForm",
+    "afterShock", "perfectArmor", "delayQi", "comboPlus", "ashura", "grab", "drunken", "paralysis", "death", "drunk", "shield", "honor", "swallow",
+    "gobble", "puncture", "lastHope", "kingdomKnight", "bubbleShield", "heavy", "overPresence", "rejuvenate", "hardenSkin", "salvation", "noShield",
+    "wash", "awareness", "damagePlus", "fortune", "damageRoulette", "disarm", "bleed", "cut", "insight", "pillage", "immunity", "blend", "invisible",
+    "needlePrison", "poison", "venomShock", "fatalStrike", "rust", "rustyDecay", "tent", "slayerMark", "maim", "enlarge", "reduce", "sticky", "acid",
+    "remedy", "boost", "heat", "autoLife", "rapidTrance", "petrify", "miracleDrop", "synchroMole", "instantCast", "burn", "ja", "runicFlame",
+    "ignite", "groundLock", "buiten", "runicSand", "lavu", "fireKeep", "phoenixSoul", "jaSoul", "gadinaSoul", "buitenSoul", "gaosSoul", "fireAvatar",
+    "earthForm", "multiCast", "dispell", "manaBurn", "ice", "frost", "iceShield", "snowMan", "focusIntellect", "snowBall", "cosmicRift",
+    "cosmicFriday", "bless", "sleep", "clear", "cleanse", "revive", "lightBind", "feather", "illuminate", "sealOfAttack", "sealOfDefense",
+    "sealOfEarth", "sealOfHeaven", "repel", "reverse", "float", "wing", "sanctuary", "worldEncarta", "massCast", "phantomBane", "dissolute",
+    "corruption", "curse", "nightmare", "amplifyDamage", "doom", "guardianOfTheNight", "blind", "confuse", "charm", "mindControl", "mimic",
+    "allMimic", "shame", "chiroptophobia", "darkStalker", "blackServant", "yellowFlag", "blueFlag", "redFlag", "whiteFlag", "seaAegis", "zephyrLore",
+    "elementalBound", "bloodCarnage", "flameOfReggu", "plague", "livingDead", "darkRitual", "nemesisLarva", "netherBane", "loveBind", "coma",
+    "inferno", "spiritOfWind", "wet"
+  ],
+  tto: [
+    "gmExpBoost", "windBound", "bladeSurge", "unchained", "tempestDance", "yinYang", "impaler", "armorShatter", "oceanResilience", "tidalPressure",
+    "anchored", "dealersMark", "eclipsed", "airPoison", "phantomVenom", "prey", "spireLink", "stormCharge", "staticDrain", "airPoisonImmune",
+    "gilded", "bounty", "stoneAegis", "runeFracture", "bastionWard", "solarCrown", "sunburn", "frostMark", "frostBite", "frozenGround", "frostField",
+    "manaFracture", "gleamingBreath", "lucentBarrier", "scriptureBind", "crimsonBrand", "evilTwin", "gmDropBoost", "magicWall", "abyssExposure",
+    "abyssFreeze", "abyssDoom", "abyssPetrify", "abyssShackle", "crystalFrozen", "crystalFrozenImmune", "weak", "abyssOrbMark"
+  ],
+  reborn: [
+    "benediction", "formlessFlow", "seraph", "carronGambit", "reactorOverdrive", "huntVeil", "seaFeast", "cookFeast"
+  ]
+};
+// Names that the camelCase split gets wrong (IMMUNITY_LABELS names come first)
+const STATUS_NAME_FIX = { dealersMark: "Dealer's Mark" };
+const STATUS_NAME_UPPER = { hp: "HP", mp: "MP", sp: "SP", ko: "KO", atk: "ATK", def: "DEF", agi: "AGI", vit: "VIT", mag: "INT", cha: "CHA", tal: "TAL", lck: "LCK", gm: "GM" };
+const STATUS_NAME_SMALL = new Set(["of", "the"]);
+const STATUS_TAG_ORDER = ["Buff", "Debuff", "Physical", "Magical", "State", "System", "Lock", "Shield", "Crowd Control"];
+const STATUS_SERVER_ORDER = ["og", "tot", "tto", "reborn"];
+function statusDisplayName(key){
+  const k = String(key);
+  if (IMMUNITY_LABELS[k]) return IMMUNITY_LABELS[k];
+  if (STATUS_NAME_FIX[k]) return STATUS_NAME_FIX[k];
+  const words = k.replace(/([a-z0-9])([A-Z])/g, "$1 $2").split(" ");
+  return words.map((w, i) => {
+    const l = w.toLowerCase();
+    if (STATUS_NAME_UPPER[l]) return STATUS_NAME_UPPER[l];
+    if (i && STATUS_NAME_SMALL.has(l)) return l;
+    return w.charAt(0).toUpperCase() + w.slice(1);
+  }).join(" ");
+}
+const _statusKeysCache = {};
+function statusKeysFor(server){
+  const srv = STATUS_SERVER_ORDER.includes(server) ? server : "og";
+  if (_statusKeysCache[srv]) return _statusKeysCache[srv];
+  const keys = STATUS_GAME_KEYS.og.concat(srv === "tto" ? STATUS_GAME_KEYS.tto : srv === "reborn" ? STATUS_GAME_KEYS.reborn : []);
+  return (_statusKeysCache[srv] = keys.slice().sort((a, b) => statusDisplayName(a).localeCompare(statusDisplayName(b), "en") || a.localeCompare(b, "en")));
+}
+function statusAllKeys(){
+  return STATUS_GAME_KEYS.og.concat(STATUS_GAME_KEYS.tto, STATUS_GAME_KEYS.reborn);
+}
+function statusGameKey(key){
+  const l = String(key).toLowerCase();
+  return statusAllKeys().find(k => k.toLowerCase() === l) || null;
+}
+function statusServersOf(key){
+  const k = statusGameKey(key);
+  if (!k) return [];
+  return STATUS_SERVER_ORDER.filter(srv => statusKeysFor(srv).includes(k));
+}
+function statusTags(key){
+  const cls = STATUS_CLASS_MAP[String(key).toLowerCase()] || STATUS_CLASS_MAP[key];
+  if (!cls) return [];
+  const have = cls.split(/,\s*/);
+  return STATUS_TAG_ORDER.filter(t => have.includes(t));
+}
+// </SG:data>
 // Mechanic-term glossary (^^term^^, added 2026-09-22). Same shape as
 // STATUS_CLASS_MAP/STATUS_DESC_MAP but for general game-engine mechanics
 // that aren't tied to a status effect -- opens a full modal (unlike the
@@ -39836,6 +39918,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-16T12:05:11.076Z","feat(bible): สารานุกรมสถานะ ขั้นที่ 1 รายชื่อสถานะของทุกเซิร์ฟเวอร์ (BB 205, TTO 253, Reborn 213)"],
     ["2026-11-15T14:05:48.222Z","fix(bible): Bunker ของ Mole ระบุว่า Mind Control กับ Charm ของค้างคาวร่ายใส่ไม่ได้; บันทึกพฤติกรรมเผ่า Structure ของทุกคลาสและผลสแกนแฟล็ก recieveStatus (44 ชนิดยูนิตที่ติดสถานะไม่ได้) ลงไฟล์อ้างอิง"],
     ["2026-11-15T12:57:30.879Z","fix(bible): Bunker ของ Mole แก้ข้อความรับบัฟ: ระบบสถานะไม่ปฏิเสธเพราะ Bunker แต่ Immune / Boost / Heat / Life Shot ของกระต่าย, Mimic ของค้างคาว และออร่า Overlord ของ Bison ใช้กับ Structure ไม่ได้"],
     ["2026-11-15T12:48:57.933Z","fix(bible): Bunker ของ Mole บอกว่าดาเมจที่ลดเป็นขั้นแยกหลัง hitMod, นับเป็นสิ่งก่อสร้างระหว่างมุดหลุม, รับบัฟ/ดีบัฟตามปกติ และสถานะที่เปลี่ยนท่าทางตัวละคร (Snowman ฯลฯ) ทำให้ออกจาก Bunker"],

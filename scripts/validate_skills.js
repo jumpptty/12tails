@@ -7346,6 +7346,54 @@ if (RUN_DAMAGE_CHECKS) {
   errorCount += skelBad.length;
   console.log(`Verified ${checkedDepGlow} stat glow checks across dep states (every card on BB, each dep at max; LCK on TTO too).`);
 }
+// <SG:checks>
+// Status glossary (spec docs/superpowers/specs/2026-11-16-status-glossary-design.md, plan docs/superpowers/plans/2026-11-16-status-glossary.md).
+{
+  const sg = (m) => { console.error(`[STATUS GLOSSARY ERROR] ${m}`); errorCount++; };
+  const run = (code) => vm.runInContext(code, sandbox);
+  const has = (n) => run(`typeof ${n}`) !== "undefined";
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  try {
+    // ---- Task 1: the status list per server, names, tags
+    const need1 = ["STATUS_GAME_KEYS", "STATUS_NAME_FIX", "statusKeysFor", "statusAllKeys", "statusServersOf", "statusDisplayName", "statusTags"];
+    const miss1 = need1.filter(n => !has(n));
+    miss1.forEach(n => sg(`missing ${n}`));
+    if (!miss1.length) {
+      const K = run("statusKeysFor"), G = run("STATUS_GAME_KEYS"), name = run("statusDisplayName"), tags = run("statusTags"), srvOf = run("statusServersOf");
+      for (const [srv, n] of Object.entries({ og: 205, tot: 205, tto: 253, reborn: 213 })) {
+        const ks = K(srv);
+        if (ks.length !== n) sg(`${srv}: ${ks.length} statuses, expected ${n}`);
+        if (new Set(ks.map(k => k.toLowerCase())).size !== ks.length) sg(`${srv}: a key appears twice (case-insensitive)`);
+        const names = ks.map(name);
+        if (names.some((x, i) => i && names[i - 1].localeCompare(x, "en") > 0)) sg(`${srv}: not sorted A-Z by display name`);
+      }
+      if (run("statusAllKeys()").length !== 261) sg(`statusAllKeys() has ${run("statusAllKeys()").length}, expected 261`);
+      for (const [k, want] of [["snowMan", "Snowman"], ["artCancel", "Art Cancel"], ["hpRegen", "HP Regen"], ["guardianOfTheNight", "Guardian of the Night"], ["magDown", "INT Down"], ["noKo", "No KO"], ["atkUp", "ATK Up"], ["dealersMark", "Dealer's Mark"]])
+        if (name(k) !== want) sg(`statusDisplayName(${k}) = ${JSON.stringify(name(k))}, expected ${want}`);
+      for (const [k, want] of [["frost", ["Debuff", "Magical", "Lock"]], ["blackServant", ["Debuff", "Magical", "State"]], ["atkup", ["Buff", "Physical"]], ["gilded", ["Debuff", "Physical", "Crowd Control"]], ["nosuchstatus", []]])
+        if (!same(tags(k), want)) sg(`statusTags(${k}) = ${JSON.stringify(tags(k))}, expected ${JSON.stringify(want)}`);
+      for (const [k, want] of [["gilded", ["tto"]], ["ice", ["og", "tot", "tto", "reborn"]], ["seraph", ["reborn"]], ["ICE", ["og", "tot", "tto", "reborn"]]])
+        if (!same(srvOf(k), want)) sg(`statusServersOf(${k}) = ${JSON.stringify(srvOf(k))}, expected ${JSON.stringify(want)}`);
+      // the lists still match the games' tables (only where those git-ignored folders exist)
+      const root = path.resolve(__dirname, "..");
+      const bbFile = path.join(root, "DecompiledSource/StatusData.cs");
+      if (fs.existsSync(bbFile)) {
+        const lines = fs.readFileSync(bbFile, "utf8").split(/\r?\n/).slice(49, 2333).join("\n");
+        const bb = [...new Set([...lines.matchAll(/nStatus == "([A-Za-z0-9]+)"/g)].map(m => m[1]))];
+        if (!same([...bb].sort(), [...G.og].sort())) sg(`STATUS_GAME_KEYS.og differs from DecompiledSource/StatusData.cs getStatusCode`);
+      }
+      const ttoDump = path.join(root, "DecompiledSource_TTO_2026-11-02/dump.cs");
+      if (fs.existsSync(ttoDump)) {
+        const d = fs.readFileSync(ttoDump, "utf8"), a = d.indexOf("public enum eStatus : int"), body = d.slice(a, d.indexOf("\n}", a));
+        const all = [...body.matchAll(/public const eStatus ([A-Za-z0-9_]+) =/g)].map(m => m[1]).filter(n => n !== "none");
+        const bbL = new Set(G.og.map(k => k.toLowerCase()));
+        if (!same(all.filter(n => !bbL.has(n.toLowerCase())).sort(), [...G.tto].sort())) sg(`STATUS_GAME_KEYS.tto differs from TTO1102 eStatus`);
+      }
+      console.log(`Verified the status glossary list: ${run("statusAllKeys()").length} statuses (BB ${K("og").length}, TTO ${K("tto").length}, Reborn ${K("reborn").length}).`);
+    }
+  } catch (e) { sg("threw: " + (e && e.stack || e)); }
+}
+// </SG:checks>
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {
   console.log(`SUCCESS: All ${SKILLS.length} skills, ${checkedFormulas} formula permutations, ${checkedLckFloors} LCK-floor checks, ${checkedGaosHeroRouting} Gaos render checks, and ${Object.keys(SKILL_ICONS).length} icons passed 100% of automated integrity checks!`);
