@@ -5896,8 +5896,8 @@
   .sk-pw-tab.is-empty .sk-pw-lbl{color:#6f6858}
   .sk-pw-tab.is-dragging{opacity:.4}
   .sk-pw-tab.is-drop{border-color:#4ade80; box-shadow:inset 0 0 0 1px #4ade80}
-  .sk-pw-face{flex:none; width:28px; height:28px; border-radius:50%; background:#26221c no-repeat; background-size:250% auto; background-position:34% 14%; box-shadow:0 0 0 2px rgba(255,255,255,.18)}
-  .sk-pw-tab.is-on .sk-pw-face{box-shadow:0 0 0 2px var(--gold)}
+  /* the game's round hero icon, whole (CLASS_HERO_COLORS): its disc fills about 88% of the square, so 32 px keeps the old 28 px circle; the margin keeps the tab height */
+  .sk-pw-face{flex:none; width:32px; height:32px; margin:-2px 0; background:transparent no-repeat center / contain; filter:drop-shadow(0 1px 2px rgba(0,0,0,.55))}
   .sk-pw-k{font:700 12px 'JetBrains Mono','Prompt',monospace; color:#f1d27a}
   .sk-pw-lbl{min-width:0; overflow:hidden; text-overflow:ellipsis}
   .sk-pw-live{margin-left:auto; flex:none; display:inline-flex; align-items:center; gap:5px; padding:1px 9px; border-radius:999px; background:rgba(74,222,128,.14); color:#4ade80; font-size:12px}
@@ -6016,8 +6016,7 @@
   .sk-ps-who small{display:block; font-size:12px; font-weight:700; letter-spacing:.4px; color:#a39a86}
   .sk-ps-who b{display:block; font-size:18px; color:#ede8df; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
   .sk-ps-who.is-to b{color:#f1d27a}
-  .sk-ps-face{flex:none; width:48px; height:48px; border-radius:50%; background:#26221c no-repeat; background-size:250% auto; background-position:34% 14%; box-shadow:0 0 0 2px rgba(255,255,255,.2)}
-  .sk-ps-who.is-to .sk-ps-face{box-shadow:0 0 0 2px var(--gold)}
+  .sk-ps-face{flex:none; width:54px; height:54px; margin:-3px 0; background:transparent no-repeat center / contain; filter:drop-shadow(0 2px 4px rgba(0,0,0,.6))}
   .sk-ps-arr{flex:none; font-size:22px; color:var(--gold)}
   .sk-ps-ctx{margin-left:auto; text-align:right; font-size:14px; line-height:1.5; color:#a39a86}
   .sk-ps-ctx b{color:#ede8df}
@@ -9022,7 +9021,7 @@
   </div>
 </div>
 
-<script src="assets.js?v=561bd51777" id="bibleAssets"></script>
+<script src="assets.js?v=e16dcf841f" id="bibleAssets"></script>
 <script>
 const BIBLE_ASSETS_IN = typeof BIBLE_ASSETS === "object" && BIBLE_ASSETS ? BIBLE_ASSETS : {};   // assets.js (scripts/bible_assets.js); {} when it did not load
 if (!Object.keys(BIBLE_ASSETS_IN).length) console.warn("assets.js did not load: icons, art, 3D previews and sounds are missing");
@@ -22592,8 +22591,9 @@ function mountSkillCooldownLookup(root){
     const i = presetWinSel = Number.isInteger(sel) && sel >= 0 && sel < PRESET_SLOTS ? sel : act;
     const pics = typeof CLASS_STORY_ART !== "undefined" ? CLASS_STORY_ART[cls] : null;   // a preset shows game colour colors[position]
     const pic = k => (pics && pics[en.colors[k]]) || "";
+    const faces = typeof CLASS_HERO_COLORS !== "undefined" ? CLASS_HERO_COLORS[cls] : null, face = k => (faces && faces[en.colors[k]]) || "";   // the game's round icon in that colour
     const label = k => en.labels[k].name || (en.slots[k] ? "ชุดที่ " + (k + 1) : "ว่าง");
-    const tabs = en.slots.map((slot, k) => `<button type="button" class="sk-pw-tab${k === i ? " is-on" : ""}${slot ? "" : " is-empty"}" data-role="preset-tab" data-slot="${k}" draggable="true" role="tab" aria-selected="${k === i}" title="PRESET ${k + 1} · ลากไปวางบนแท็บอื่นเพื่อสลับลำดับ"><span class="sk-pw-face" style="background-image:url('${pic(k)}')"></span><span class="sk-pw-k">${k + 1}</span><span class="sk-pw-lbl">${presetEsc(label(k))}</span>${k === act ? '<span class="sk-pw-live">ใช้</span>' : ""}</button>`).join("");
+    const tabs = en.slots.map((slot, k) => `<button type="button" class="sk-pw-tab${k === i ? " is-on" : ""}${slot ? "" : " is-empty"}" data-role="preset-tab" data-slot="${k}" draggable="true" role="tab" aria-selected="${k === i}" title="PRESET ${k + 1} · ลากไปวางบนแท็บอื่นเพื่อสลับลำดับ"><span class="sk-pw-face" style="background-image:url('${face(k)}')"></span><span class="sk-pw-k">${k + 1}</span><span class="sk-pw-lbl">${presetEsc(label(k))}</span>${k === act ? '<span class="sk-pw-live">ใช้</span>' : ""}</button>`).join("");
     const s = en.slots[i], lab = en.labels[i], inUse = act === i;
     const use = inUse ? `<button type="button" class="sk-pw-use" disabled>กำลังใช้อยู่</button>`
       : `<button type="button" class="sk-pw-use${s ? "" : " is-new"}" data-role="preset-use">${s ? "ใช้ชุดนี้" : "เริ่มชุดนี้จากค่าปัจจุบัน"}</button>`;
@@ -22836,9 +22836,9 @@ function mountSkillCooldownLookup(root){
   // compact, then a zoom). "กลับไปชุดเดิม" = Ctrl+Z (undoPreset closes this).
   function showPresetPopup(i, cls, sb, sa, before, after, from){
     hidePresetPopup(true);
-    const esc = presetEsc, en = presetEntry(cls), pics = typeof CLASS_STORY_ART !== "undefined" ? CLASS_STORY_ART[cls] : null;
+    const esc = presetEsc, en = presetEntry(cls), faces = typeof CLASS_HERO_COLORS !== "undefined" ? CLASS_HERO_COLORS[cls] : null;
     const who = (k, to) => { const none = k === null || k === undefined;
-      return `<div class="sk-ps-who${to ? " is-to" : ""}"><span class="sk-ps-face"${none ? "" : ` style="background-image:url('${(pics && pics[en.colors[k]]) || ""}')"`}></span><span><small>${none ? "ก่อนหน้า" : "PRESET " + (k + 1)}</small><b>${none ? "ค่าเดิม" : esc(en.labels[k].name || "ชุดที่ " + (k + 1))}</b></span></div>`; };
+      return `<div class="sk-ps-who${to ? " is-to" : ""}"><span class="sk-ps-face"${none ? "" : ` style="background-image:url('${(faces && faces[en.colors[k]]) || ""}')"`}></span><span><small>${none ? "ก่อนหน้า" : "PRESET " + (k + 1)}</small><b>${none ? "ค่าเดิม" : esc(en.labels[k].name || "ชุดที่ " + (k + 1))}</b></span></div>`; };
     const cards = presetChangeRows(before, after).filter(r => !r.raw).map(r => {
       const top = r.nb ? Math.max(...r.nb, ...r.na) : 0;
       const bars = top > 0 ? `<div class="sk-ps-bars" aria-hidden="true"><i style="width:${(Math.max(...r.nb) / top * 100).toFixed(1)}%"></i><i style="width:${(Math.max(...r.na) / top * 100).toFixed(1)}%"></i></div>` : "";
@@ -33253,6 +33253,10 @@ const CLASS_ART = BIBLE_ASSETS_IN.CLASS_ART || {};
 // chips and class filter. 75 px, so keep them at 56 px or less; the 104 px class picker grids keep CLASS_MINIMAL_ICONS.
 const CLASS_HERO_ICONS = BIBLE_ASSETS_IN.CLASS_HERO_ICONS || {};
 const CLASS_STORY_ART = BIBLE_ASSETS_IN.CLASS_STORY_ART || {};
+// The same round hero icons in all five game colours (RippedAssets gamegui/icons/heroes/<Class>1..5.png, 75 px, WebP q90; [Class] = 5 data URIs,
+// index = game colour 0-4). The PRESET tabs and the preset swap pop-up show colour colors[k] of each preset (user 2026-11-17: the game's
+// round icon, not a face cut from the story portrait), whole like the badge: ears and hats break out of the circle.
+const CLASS_HERO_COLORS = BIBLE_ASSETS_IN.CLASS_HERO_COLORS || {};
 
 // CHA / AGI Optimizer (2026-09-25). The LCK input (2026-10-06) adds the roll both adjusters make on every cast:
 // R = Random.Range(0, ceil(0.2 × LCK)), independently for agiAdjust (AGI + R) and chaAdjust (CHA + R). The cycle
@@ -40845,6 +40849,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-17T14:57:54.594Z","feat(bible): PRESET ใช้ไอคอนหน้าอาชีพทรงกลมของเกม BB ครบ 5 สี แทนภาพตัดจากพอร์เทรต"],
     ["2026-11-17T13:47:40.186Z","fix(bible): Royal Flush (TTO) ได้ผล Power One / Two / Three / Seven และ Super Seven ตามโค้ดเกม"],
     ["2026-11-16T16:11:48.334Z","fix(bible): สารานุกรมสถานะ เลเวลสูงสุดนับสกิลเสริมและผู้ร่ายคนที่สอง เช่น Bless ถึงเลเวล 6"],
     ["2026-11-16T15:29:15.926Z","feat(bible): สารานุกรมสถานะ ภาพเมนูสายฝนไอคอนสถานะ วงสีบอกประเภทหนาขึ้น และป๊อปอัปของเล่นใหม่แทนแพตช์โน้ต TTO"],

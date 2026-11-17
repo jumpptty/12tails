@@ -1044,6 +1044,14 @@ let checkedPanelMarkup = 0;
     ["Bat", "Bison", "Cat", "Chameleon", "Mole", "Monkey", "Panda", "Penguin", "Rabbit", "Sheep", "Whale", "Wolf"].forEach(c =>
       check(`CLASS_STORY_ART needs 5 colour portraits for ${c} (one per PRESET card)`,
         Array.isArray(storyArt[c]) && storyArt[c].length === 5 && storyArt[c].every(s => /^data:image\/webp;base64,/.test(s))));
+    // PRESET tabs and swap pop-up faces (user 2026-11-17): the game's round hero icon in each preset's colour, gamegui/icons/heroes/<Class>1..5.png
+    const heroColors = vm.runInContext("CLASS_HERO_COLORS", sandbox);
+    ["Bat", "Bison", "Cat", "Chameleon", "Mole", "Monkey", "Panda", "Penguin", "Rabbit", "Sheep", "Whale", "Wolf"].forEach(c =>
+      check(`CLASS_HERO_COLORS needs the game's 5 round hero icons for ${c} (PRESET tabs and swap pop-up)`,
+        Array.isArray(heroColors[c]) && heroColors[c].length === 5 && heroColors[c].every(s => /^data:image\/webp;base64,/.test(s)) && new Set(heroColors[c]).size === 5));
+    check("the PRESET tabs and the swap pop-up show the round hero icon in the preset's colour (CLASS_HERO_COLORS), not a crop of the story portrait",
+      html.includes(`<span class="sk-pw-face" style="background-image:url('\${face(k)}')"></span>`) && html.includes("(faces && faces[en.colors[k]])")
+      && !/\.sk-(?:pw|ps)-face\{[^}]*background-size:250%/.test(html));
   }
   check("stat presets must keep their localStorage key (renaming it would drop every saved preset)", html.includes('"12t-bible-stat-presets"'));
   // Stat panel collapse (2026-10-29): a click on the header box itself folds it (user 2026-10-29, no chevron); the hidden button keeps the
