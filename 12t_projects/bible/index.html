@@ -33686,8 +33686,11 @@ function ttoFix(id, note, fields){
 }
 const ttoDescFix = (id, fn) => { const c = SKILLS.find(s => s.id === id), was = c.servers && c.servers.tto && c.servers.tto.desc !== undefined ? c.servers.tto.desc : c.desc; return (rank, depRank) => fn(typeof was === "function" ? was(rank, depRank) : was, rank); };
 ttoFix("cat_nineLives", "• [Fix] ชุบชีวิตได้ทุกครั้งที่ตาย เพราะไม่เช็คคูลดาวน์ → ติดคูลดาวน์ **60 วินาที** ตามปกติ", { bbBug: "", cd: 60, cdWrapped: true, revisedArtExempt: false, desc: ttoDescFix("cat_nineLives", (d) => descSwap(d, "<br>__ในโค้ดมีคูลดาวน์ภายใน **60 วินาที** (ลดตามค่า AGI) แต่ไม่ถูกเรียกใช้ จึงชุบได้ทุกครั้งโดยไม่ติดคูลดาวน์__", "")) });
+// Open Wound, checked in TTO's client of 2026-11-14 (2026-11-17): the nAttack-2 Hidden Blade hit now reaches OpenWound (TTO1114:Cat.<RPC_nAttack2>d__173::MoveNext@0x1BC7530,
+// both branches end in the one call), while Finishing Blow still calls it after hit 3 only (TTO1114:Cat.<RPC_finishingBlow2>d__229::MoveNext@0x1BB67F0, the same in TTO1102).
+// So TTO's vague "OpenWound5 ทำงานไม่ถูกต้อง" note is that one fix; the Open Wound card's red line about Finishing Blow went, its unintended note stays.
 ttoFix("cat_nAttack", "• [Fix] ฮิตที่ **Hidden Blade** ฟันหลังในท่าที่ 2 ไม่ติด **Open Wound** → ติดเหมือนฮิตอื่น", { unintended: "", effectProc: CAT_OPENWOUND_PROC });
-ttoFix("cat_openWound", "• [Fix] ฮิตที่ **Hidden Blade** ฟันหลังในท่าที่ 2 ของ **nAttack** ไม่ติดผลนี้ → ติดแล้ว", { unintended: "**Finishing Blow** ติดดาเมจม่วงเฉพาะฮิตที่ 3 (ฮิต 1, 2 และ 4 ไม่ได้เรียกผลของสกิลนี้)", liveCheck: "แพตช์ TTO ยังบอกว่าแก้ OpenWound5 ที่ทำงานไม่ถูกต้อง แต่ไม่บอกว่าแก้อะไร การ์ดจึงแก้เฉพาะฮิตของ Hidden Blade และยังไม่รู้ว่า **Finishing Blow** เปลี่ยนหรือไม่" });
+ttoFix("cat_openWound", "• [Fix] ฮิตที่ **Hidden Blade** ฟันหลังในท่าที่ 2 ของ **nAttack** ไม่ติดผลนี้ → ติดแล้ว", { unintended: "**Finishing Blow** ติดดาเมจม่วงเฉพาะฮิตที่ 3 (ฮิต 1, 2 และ 4 ไม่ได้เรียกผลของสกิลนี้)" });
 ttoFix("penguin_novaFlare", "• [Fix] ใช้สกิลแล้วไม่นับคูลดาวน์ **120 วินาที** → นับตามปกติ");
 ttoFix("penguin_cosmicRift", "• [Fix] โดน ^^ดาเมจม่วง^^ ระหว่างอยู่ในมิติแล้วกดออกไม่ได้ → กดออกได้ตามปกติ ไม่ว่าจะโดนดาเมจประเภทใด");
 ttoFix("penguin_giantStar", "• [Fix] **Falling Stars:** รัศมีหาเป้าหมายไม่เพิ่ม (**12m / 16m**) → เพิ่ม **50%** เป็น **18m / 24m**", { bbBug: "", tooltipNote: "บอกว่าเพิ่ม **ระยะ** ของ Falling Star และ Falling Comet ขึ้น **50%** แต่ **Falling Comets** รัศมีระเบิดเพิ่ม **50%** (**6m** เป็น **9m**) ส่วนระยะกระจายเพิ่มแค่ **25%** (**±8m** เป็น **±10m**)", desc: ttoDescFix("penguin_giantStar", (d) => descSwap(d, "**Falling Stars:** เพิ่มจำนวนเป้าหมายสูงสุดจาก", "**Falling Stars:** เพิ่มรัศมีหาเป้าหมายจาก **12m / 16m** (เลเวล 1 / 2) เป็น **18m / 24m** เพิ่มจำนวนเป้าหมายสูงสุดจาก")) });
@@ -40856,6 +40859,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-17T15:43:58.828Z","fix(bible): Open Wound (TTO) ตามโค้ด 14 พ.ย. แก้แค่ฮิต Hidden Blade ท่าที่ 2 ส่วน Finishing Blow ยังติดแค่ฮิตที่ 3 จึงเอาเส้นแดงออก"],
     ["2026-11-17T15:29:25.916Z","feat(bible): Open Wound ของแมวคิดตามเลเวล Disarm และ Bleed บนเป้าหมาย (ปุ่มใหม่ 0-2) และ Crescent Eclipse เลิกใช้ช่องกรอกสถานะ"],
     ["2026-11-17T14:57:54.594Z","feat(bible): PRESET ใช้ไอคอนหน้าอาชีพทรงกลมของเกม BB ครบ 5 สี แทนภาพตัดจากพอร์เทรต"],
     ["2026-11-17T13:47:40.186Z","fix(bible): Royal Flush (TTO) ได้ผล Power One / Two / Three / Seven และ Super Seven ตามโค้ดเกม"],

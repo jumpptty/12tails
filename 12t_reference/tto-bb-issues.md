@@ -101,7 +101,7 @@ The state on TTO (Tailstopia Online) of every issue on the Bible's BB issues pag
 | Joker | unintended | open | Same unclamped Joker add as Lucky Card. `TTO1102:Cat.<RPC_luckyCard>d__182::MoveNext@0x1BB6D00` |
 | Joker | tooltip | fixed | Rows chance 6% and LCK +0.5× = code lckAdjust(6) and the 0.5×LCK lead; description still 5% and 1.0-3.0. `TTO1102:SkillDetailData::CatJoker@0x21EF680` |
 | Three Knives | tooltip | fixed | Line: three daggers, the middle one +6 = code. `TTO1102:SkillDetailData::CatThreeKnives@0x21F2F50`, `TTO1102:Cat.<RPC_flyingDagger>d__207::MoveNext@0x1BAE0D0` |
-| Finishing Blow | unintended | open | Only the third of four hits calls OpenWound, as in BB. `TTO1102:Cat.<RPC_finishingBlow2>d__229::MoveNext@0x1BAC780` |
+| Finishing Blow | unintended | open | Only the third of four hits calls OpenWound, as in BB. `TTO1102:Cat.<RPC_finishingBlow2>d__229::MoveNext@0x1BAC780`; still so in the 2026-11-14 client, `TTO1114:Cat.<RPC_finishingBlow2>d__229::MoveNext@0x1BB67F0` (checked 2026-11-17) |
 | Open Wound | unintended | open | Settled by the card's TTO tab (it carries its own note). |
 | Pillage Plunge | tooltip | fixed | Row 30 s (BB's 30 assumed; Ghidra drops the float); description still 12 Sec. `TTO1102:SkillDetailData::CatPillagePlunge@0x21F0FB0`, `TTO1102:Cat.<RPC_pillagePlunge>d__232::MoveNext@0x1BC3180` |
 
