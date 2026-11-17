@@ -101,9 +101,8 @@ The state on TTO (Tailstopia Online) of every issue on the Bible's BB issues pag
 | Joker | unintended | open | Same unclamped Joker add as Lucky Card. `TTO1102:Cat.<RPC_luckyCard>d__182::MoveNext@0x1BB6D00` |
 | Joker | tooltip | fixed | Rows chance 6% and LCK +0.5× = code lckAdjust(6) and the 0.5×LCK lead; description still 5% and 1.0-3.0. `TTO1102:SkillDetailData::CatJoker@0x21EF680` |
 | Three Knives | tooltip | fixed | Line: three daggers, the middle one +6 = code. `TTO1102:SkillDetailData::CatThreeKnives@0x21F2F50`, `TTO1102:Cat.<RPC_flyingDagger>d__207::MoveNext@0x1BAE0D0` |
-| Finishing Blow | unintended | open | Only the third of four hits calls OpenWound, as in BB. `TTO1102:Cat.<RPC_finishingBlow2>d__229::MoveNext@0x1BAC780`; still so in the 2026-11-14 client, `TTO1114:Cat.<RPC_finishingBlow2>d__229::MoveNext@0x1BB67F0` (checked 2026-11-17) |
-| Open Wound | bug | fixed | The nAttack-2 Hidden Blade gap (a bug since 2026-11-17): settled by the card's TTO tab (it clears the note and has a [Fix] line). `TTO1114:Cat.<RPC_nAttack2>d__173::MoveNext@0x1BC7530` |
-| Open Wound | unintended | open | Finishing Blow still calls OpenWound on hit 3 only. The TTO tab now carries BB's own words, so the state comes from `BB_ISSUE_TTO`. `TTO1114:Cat.<RPC_finishingBlow2>d__229::MoveNext@0x1BB67F0` |
+| Finishing Blow | bug | open | Only the third of four hits calls OpenWound, as in BB (filed as unintended until 2026-11-17, when the user made it a BB bug). `TTO1102:Cat.<RPC_finishingBlow2>d__229::MoveNext@0x1BAC780`; still so in the 2026-11-14 client, `TTO1114:Cat.<RPC_finishingBlow2>d__229::MoveNext@0x1BB67F0` (checked 2026-11-17) |
+| Open Wound | bug | open | One bug note since 2026-11-17 (both gaps became bugs): the nAttack-2 Hidden Blade gap is fixed (`TTO1114:Cat.<RPC_nAttack2>d__173::MoveNext@0x1BC7530`), Finishing Blow still calls OpenWound on hit 3 only (`TTO1114:Cat.<RPC_finishingBlow2>d__229::MoveNext@0x1BB67F0`), so the TTO tab keeps its own note with Finishing Blow alone (a partial fix). |
 | Pillage Plunge | tooltip | fixed | Row 30 s (BB's 30 assumed; Ghidra drops the float); description still 12 Sec. `TTO1102:SkillDetailData::CatPillagePlunge@0x21F0FB0`, `TTO1102:Cat.<RPC_pillagePlunge>d__232::MoveNext@0x1BC3180` |
 
 ### Chameleon
