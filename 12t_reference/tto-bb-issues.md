@@ -84,7 +84,7 @@ The state on TTO (Tailstopia Online) of every issue on the Bible's BB issues pag
 
 | Skill / issue | Type | TTO | Evidence |
 |---|---|---|---|
-| nAttack | unintended | fixed | Settled by the card's TTO tab (it clears the note or has a [Fix] line). |
+| nAttack | bug | fixed | Settled by the card's TTO tab (it clears the note and has a [Fix] line); re-checked in `TTO1114:Cat.<RPC_nAttack2>d__173::MoveNext@0x1BC7530`. Filed as unintended until 2026-11-17, when the user made the stage-2 Hidden Blade gap a BB bug. |
 | Awareness | tooltip | fixed | Rows radius 12 / 24 m = code 12×sLv; description still 18 m. `TTO1102:SkillDetailData::CatAwareness@0x21EBAC0`, `TTO1102:Cat::RPC_awareness@0x1B84ED0` |
 | Lucky Card | unintended | open | Joker branch still adds 0.5×(caster LCK − target LCK) unclamped. `TTO1102:Cat.<RPC_luckyCard>d__182::MoveNext@0x1BB6D00` |
 | Lucky Card | tooltip | fixed | Rows 50% ATK + LCK roll on your LCK above the target's = code; description still old. `TTO1102:SkillDetailData::CatLuckyCard@0x21EFBE0`, `TTO1102:Cat.<RPC_luckyCard>d__182::MoveNext@0x1BB6D00` |
@@ -102,7 +102,8 @@ The state on TTO (Tailstopia Online) of every issue on the Bible's BB issues pag
 | Joker | tooltip | fixed | Rows chance 6% and LCK +0.5× = code lckAdjust(6) and the 0.5×LCK lead; description still 5% and 1.0-3.0. `TTO1102:SkillDetailData::CatJoker@0x21EF680` |
 | Three Knives | tooltip | fixed | Line: three daggers, the middle one +6 = code. `TTO1102:SkillDetailData::CatThreeKnives@0x21F2F50`, `TTO1102:Cat.<RPC_flyingDagger>d__207::MoveNext@0x1BAE0D0` |
 | Finishing Blow | unintended | open | Only the third of four hits calls OpenWound, as in BB. `TTO1102:Cat.<RPC_finishingBlow2>d__229::MoveNext@0x1BAC780`; still so in the 2026-11-14 client, `TTO1114:Cat.<RPC_finishingBlow2>d__229::MoveNext@0x1BB67F0` (checked 2026-11-17) |
-| Open Wound | unintended | open | Settled by the card's TTO tab (it carries its own note). |
+| Open Wound | bug | fixed | The nAttack-2 Hidden Blade gap (a bug since 2026-11-17): settled by the card's TTO tab (it clears the note and has a [Fix] line). `TTO1114:Cat.<RPC_nAttack2>d__173::MoveNext@0x1BC7530` |
+| Open Wound | unintended | open | Finishing Blow still calls OpenWound on hit 3 only. The TTO tab now carries BB's own words, so the state comes from `BB_ISSUE_TTO`. `TTO1114:Cat.<RPC_finishingBlow2>d__229::MoveNext@0x1BB67F0` |
 | Pillage Plunge | tooltip | fixed | Row 30 s (BB's 30 assumed; Ghidra drops the float); description still 12 Sec. `TTO1102:SkillDetailData::CatPillagePlunge@0x21F0FB0`, `TTO1102:Cat.<RPC_pillagePlunge>d__232::MoveNext@0x1BC3180` |
 
 ### Chameleon
