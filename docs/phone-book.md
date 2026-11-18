@@ -49,12 +49,12 @@ This is the way every decode so far was done; keep doing it this way. It is not 
 
 1. Read this file (you are doing that) and AGENTS.md section 2's citation tags.
 2. Carry on with whatever decode was being discussed, without restating caveats.
-3. For a new TTO patch: start with `DecompiledSource_TTO_2026-11-02/BUILD.md`, "Rebuild after a TTO patch" and "Still to do" (a constants file, a self-check and a constant finder were planned). Make a new dated folder and tag for the new build; old citations keep theirs.
+3. For a new TTO patch: start with `DecompiledSource_TTO_shared/BUILD_TTO1102.md`, "Rebuild after a TTO patch" and "Still to do" (a constants file, a self-check and a constant finder were planned). Make a new dated folder and tag for the new build; old citations keep theirs.
 4. For ToT or another client: the same steps the TTO work used (find how the files are protected, decode offline, dump, decompile, label, write `BUILD.md`), in a new dated folder, then add its tag to AGENTS.md.
 
 ## Where things are
 
-- `DecompiledSource_TTO_2026-11-02/BUILD.md`: the TTO recipe, constants, how to read a skill, how to move it to another PC.
+- `DecompiledSource_TTO_shared/BUILD_TTO1102.md`: the TTO recipe, constants, how to read a skill, how to move it to another PC.
 - AGENTS.md section 2 (citation tags) and section 3 item 7 (this rule, short form).
 - `12t_reference/cat-skill-reference.md`, "Royal Flush": the first skill written up from the TTO decompile, a worked example of the whole path from code to card.
 - `12t_reference/12Tails-Mechanics-Reference.md`, "TTO engine helpers": `talAdjust` / `lckAdjust` as TTO's client has them.
