@@ -21682,7 +21682,9 @@ function mountSkillCooldownLookup(root){
   // portrait (Common/shared skills) still gets the caption, just without the picture.
   function updateClassBadge(cls){
     if (!classBadgeEl) return;
-    const src = (typeof CLASS_HERO_ICONS !== "undefined") ? CLASS_HERO_ICONS[cls] : undefined;
+    // the upscaled round face in the colour of the preset in use (user 2026-11-18; colors[position] follows the user's reorder); the 75 px icon as fallback
+    const faces = typeof CLASS_HERO_COLORS !== "undefined" ? CLASS_HERO_COLORS[cls] : null;
+    const src = (faces && faces[presetFaceColor(cls)]) || ((typeof CLASS_HERO_ICONS !== "undefined") ? CLASS_HERO_ICONS[cls] : undefined);
     if (classBadgeImgEl) {
       classBadgeImgEl.hidden = !src;
       if (classBadgeImgEl.parentElement) classBadgeImgEl.parentElement.hidden = !src;   // the face button (opens the PRESET window)
@@ -22654,6 +22656,13 @@ function mountSkillCooldownLookup(root){
     if (selected.class !== "Common") presetClassLast = selected.class;
     return selected.class === "Common" ? (presetClassLast || "Common") : selected.class;
   }
+  // The game colour (0-4) of the preset in use for a class: colors[position], which a reorder in the PRESET window carries along; 0 before presets load.
+  function presetFaceColor(cls){
+    const en = presetData && presetData.classes && presetData.classes[cls];
+    if (!en) return 0;
+    const act = en.active === null ? 0 : en.active;
+    return Array.isArray(en.colors) && Number.isInteger(en.colors[act]) ? en.colors[act] : act;
+  }
   function presetEntry(cls){
     return presetData.classes[cls] || (presetData.classes[cls] = { slots: Array(PRESET_SLOTS).fill(null), active: null,
       labels: Array.from({ length: PRESET_SLOTS }, () => ({ name: "", desc: "" })),
@@ -22736,6 +22745,7 @@ function mountSkillCooldownLookup(root){
     const cls = presetClass();
     if (!cls) return;
     const e = presetEntry(cls), act = e.active === null ? 0 : e.active;
+    if (classBadgeNameEl && classBadgeNameEl.textContent === cls) updateClassBadge(cls);   // the face follows the preset in use (a switch, a reorder)
     grp.querySelectorAll('[data-preset-slot]').forEach(b => {
       const i = Number(b.dataset.presetSlot), nm = e.labels[i].name;
       b.setAttribute("aria-pressed", String(i === act));
@@ -41142,6 +41152,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-18T15:09:18.458Z","feat(bible): รูปหน้าคลาสในกล่อง PRESET ใช้ภาพขยายและเปลี่ยนสีตามชุดที่ใช้อยู่ (ตามลำดับที่ผู้ใช้จัดเอง)"],
     ["2026-11-18T15:05:48.416Z","feat(bible): PRESET เป็นปุ่มตัวเลข 1-5 กดครั้งเดียวสลับชุดทันทีไม่มีป๊อปอัป กดเลขที่ใช้อยู่หรือรูปคลาสเพื่อตั้งค่า และเคอร์เซอร์ในช่องค้นหากลับมากะพริบ"],
     ["2026-11-18T14:58:34.400Z","feat(bible): กด Esc ในหน้าสกิลกลับไปรายชื่อสกิลของคลาส (แท็บที่มีสกิลนั้น) และ Esc ในหน้ารายชื่อกลับไปหน้าเลือกคลาส"],
     ["2026-11-18T14:54:23.636Z","feat(bible): ประตูเลือกคลาสวงใหญ่ขึ้น ช่องค้นหาใกล้วงตามความสูงจริง หัว ทั่วไป ใช้วงแหวน เอาปุ่มเล็กออกจากหน้ารายชื่อ และกด A D หรือลูกศรสลับแท็บได้"],
