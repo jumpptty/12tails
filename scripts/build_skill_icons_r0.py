@@ -8,6 +8,9 @@
 #   --r0-dir <dir>   read the rank-0 pictures from <dir>/<class>/<stem>0.png (e.g. Real-ESRGAN upscales) instead of RippedAssets
 #   --rip <dir>      the RippedAssets skills folder (default: <repo>/RippedAssets/ExportedProject/Assets/Resources/gamegui/icons/skills)
 #   --sheet <png>    save a before / after / mask sheet of a sample
+#   --extra-dir <dir>  also take <dir>/<icon key>.webp (128 px) for icons with no rank-0 picture, used as they are: the numeral painted out by
+#                    hand-checked inpainting (HANDOFF 2026-11-18 item 5; the 373 files and their recipe are in
+#                    D:\12tails-assets-archive\class-gate-upscale-2026-11-18\inpainted\, the upscaled rank-0 pictures in ...\r0\)
 # After --write: node scripts/bible_assets.js stamp, then node scripts/validate_skills.js ([HALO ROSTER ERROR] checks the container).
 import argparse, base64, io, json, os, re, subprocess, sys
 from PIL import Image, ImageChops, ImageFilter
@@ -18,6 +21,7 @@ ap.add_argument("--write", action="store_true")
 ap.add_argument("--r0-dir")
 ap.add_argument("--rip", default=os.path.join(REPO, "RippedAssets/ExportedProject/Assets/Resources/gamegui/icons/skills"))
 ap.add_argument("--sheet")
+ap.add_argument("--extra-dir")
 a = ap.parse_args()
 
 INDEX, ASSETS = os.path.join(REPO, "12t_projects/bible/index.html"), os.path.join(REPO, "12t_projects/bible/assets.js")
@@ -56,7 +60,16 @@ for key in card_keys:
     result[key] = "data:image/webp;base64," + base64.b64encode(b.getvalue()).decode()
     if len(samples) < 24 and len(result) % 6 == 1: samples.append((ico, comp, m))
 
-print(len(card_keys), "card icon keys;", len(result), "numeral-free icons;", round(sum(map(len, result.values())) / 1024), "KB")
+extra = 0
+if a.extra_dir:
+    for key in card_keys:
+        p = os.path.join(a.extra_dir, key + ".webp")
+        if key in icons and key not in result and os.path.isfile(p):
+            im = Image.open(p)
+            if im.size != (128, 128): sys.exit(p + " is not 128 x 128")
+            result[key] = "data:image/webp;base64," + base64.b64encode(open(p, "rb").read()).decode(); extra += 1
+    result = dict(sorted(result.items()))
+print(len(card_keys), "card icon keys;", len(result), "numeral-free icons (" + str(extra) + " painted from --extra-dir);", round(sum(map(len, result.values())) / 1024), "KB")
 if a.sheet and samples:
     sheet = Image.new("RGBA", (len(samples) * 136 + 8, 3 * 136 + 8), (36, 27, 21, 255))
     for i, (x, c, m) in enumerate(samples):
