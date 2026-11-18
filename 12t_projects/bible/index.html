@@ -4284,13 +4284,20 @@
   }
   .sk-picker-root[hidden]{display:none}
   .sk-picker-classes{
-    width:100%;
+    width:100%; display:flex; flex-direction:column; justify-content:center;   /* gateFill gives it the reference box's height; the rings sit in its middle */
   }
+  /* 13 rings (12 classes + Common, user 2026-11-18): 6 on the first row, 6 + Common on the second. A 14-column grid where every ring spans 2 columns
+     and the first starts one column in, so the 6 sit centred over the 7 and all rings are one size. */
   .sk-picker-classes .sg-gate-grid{
-    display:grid; grid-template-columns:repeat(6, 1fr); gap:10px;
+    display:grid; grid-template-columns:repeat(14, minmax(0, 1fr)); gap:10px;
   }
+  .sk-picker-classes .sg-gate-btn{grid-column:span 2}
+  .sk-picker-classes .sg-gate-btn:first-child{grid-column:2 / span 2}
+  .sg-gate-common-art{display:grid; place-items:center; border-radius:50%; background:radial-gradient(circle at 42% 36%, #2b2119, #110c09 72%)}
+  .sg-gate-common-art svg{width:44%; height:44%; fill:var(--gold)}
   @media (max-width: 800px) {
     .sk-picker-classes .sg-gate-grid{grid-template-columns:repeat(4, 1fr); gap:8px}
+    .sk-picker-classes .sg-gate-btn, .sk-picker-classes .sg-gate-btn:first-child{grid-column:auto}
   }
   @media (max-width: 520px) {
     .sk-picker-classes .sg-gate-grid{grid-template-columns:repeat(3, 1fr); gap:6px}
@@ -22162,9 +22169,19 @@ function mountSkillCooldownLookup(root){
     fade();
   }
   addEventListener("resize", () => {
+    gateFill();
     const g = pickerRootEl && !pickerRootEl.hidden && pickerRootEl.querySelector(".sk-roster-grid");
     if (g) gridFitPaged(g, pickerState === "global" ? searchPage : rosterPage);
   });
+  // The class gate (desktop) is as tall as the landing's reference box: its rings sit centred in the space the search row leaves, so the gate view is
+  // centred like the roster and the search bar keeps one place on the gate, the rosters and the search results (user 2026-11-18).
+  function gateFill(){
+    const pc = pickerRootEl && !pickerRootEl.hidden && pickerRootEl.querySelector(".sk-picker-classes"), shell = pc && pc.closest(".tool-shell");
+    if (!pc) return;
+    pc.style.minHeight = "";
+    if (window.innerWidth < 900 || !shell || !shell.classList.contains("is-hero-empty") || typeof landingRefH !== "function") return;
+    pc.style.minHeight = Math.max(0, Math.round(landingRefH() - (shell.offsetHeight - pc.offsetHeight))) + "px";
+  }
   function renderPickerView(){
     if (!pickerRootEl) return;
     if (selected) {
@@ -22293,6 +22310,10 @@ function mountSkillCooldownLookup(root){
                 </button>
               `;
             }).join('')}
+            <button type="button" class="sg-gate-btn is-hero sg-gate-common" data-class="Common" title="ทั่วไป (Common)">
+              <span class="sg-gate-ring"><span class="sg-gate-icon sg-gate-common-art" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.6"/><rect x="14" y="3" width="7" height="7" rx="1.6"/><rect x="3" y="14" width="7" height="7" rx="1.6"/><rect x="14" y="14" width="7" height="7" rx="1.6"/></svg></span></span>
+              <span class="sg-gate-label">${CLASS_TH_NAMES.Common || 'Common'}</span>
+            </button>
           </div>
         </div>
       `;
@@ -22310,14 +22331,10 @@ function mountSkillCooldownLookup(root){
         });
       });
 
-      if (browseBtn) {
-        browseBtn.hidden = false;
-        browseBtn.classList.add('sk-browse-common');
-        browseBtn.title = 'ทั่วไป (Common)';
-        browseBtn.setAttribute('aria-label', 'Common skills');
-      }
+      if (browseBtn) browseBtn.hidden = true;   // Common is a ring of the gate now (user 2026-11-18), not the small ⊞ button
     }
 
+    gateFill();
     if (typeof fitStageToScreen === 'function' && document.documentElement && document.documentElement.classList && typeof document.documentElement.classList.contains === 'function') {
       fitStageToScreen();
     }
@@ -41056,6 +41073,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-18T14:42:29.691Z","feat(bible): ประตูเลือกคลาสมีวง ทั่วไป (Common) เป็นวงที่ 13 แถวบน 6 แถวล่าง 7 แทนปุ่มเล็กข้างช่องค้นหา และจัดกลางจอ"],
     ["2026-11-18T14:30:06.189Z","feat(bible): เพิ่มเครื่องประดับ Bloom Pulse (TTO 1.7.0 แลกที่เปโด้) ในช่องเครื่องประดับของไกด์อาชีพ TTO"],
     ["2026-11-18T14:26:43.695Z","fix(bible): สลับแท็บรายชื่อสกิลแล้วขนาดและตำแหน่งการ์ดเปลี่ยนทันที ไม่มีแอนิเมชัน"],
     ["2026-11-18T14:24:48.871Z","feat(bible): แท็บรายชื่อสกิลจัดแถวสมดุล 7-12 สกิลใช้การ์ดใหญ่ 2 แถว 13-16 สกิลใช้การ์ดเล็ก 2 แถวเท่ากัน"],
