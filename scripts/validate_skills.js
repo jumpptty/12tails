@@ -1044,6 +1044,14 @@ let checkedPanelMarkup = 0;
     ["Bat", "Bison", "Cat", "Chameleon", "Mole", "Monkey", "Panda", "Penguin", "Rabbit", "Sheep", "Whale", "Wolf"].forEach(c =>
       check(`CLASS_STORY_ART needs 5 colour portraits for ${c} (one per PRESET card)`,
         Array.isArray(storyArt[c]) && storyArt[c].length === 5 && storyArt[c].every(s => /^data:image\/webp;base64,/.test(s))));
+    // PRESET tabs and swap pop-up faces (user 2026-11-17): the game's round hero icon in each preset's colour, gamegui/icons/heroes/<Class>1..5.png
+    const heroColors = vm.runInContext("CLASS_HERO_COLORS", sandbox);
+    ["Bat", "Bison", "Cat", "Chameleon", "Mole", "Monkey", "Panda", "Penguin", "Rabbit", "Sheep", "Whale", "Wolf"].forEach(c =>
+      check(`CLASS_HERO_COLORS needs the game's 5 round hero icons for ${c} (PRESET tabs and swap pop-up)`,
+        Array.isArray(heroColors[c]) && heroColors[c].length === 5 && heroColors[c].every(s => /^data:image\/webp;base64,/.test(s)) && new Set(heroColors[c]).size === 5));
+    check("the PRESET tabs and the swap pop-up show the round hero icon in the preset's colour (CLASS_HERO_COLORS), not a crop of the story portrait",
+      html.includes(`<span class="sk-pw-face" style="background-image:url('\${face(k)}')"></span>`) && html.includes("(faces && faces[en.colors[k]])")
+      && !/\.sk-(?:pw|ps)-face\{[^}]*background-size:250%/.test(html));
   }
   check("stat presets must keep their localStorage key (renaming it would drop every saved preset)", html.includes('"12t-bible-stat-presets"'));
   // Stat panel collapse (2026-10-29): a click on the header box itself folds it (user 2026-10-29, no chevron); the hidden button keeps the
@@ -1848,11 +1856,19 @@ let checkedEffectProc = 0;
   deps.shadowFist = 0; check("Shadow Fist 0, no bonus", ep.bonus(wm, 1, 100) === 0, ep.bonus(wm, 1, 100));
   // Cat Open Wound (#443): 30 x (target disarm Lv + bleed Lv) per landed hit, gated by the passive; hit-number gating (Cat.cs:10404, 17390-17507, 38717-39031).
   const ow = byId("cat_flyingDagger"), fbl = byId("cat_finishingBlow"), cmb = byId("cat_nAttack");
-  deps.openWound = 1;
-  check("Open Wound on = 30 x (Disarm 2 + Bleed 2) = 120 per hit", ep.bonus(ow, 1, 0) === 120, ep.bonus(ow, 1, 0));
-  deps.openWound = 0; check("Open Wound off, no bonus", ep.bonus(ow, 1, 0) === 0, ep.bonus(ow, 1, 0));
+  // the target's levels are two toggles, 0-2 each (user 2026-11-17)
+  deps.openWound = 1; deps.catTargetDisarm = 0; deps.catTargetBleed = 0;
+  check("Open Wound on, target without Disarm / Bleed: no bonus", ep.bonus(ow, 1, 0) === 0, ep.bonus(ow, 1, 0));
+  deps.catTargetDisarm = 1; check("Open Wound + target Disarm 1 = 30 per hit", ep.bonus(ow, 1, 0) === 30, ep.bonus(ow, 1, 0));
+  deps.catTargetBleed = 2; check("Open Wound + target Disarm 1 + Bleed 2 = 90 per hit", ep.bonus(ow, 1, 0) === 90, ep.bonus(ow, 1, 0));
+  deps.catTargetDisarm = 2; check("Open Wound + target Disarm 2 + Bleed 2 = 120 per hit", ep.bonus(ow, 1, 0) === 120, ep.bonus(ow, 1, 0));
+  deps.openWound = 0; check("Open Wound off, no bonus even on a Disarm 2 + Bleed 2 target", ep.bonus(ow, 1, 0) === 0, ep.bonus(ow, 1, 0));
+  delete deps.catTargetDisarm; delete deps.catTargetBleed;
   check("bbBugSee points at a card that owns the bug (bbBug) and the text names it", sandbox.SKILLS.filter(s => s.bbBugSee).every(s => { const o = sandbox.SKILLS.find(x => x.id === s.bbBugSee.id); return o && o.bbBug && s.bbBugSee.text && s.bbBugSee.text.toLowerCase().includes(o.name.toLowerCase()); }));
-  check("Open Wound is one toggle: no separate target Disarm/Bleed deps", !sandbox.SKILLS.some(s => s.effectProc && s.effectProc.controls && s.effectProc.controls.some(d => /^catTarget/.test(d.id))));
+  check("every card and server tab with the Open Wound bonus draws the target Disarm (0-2) and Bleed (0-2) toggles; Drop Anchor Disarm only (its chain break lands Bleed 2 first)",
+    sandbox.SKILLS.flatMap(s => [s, ...Object.values(s.servers || {})]).filter(c => c.effectProc && c.effectProc.controls && c.effectProc.controls.some(d => d.id === "openWound"))
+      .every(c => { const ids = c.effectProc.controls.map(d => d.id); return ids.includes("catTargetDisarm") && (ids.includes("catTargetBleed") !== ids.includes("anchorBreak")); })
+    && ["catTargetDisarm", "catTargetBleed"].every(id => { const d = vm.runInContext("CAT_OPENWOUND_PROC", sandbox).controls.find(x => x.id === id); return d && d.minRank === 0 && d.maxRank === 2 && d.cycleRanks && vm.runInContext("DEP_NOT_SKILL", sandbox).has(id); }));
   check("Finishing Blow carries the bonus on hit 3 only", [0, 1, 2, 3].map(i => ep.hitOk(fbl, 1, i)).join() === "false,false,true,false", [0, 1, 2, 3].map(i => ep.hitOk(fbl, 1, i)).join());
   check("a card without effectProc.hits carries it on every hit", ep.hitOk(ow, 1, 0) && ep.hitOk(ow, 1, 2));
   deps.catComboHidden = 0; check("Combo without Hidden Blade: Open Wound on all 6 hits", [0, 1, 2, 3, 4, 5].every(i => ep.hitOk(cmb, 3, i)));
@@ -2871,6 +2887,7 @@ let checkedCatPowerTto = 0;
 {
   const fail = (msg) => { console.error(`[CAT POWER TTO ERROR] ${msg}`); errorCount++; };
   const treeA = new Set(["cat_luckyCard","cat_fateDraw","cat_powerShuffle","cat_lifeGamble","cat_skillGamble","cat_luckyDice","cat_doubleDown","cat_powerOne","cat_powerTwo","cat_powerThree","cat_powerSeven","cat_twoPair","cat_copycat","cat_damageRoulette","cat_nineLives","cat_grandCasinoArcade"]);
+  const ttoPowerExtra = new Set(["cat_royalFlush"]);   // TTO's hit() also keeps Power for codes 452 / 4521, Royal Flush's blasts and sword (TTO1114:CharacterControl::hit@0x24E50B0)
   const dmgCats = SKILLS.filter(s => s.class === "Cat" && !s.mount && (s.dmg || s.dmgGroups || s.comboModel));
   // Mount attacks (user 2026-10-17) hit as the mount character (Type "none"), so Power never applies, on any server.
   for (const sk of SKILLS.filter(s => s.class === "Cat" && s.mount)) for (const server of ["og", "tto"]) { sandbox._setServer(server); sandbox._depRanks.catPower = 4; sandbox._skillRanks[sk.id] = 1; sandbox._selectSkill(sk); if (sandbox._getRenderedHeroHtml().includes('data-dep-id="catPower"')) fail(`${sk.id} on ${server}: a mount attack shows the Power toggle`); else checkedCatPowerTto++; }
@@ -2878,7 +2895,8 @@ let checkedCatPowerTto = 0;
   for (const sk of dmgCats) {
     if (sk.onlyServer) {   // a server-exclusive card (Reborn C6 / C7) has no TTO tab: Power applies on its own server (hit(), Reborn:CharacterControl.cs:7059-7091)
       sandbox._skillRanks[sk.id] = sk.maxRank || 1; sandbox._setServer(sk.onlyServer); sandbox._depRanks.catPower = 4; sandbox._selectSkill(sk);
-      if (sandbox._getRenderedHeroHtml().includes('data-dep-id="catPower"') !== (sk.onlyServer !== "tto")) fail(`${sk.id} on ${sk.onlyServer}: Power toggle ${sk.onlyServer === "tto" ? "on a TTO card outside Class A" : "missing"}`); else checkedCatPowerTto++;
+      const wantPower = sk.onlyServer !== "tto" || ttoPowerExtra.has(sk.id);
+      if (sandbox._getRenderedHeroHtml().includes('data-dep-id="catPower"') !== wantPower) fail(`${sk.id} on ${sk.onlyServer}: Power toggle ${wantPower ? "missing" : "on a TTO card outside Class A and Royal Flush"}`); else checkedCatPowerTto++;
       sandbox._setServer("og"); continue;
     }
     if (!treeA.has(sk.id) && !(sk.servers && sk.servers.tto)) fail(`${sk.id}: non-Class-A Cat damage skill has no TTO server entry, so its TTO button is missing`); else checkedCatPowerTto++;
@@ -2912,10 +2930,10 @@ let checkedCatPowerTto = 0;
     if (!h.includes("Open Wound:") || !h.includes("เพิ่มเติม")) fail(`${sk.id}: no Open Wound bonus-damage line in the description`); else checkedCatPowerTto++;
   }
   const fbl = SKILLS.find(s => s.id === "cat_finishingBlow");
-  { const fh = heroOf(fbl, "og"); if (!fh.includes("เพิ่มเติมทุกฮิต") || !/class="sk-unintended"[^>]*>[\s\S]*?ฮิตที่ 3/.test(fh) || fh.includes("เฉพาะฮิตที่ 3</")) fail("cat_finishingBlow: the Open Wound line says every hit and the hit 3 only gap sits in the unintended chip"); else checkedCatPowerTto++; }
+  { const fh = heroOf(fbl, "og"); if (!fh.includes("เพิ่มเติมทุกฮิต") || !/class="sk-bb-bug"[^>]*>[\s\S]*?ฮิตที่ 3/.test(fh) || /class="sk-unintended"/.test(fh) || fh.includes("เฉพาะฮิตที่ 3</")) fail("cat_finishingBlow: the Open Wound line says every hit and the hit 3 only gap sits in the BB bug chip (user 2026-11-17)"); else checkedCatPowerTto++; }
   const cmb = SKILLS.find(s => s.id === "cat_nAttack");
   const cmbHtml = heroOf(cmb, "og").replace(/<span class="sk-nobr">([^<]*)<\/span>/g, "$1");   // loanword glue is markup only
-  if (!cmbHtml.includes("เพิ่มเติมทุกฮิต") || cmbHtml.includes("ฮิตที่ 2 จะไม่ติดดาเมจม่วง") || !/class="sk-unintended"[^>]*>[\s\S]*?ไม่ติดฮิตที่ 2 เมื่อฟันหลังด้วย/.test(cmbHtml)) fail("cat_nAttack: Open Wound line says every hit and the stage 2 Hidden Blade gap sits in the unintended chip"); else checkedCatPowerTto++;
+  if (!cmbHtml.includes("เพิ่มเติมทุกฮิต") || cmbHtml.includes("ฮิตที่ 2 จะไม่ติดดาเมจม่วง") || !/class="sk-bb-bug"[^>]*>[\s\S]*?ไม่ติดฮิตที่ 2 เมื่อฟันหลังด้วย/.test(cmbHtml) || /class="sk-unintended"/.test(cmbHtml)) fail("cat_nAttack: Open Wound line says every hit and the stage 2 Hidden Blade gap sits in the BB bug chip (user 2026-11-17), with no unintended chip"); else checkedCatPowerTto++;
   const ttoCombo = heroOf(cmb, "tto");
   if (ttoCombo.includes("Power Seven")) fail("cat_nAttack on tto still mentions Power Seven"); else checkedCatPowerTto++;
   // Rabbit Miracle Blend (Rabbit_potion.cs:432-438): status duration chaAdjust(4 + 2 x Alchemist Lab rank) (4s unlearned), golden potion chip per bottle and per 4 bottles.
@@ -3038,6 +3056,15 @@ let checkedTtoNoLck = 0;
       sandbox._setServer("tto"); ins.enemyDef.value = String(def); sandbox._selectSkill(gorgon);
       const r = sandbox._finalRangeForRange(sandbox._calcRangeFor(sandbox._getDmgText(gorgon, Number(rank))));
       if (r[0] !== want || r[1] !== want) fail(`Gorgon Shot rank ${rank} at DEF ${def} on TTO: ${JSON.stringify(r)}, game shows ${want}`); else checkedTtoNoLck++;
+    }
+    // Not live readings: the edges of TTO's own defAdjust (TTO1102:CharacterControl::defAdjust@0x24d0510), which clamps DEF to 1-512
+    // before a Magic hit halves it, so DEF 0-1 counts as 0.5 and DEF above 512 as 256 (halving first gave 299 / 138 at rank 2).
+    const GORGON_CODE_EDGES = { 2: [[0, 300], [1, 300], [600, 100]], 1: [[0, 150], [1, 150], [600, 28]] };
+    for (const [rank, rows] of Object.entries(GORGON_CODE_EDGES)) for (const [def, want] of rows) {
+      sandbox._skillRanks[gorgon.id] = Number(rank);
+      sandbox._setServer("tto"); ins.enemyDef.value = String(def); sandbox._selectSkill(gorgon);
+      const r = sandbox._finalRangeForRange(sandbox._calcRangeFor(sandbox._getDmgText(gorgon, Number(rank))));
+      if (r[0] !== want || r[1] !== want) fail(`Gorgon Shot rank ${rank} at DEF ${def} on TTO: ${JSON.stringify(r)}, TTO's defAdjust gives ${want}`); else checkedTtoNoLck++;
     }
     if (savedRank === undefined) delete sandbox._skillRanks[gorgon.id]; else sandbox._skillRanks[gorgon.id] = savedRank;
   }
@@ -4107,7 +4134,7 @@ let checkedRsim = 0;
         const script = [
           "(async () => {",
           "  let release; const classGuideLiveReady = new Promise((r) => { release = r; }); const tick = () => new Promise((r) => setTimeout(r, 0));",
-          "  const nodes = { sendNum: { value: '' }, sendHint: { textContent: '', hidden: true } }, el = (r) => nodes[r];",
+          "  const nodes = { sendNum: { value: '' }, sendHint: { textContent: '', hidden: true }, sendName: { textContent: '', hidden: true } }, el = (r) => nodes[r];",
           "  let draft = { title: 'Wolf Guide', author: 'Kong' }, sendTyped = null; const CLASS_GUIDES = [{ id: 49, title: 'Other', author: 'X' }];",
           "  const classGuideUnpack = async () => JSON.stringify({ title: 'changed' });",
           "  const bodies = []; const fetch = async (url, opts) => { bodies.push(opts.body); return { json: async () => ({ ok: true }) }; };",
@@ -4122,6 +4149,7 @@ let checkedRsim = 0;
           "  CLASS_GUIDES.push({ id: 107, title: 'wolf  guide', author: 'KONG' }); release();",
           "  const first = await press; await entry;",
           "  out.push({ pass: first === false && bodies.length === 0 && nodes.sendNum.value === '107' && !nodes.sendHint.hidden && nodes.sendHint.textContent.includes('#107'), msg: 'a ส่งไกด์ press made while the live guide list loads (classGuideLiveReady pending), where the list then fills #107, does not send on that press but shows the hint (got ' + JSON.stringify({ first, sends: bodies.length, num: nodes.sendNum.value, hint: nodes.sendHint.textContent }) + ')' });",
+          "  out.push({ pass: !nodes.sendName.hidden && nodes.sendName.textContent.includes('#107') && nodes.sendName.textContent.includes('wolf') && nodes.sendName.textContent.includes('Kong'.toUpperCase()), msg: 'the send card names the guide #N replaces (title and author, got ' + JSON.stringify(nodes.sendName.textContent) + ')' });",
           "  const second = await classGuideSendSubmit(ui);",
           "  out.push({ pass: second === true && bodies.length === 1 && bodies[0].get('replaces') === '107' && status.textContent === 'ส่งแล้ว ไกด์จะขึ้นหลังตรวจ', msg: 'the next press sends the guide as the update of #107 (got ' + JSON.stringify({ second, sends: bodies.length, status: status.textContent }) + ')' });",
           "  const after = [ui.btn.disabled, ui.btn.lastElementChild.textContent]; classGuideSendUnlock(ui); const still = [ui.btn.disabled, status.textContent];",
@@ -4146,6 +4174,8 @@ let checkedRsim = 0;
     const lines = html.split(/\r?\n/), checkLine = (needle) => lines.some((l) => l.includes(needle) && /act === "send"/.test(l));
     ok(["classGuideStatsProblem(draft.stats) || statTypo()))", "!(draft && draft.title && draft.title.trim() && draft.author", "!(draft && draft.modes && draft.modes.length)", "!(draft && draft.cover && draft.cover.length)", "buildProblems().length)) guardBuild();"].every(checkLine),
       "ส่งไกด์ runs the same checks as คัดลอกโค้ดไกด์ (stats, title and author, PVE / PVP, cover, build)");
+    ok(/data-cg-role="send"[^\n]*data-cg-act="export" hidden>/.test(html) && /else if \(act === "send"\)\{ saveDraft\(\); showSendCopy\(\);/.test(html) && /sendCopyBtn\(\)\.hidden = !sendTried;/.test(html), "the send card's คัดลอกโค้ดไกด์ starts hidden and shows once ส่งไกด์ has been pressed (the send button then fills the column)");
+    ok(/\.cg-send-num input::-webkit-inner-spin-button\{-webkit-appearance:none/.test(html) && /\.cg-send-num input\{[^}]*appearance:textfield/.test(html) && /data-cg-role="sendName" hidden/.test(html), "the update-existing-guide # field has no up / down stepper, and the send card has its name line for the guide being replaced");
     ok(/else if \(act === "send"\)\{[^\n]*classGuideSendSubmit\(sendUi\)/.test(html) && /code: \(\) => classGuidePack\(collect\(\)\)[^\n]*key: \(\) => JSON\.stringify\(draft\) \+ "\\n" \+ el\("sendNum"\)\.value/.test(html) && /draft = collect\(\); [^\n]*classGuideSendUnlock\(sendUi\);/.test(html) && /el\("sendNum"\)\.addEventListener\("input", [^\n]*classGuideSendUnlock\(sendUi\)/.test(html) && /await classGuideLiveReady;/.test((html.match(/async function sendPaint\([\s\S]*?\n  \}/) || [""])[0]),
       "the ส่งไกด์ branch sends classGuidePack(collect()) (the code คัดลอกโค้ดไกด์ copies) through classGuideSendSubmit, #N waits for the live guides, and every draft or #N edit runs classGuideSendUnlock"); }
   rejects(()=>norm(change({build:{...fixture.build,server:"og"}})),"reject ToT EX on BB");
@@ -5243,24 +5273,21 @@ async function donateChildTests(env) {
   console.log(`Verified ${checked} server balance / BB issues page checks.`);
 }
 
-// TTO wallpaper (user 2026-10-25): the TTO look is a wallpaper under a dark veil (TTO_WALLPAPER, a MANIFEST string container in assets.js, put on <html> as --tto-wallpaper);
-// the stars, lanterns and harlequin of the old look are gone, and the page declares the container like the other string containers.
+// TTO look (user 2026-11-15): TTO wears the BB look again (night sky, TailsTopia's star sheet, warm solid panels with the harlequin texture), so the wallpaper look of 2026-10-25
+// (veil, see-through glass, cr. fuWaa caption, mirrored showcase) is gone. TTO_WALLPAPER stays in assets.js, unused, so it can come back.
 {
   let n = 0; const bad = (m) => { console.error(`[TTO THEME ERROR] ${m}`); errorCount++; }, good = (c, m) => { if (c) n++; else bad(m); };
   good(bibleAssets.MANIFEST.some((m) => m.name === "TTO_WALLPAPER" && m.empty === ""), 'scripts/bible_assets.js MANIFEST has no { name: "TTO_WALLPAPER", empty: "" }');
   good(/^const TTO_WALLPAPER = BIBLE_ASSETS_IN\.TTO_WALLPAPER \|\| "";\r?$/m.test(html), 'index.html does not declare const TTO_WALLPAPER = BIBLE_ASSETS_IN.TTO_WALLPAPER || "";');
-  let wp = ""; try { wp = vm.runInContext("TTO_WALLPAPER", sandbox); } catch (e) {}
-  const bytes = /^data:image\/webp;base64,/.test(wp) ? Buffer.from(wp.slice(23), "base64") : Buffer.alloc(0);
-  good(bytes.length > 50000 && bytes.toString("latin1", 0, 4) === "RIFF" && bytes.toString("latin1", 8, 12) === "WEBP", "TTO_WALLPAPER is not a WebP data URI of a real picture (assets.js)");
-  const tto = (/:root\[data-theme\]\[data-sk-server="tto"\]\{[\s\S]*?\n  \}/.exec(html) || [""])[0];
-  good(/--th-page:[^;]*var\(--tto-wallpaper/.test(tto) && /--th-veil:/.test(tto) && /--th-solid:0%/.test(tto), "the TTO look must put --tto-wallpaper under --th-veil and use see-through surfaces");
+  good(html.includes(':root[data-theme][data-sk-server="tto"],\r\n  :root[data-theme][data-sk-server="og"]{'), "the TTO look must share the BB token block (:root[data-theme][data-sk-server=\"tto\"], then the og selector)");
+  good(!/:root\[data-theme\]\[data-sk-server="tto"\]\{/.test(html) && !/--th-page:[^;]*var\(--tto-wallpaper/.test(html), "TTO has its own wallpaper token block again: it must wear the BB look");
+  good(html.includes('html:is([data-sk-server="og"],[data-sk-server="tto"]) body::after{'), "the star sheet layer (body::after) must cover TTO as well as BB");
   good(!/skTtoSky|--tto-stars|--tto-lantern|ensureServerBackdrops/.test(html), "the old TTO stars / lanterns code is still in index.html");
-  good(html.includes('<div id="skWallCredit">cr. fuWaa</div>') && html.includes('html.hub-menu[data-sk-server="tto"] #skWallCredit{display:block}'), "the wallpaper credit (cr. fuWaa) is missing: the main-menu caption shown in the TTO look");
-  good(!html.includes('octx.fillText("cr. fuWaa"') && !/html\[data-sk-server="tto"\] #skWallCredit\{display:block\}/.test(html), "cr. fuWaa shows only on the main menu (user 2026-10-26): not in the tools, not on the exported guide image");
-  good(/#skWallCredit\{[^}]*z-index:-1/.test(html) && !/#skWallCredit\{[^}]*(border-radius|background:)/.test(html), "cr. fuWaa is plain text in the wallpaper layer (z-index:-1, no pill background or border)");
-  good(html.includes('@media (max-width:760px){ html[data-sk-server="tto"] #skWallCredit{display:none !important} }'), "the cr. fuWaa caption must be hidden on phones (max-width 760px)");
-  good(html.includes('html[data-sk-server="tto"] .ln-art{grid-column:1; grid-row:1}') && html.includes('html[data-sk-server="tto"] .ln-copy{grid-column:2; grid-row:1; justify-self:end}') && /@media \(min-width:901px\)\{\s*html\[data-sk-server="tto"\] \.ln-stage\{grid-template-columns:minmax\(0,58fr\) minmax\(0,42fr\)\}/.test(html), "the TTO look must mirror the hub showcase on PC (art left, text right, inside @media (min-width:901px))");
-  console.log(`Verified ${n} TTO wallpaper theme checks.`);
+  good(!/skWallCredit/.test(html), "the cr. fuWaa wallpaper caption is back (#skWallCredit): TTO no longer shows the wallpaper");
+  good(!/html\[data-sk-server="tto"\] \.ln-/.test(html), "the mirrored hub showcase of the TTO wallpaper look is back (html[data-sk-server=\"tto\"] .ln-...)");
+  good(html.includes('const bbLook = look === "og" || look === "tto";'), "the guide image export must draw the BB night sky and harlequin panels for TTO too (bbLook)");
+  good(html.includes(':not([data-sk-server="og"]):not([data-sk-server="tto"]) :is(.nl-grp-rows, .nl-rail){--th-solid:92%}'), "the notes page's nearly solid panel rule must skip TTO as well as BB (both are solid)");
+  console.log(`Verified ${n} TTO look checks (the BB look again).`);
 }
 // BB look (user 2026-10-29): the TTO look from before its wallpaper (night sky, TailsTopia's star sheet, warm solid panels with the harlequin texture), without its jack-o-lanterns.
 {
@@ -5269,7 +5296,7 @@ async function donateChildTests(env) {
   good(blk.includes("--gold:#d0913e") && blk.includes("repeating-linear-gradient(45deg") && blk.includes("linear-gradient(#0b0c17 0%, #100e18 45%, #171009 100%)") && !/--th-solid:0%/.test(blk), "the BB look must keep the old TTO palette, the harlequin --th-texture on solid panels and the night sky --th-page");
   const sv = (/--bb-stars:url\("data:image\/svg\+xml,([^"]+)"\)/.exec(blk) || [])[1] || "";
   good((decodeURIComponent(sv).match(/<circle/g) || []).length === 65, "the BB look must embed TailsTopia's star sheet (--bb-stars, 65 circles)");
-  good(/html\[data-sk-server="og"\] body::after\{[^}]*var\(--bb-stars\)/.test(html), "the BB star sheet layer (html[data-sk-server=\"og\"] body::after) is missing");
+  good(/html:is\(\[data-sk-server="og"\],\[data-sk-server="tto"\]\) body::after\{[^}]*var\(--bb-stars\)/.test(html), "the BB / TTO star sheet layer (html:is([data-sk-server=\"og\"],[data-sk-server=\"tto\"]) body::after) is missing");
   good(!/--[\w-]*lantern|data:image\/webp/.test(blk) && !/skTtoSky|ensureServerBackdrops|\.lan-i\{/.test(html), "the BB look must not bring back the jack-o-lanterns (user 2026-10-29: no pumpkins)");
   good(html.includes('urlOf("--bb-stars")') && html.includes("// BB's harlequin (--th-texture)"), "the guide image export must draw the BB night sky with stars and the harlequin bands on its panels");
   console.log(`Verified ${n} BB look checks.`);
@@ -5300,7 +5327,7 @@ async function donateChildTests(env) {
   { const i0 = html.indexOf(':root[data-theme][data-sk-server="reborn"]{'), blk = i0 < 0 ? "" : html.slice(i0, html.indexOf("\n  }", i0));
     good(blk.includes("var(--reborn-wallpaper") && blk.includes("--th-veil:") && blk.includes("--th-solid:0%") && blk.includes("--gold:#ef8a2a"), "the Reborn look must put --reborn-wallpaper under --th-veil, use see-through surfaces and the #ef8a2a orange"); }
   good(!html.includes('html:is([data-sk-server="tto"],[data-sk-server="tot"]) ') && !html.includes('html:is([data-sk-server="tto"],[data-sk-server="tot"],[data-sk-server="reborn"])') && html.includes("var G = 'html:is([data-sk-server=\"og\"],[data-sk-server=\"tto\"],[data-sk-server=\"tot\"],[data-sk-server=\"reborn\"]) ';") && html.includes('st === "tot" || st === "tto" || st === "reborn"'), "the theme selectors (THEME_SURFACES G, backdrop, boot script) must include reborn next to tto and tot, and og (the BB look, user 2026-10-29)");
-  good(html.includes('urlOf("--" + look + "-wallpaper")') && html.includes('if (look !== "og"){ ctx.fillStyle = v("--th-wash")'), "the guide image export must draw the wallpaper and glass for every look but BB (Reborn included)");
+  good(html.includes('urlOf("--" + look + "-wallpaper")') && html.includes('if (!bbLook){ ctx.fillStyle = v("--th-wash")'), "the guide image export must draw the wallpaper and glass for every look but BB and TTO (Reborn included)");
   // TTO (user 2026-10-31, TailsTopia's simulator read that day): the C pool stops at 9; cells 452-454 need Lv 100, 7 C skills and their required skills; each has a card.
   // Patch 1.6.2.1: C pool 10 at Lv 100 and each Lv 100 skill costs a C point; the TTO1106 client (2026-11-06) no longer limits them to one at a time.
   { const X = vm.runInContext("SKILL_SIM_TTO_EXTRA", sandbox), cf = vm.runInContext("skillSimCellsFor", sandbox), valid = vm.runInContext("skillSimValid", sandbox), probs = vm.runInContext("skillSimProblems", sandbox), auto = vm.runInContext("skillSimAutoLearn", sandbox);
@@ -5408,11 +5435,11 @@ async function donateChildTests(env) {
         good(c("bison_ironSkin").desc(1).includes("**16%**"), "the BB Iron Skin stays 16% at rank 1");
         good(tto("bison_diamondSkin").tooltipNote === "" && tto("bison_ironSkin").tooltipNote(1).includes("6m") && !tto("bison_ironSkin").tooltipNote(1).includes("โค้ดจริงลด"), "the Skin tooltip notes keep only what is still wrong");
         R.giantStar = 0; good(tto("penguin_fallingStars").reach(2)[0].r === 16, "Falling Stars 16 m without Giant Star"); R.giantStar = 1; good(tto("penguin_fallingStars").reach(1)[0].r === 18 && tto("penguin_fallingStars").reach(2)[0].r === 24, "18 / 24 m with it on TTO"); delete R.giantStar; good(c("penguin_giantStar").bbBug && tto("penguin_giantStar").bbBug === "", "Giant Star's bug is cleared on TTO only");
-        good(!tto("cat_nAttack").unintended && !tto("cat_nAttack").effectProc.hits && typeof c("cat_nAttack").effectProc.hits === "function", "Open Wound reaches the Hidden Blade hit on TTO, not on BB");
+        good(tto("cat_nAttack").bbBug === "" && !tto("cat_nAttack").unintended && !tto("cat_nAttack").effectProc.hits && typeof c("cat_nAttack").effectProc.hits === "function" && /Hidden Blade/.test(c("cat_nAttack").bbBug) && /Hidden Blade/.test(c("cat_openWound").bbBug) && /Finishing Blow/.test(c("cat_openWound").bbBug) && !c("cat_openWound").unintended && /ฮิตที่ 3/.test(c("cat_finishingBlow").bbBug) && !c("cat_finishingBlow").unintended && /Finishing Blow/.test(tto("cat_openWound").bbBug) && !/Hidden Blade/.test(tto("cat_openWound").bbBug), "Open Wound reaches the Hidden Blade hit on TTO, not on BB; both gaps (Combo's stage-2 backstab, Finishing Blow's hits 1, 2, 4) are BB bugs (user 2026-11-17), and the TTO tab keeps only Finishing Blow");
         good(tto("cat_nAttack").changeNote.includes("Power Seven") && tto("rabbit_contract").changeNote.includes("เดินตามเจ้าของ"), "the fixes add to the cards' earlier TTO notes");
         good(!tto("whale_wallPuncture").desc(4).includes("ไม่ติดผลพิเศษ") && tto("rabbit_miracleBlend").desc(1, 0).includes("ตอนที่โยนขวด"), "Wall Puncture and Miracle Blend's TTO text follow the fixes");
-        good(!!tto("cat_openWound").liveCheck && !tto("whale_gourmetHeart").liveCheck && c("whale_gourmetHeart").unintended, "a patch line that says nothing specific goes in the red line (Gourmet Heart's was explained by TTO1102, 2026-11-04)");
-        good(heroOn("tto", c("cat_openWound")).includes("sk-live-check") && !heroOn("og", c("cat_openWound")).includes("sk-live-check"), "the red line stays on TTO"); }
+        good(!tto("cat_openWound").liveCheck && !tto("whale_gourmetHeart").liveCheck && c("whale_gourmetHeart").unintended, "the code settled both vague patch lines, so no red line is left: Gourmet Heart by TTO1102 (2026-11-04), Open Wound by TTO1114 (2026-11-17)");
+        good(!heroOn("tto", c("cat_openWound")).includes("sk-live-check") && /Finishing Blow/.test(tto("cat_openWound").bbBug) && /\[Fix\][^\n]*Hidden Blade/.test(tto("cat_openWound").changeNote), "Open Wound on TTO (TTO1114): the Hidden Blade [Fix] line, Finishing Blow still hit 3 only (TTO1114:Cat.<RPC_finishingBlow2>d__229), no red line"); }
       // the rest of the tooltip cards, and the pictures as the in-game tooltip pop-up (user 2026-11-02)
       { const card = (id) => SKILLS.find(s => s.id === id), R = sandbox._depRanks, inputs = vm.runInContext("DMG_INPUT_VALS", sandbox);
         const pics = ["panda_yinYangFist", "panda_tempestDance", "monkey_jaAscension", "monkey_buitenBastion", "whale_leviathanBreach", "whale_oceansResilience", "rabbit_medicTurret", "rabbit_coinRicochet", "rabbit_bountyHunt", "bat_crimsonVerdict", "chameleon_venomPhantom", "chameleon_apexHunt", "chameleon_chainLightning", "sheep_lucentBarrier", "sheep_grandCodex", "mole_twinWarhead", "mole_barrelRailgun", "cat_royalFlush"];
@@ -5526,12 +5553,20 @@ async function donateChildTests(env) {
             good(card("chameleon_farReach").servers.tto.desc(4, 0).includes("**Venom Phantom:** เพิ่มระยะใช้จาก **16m** เป็น **24m**") && card("chameleon_farReach").servers.tto.desc(4, 0).includes("**Apex Hunt:** เพิ่มระยะใช้และระยะล็อกเป้าจาก **24m** เป็น **40m**"), "Far Reach on TTO gives Venom Phantom 16 + 2 x level and Apex Hunt 24 + 4 x level");
           } finally { vm.runInContext("chmBurstStatsGlobal = " + (chaSaved ? "globalThis.__chmSaved" : "null"), Object.assign(sandbox, { __chmSaved: chaSaved })); } }
         // Royal Flush: the worked example of the user's Codex decode (ATK 200, TAL 100), re-checked against the TTO decompile (TTO1102, 2026-11-02)
-        { const rf = card("cat_royalFlush"), [burst, last, sword] = rf.dmgGroups, at = (hand, spades, g) => { R.royalHand = hand; inputs.royalSpades = spades; return rf.rawModel.parts(1, { ATK: 200, TAL: 100, LCK: 100, LV: 100, group: g }).crit; };
+        { const cpSaved = R.catPower; R.catPower = 0;   // the base goldens are without Power (an earlier block leaves it on)
+          const rf = card("cat_royalFlush"), [burst, last, sword] = rf.dmgGroups, at = (hand, spades, g) => { R.royalHand = hand; inputs.royalSpades = spades; return rf.rawModel.parts(1, { ATK: 200, TAL: 100, LCK: 100, LV: 100, group: g }).crit; };
           good(at(9, 5, burst) === 460 && at(9, 5, last) === 460 && at(9, 0, burst) === 256 && at(9, 0, sword) === 500, "Royal Flush at LCK 100 (TTO1109:Cat::RoyalFlushHit@0x1B9AED0, LCK only, float32): 460 with 5 spades (every blast), 256 with none, sword 500");
           { const atL = (L, sp, g) => { R.royalHand = 9; inputs.royalSpades = sp; return rf.rawModel.parts(1, { ATK: 999, TAL: 999, LCK: L, LV: 100, group: g }).crit; }; good(atL(156, 5, burst) === 718 && atL(156, 0, sword) === 780 && atL(0, 0, burst) === 1 && atL(0, 0, sword) === 1 && atL(100, 5, burst) === 460, "Royal Flush ignores ATK / TAL: LCK 156 gives 718 a blast with 5 spades and a 780 sword; LCK 0 still does 1 (the code's floor of 1)"); }
           const total = (sp) => at(9, sp, burst) * burst.hitCount() + at(9, sp, last) * last.hitCount() + at(9, sp, sword) * sword.hitCount();
           good(total(5) === 2800 && total(0) === 1780, "Royal Flush totals 2,800 and 1,780 at LCK 100 (4 blasts + the last + the sword)");
           good(at(5, 5, burst) === 374 && at(4, 4, burst) === 274, "spades count double on a Flush, not on a Straight (LCK 100: 374 / 274)");
+          // Cat Power on Royal Flush (TTO1114:CharacterControl::hit@0x24E50B0: codes 452 / 4521 keep it; FloorToInt(float(dmg) x mult), float32 like the client)
+          // the probe rolls the sword (group 2): _calcRangeFor stays bound to the last mode row drawn, the sword row on a Royal Flush hand
+          { const pw = (p, fn) => { R.catPower = p; try { return fn(); } finally { R.catPower = 0; } }, sw600 = () => { R.royalHand = 9; inputs.royalSpades = 0; return rf.rawModel.parts(1, { ATK: 0, TAL: 0, LCK: 600, LV: 100, group: sword }).crit; };
+            good(pw(4, () => at(9, 5, burst)) === 782 && pw(4, () => at(9, 0, sword)) === 850 && pw(1, () => at(9, 5, burst)) === 506 && pw(0, () => at(9, 5, burst)) === 460 && pw(3, sw600) === 3899 && pw(0, sw600) === 3000, "Royal Flush keeps Cat Power on TTO: Power Seven turns a 460 blast into 782 and the 500 sword into 850, Power One gives 506; float32 like the client (Power Three on a 3,000 sword = 3,899, not 3,900)");
+            const lckIn = sandbox._statInputs.lck, lckSaved = lckIn.value, finAt = (p) => pw(p, () => { R.royalHand = 9; inputs.royalSpades = 5; lckIn.value = "100"; try { const h = heroOn("tto", rf); return { h, fin: sandbox._finalRangeForRange(sandbox._calcRangeFor("0")), rolls: Array.from({ length: 400 }, () => sandbox._rollOneHit(rf, 1, 0, false, 2)) }; } finally { lckIn.value = lckSaved; } });
+            const p0 = finAt(0), p4 = finAt(4), inside = p4.rolls.every(v => v >= p4.fin[0] && v <= p4.fin[1]);
+            good(p4.h.includes('data-dep-id="catPower"') && p4.h.includes(">(Power Seven)</span>") && !p0.h.includes(">(Power Seven)</span>") && p4.h.includes("ของตัวเองลงท้ายด้วยเลข") && !p0.h.includes("ของตัวเองลงท้ายด้วยเลข") && p4.fin[1] > p0.fin[1] && inside, "Royal Flush on TTO: the Power toggle, and while it is on a Power Seven formula term, the Power line, a higher Final and Test rolls inside it (" + p4.fin.join("~") + " vs " + p0.fin.join("~") + ")"); }
           good([4, 4, 3, 3, 4, 5, 2, 2, 5, 5].every((m, h) => { R.royalHand = h; return rf.dmgInputs[0].max() === m; }) && at(4, 5, burst) === at(4, 4, burst), "Royal Flush spade box: at most the spades TTO1102:Cat::DealHand@0x1B805E0 can deal for the hand (5 only on the three Flush hands, 2 on Full House / Four of a Kind), and a stored 5 on a Straight counts as 4");
           good(burst.ko === "3" && last.ko === "10" && sword.ko === "20", "Royal Flush KO: 3 a blast, 10 the last, 20 the sword (TTO1102 hit() nKo)");
           R.royalHand = 7; good(burst.hitCount() === 3 && last.hitCount() === 1 && sword.hitCount() === 0, "Four of a Kind: 3 blasts + the last, no sword"); const noSword = heroOn("tto", rf); good(!noSword.includes("ดาบไพ่ Royal Flush</") && noSword.includes("Four of a Kind"), "the sword row shows on Royal Flush only");
@@ -5540,21 +5575,21 @@ async function donateChildTests(env) {
           good(!rf.liveCheck && /paralysis1/.test(rf.tooltipNote) && rf.secondaryLckProc.label === "โอกาส Paralysis" && rf.secondaryLckProc.chance === 10, "Royal Flush: no red line left, the club tooltip note, a fixed 10% paralysis chip per club");
           good(!rf.cdMapStart && !heroOn("tto", rf).includes("ติด CD เริ่มฉาก"), "Royal Flush: no start-of-mission cooldown (TTO1102:Cat::Start@0x1B8E120 seeds only Pillage Plunge, Support Fire and Drop Anchor)");
           inputs.royalSpades = 5; const withSword = heroOn("tto", rf); good(withSword.includes("ดาบไพ่ Royal Flush") && withSword.split('data-role="dmg-input"').length - 1 === 2 && (withSword.match(/⌊/g) || []).length === 2, "Royal Flush: three rows, a spade box and a floor on each blast row only");
-          good(/sk-note-tip[^<]*<[\s\S]*?<\/button><\/span><button type="button" class="sk-credit" data-credit="liusuyang" title="ผู้ถอดสูตรดาเมจของ Royal Flush \(TTO\) : /.test(withSword) && !/<div class="sk-hero-desc[\s\S]*data-credit="liusuyang"/.test(withSword), "Royal Flush: LiuSuYang's scroll sits right after the note icons (beside the tooltip-mismatch icon) with its own label, none in the desc"); delete R.royalHand; inputs.royalSpades = 0; }
+          good(/sk-note-tip[^<]*<[\s\S]*?<\/button><\/span><button type="button" class="sk-credit" data-credit="liusuyang" title="ผู้ถอดสูตรดาเมจของ Royal Flush \(TTO\) : /.test(withSword) && !/<div class="sk-hero-desc[\s\S]*data-credit="liusuyang"/.test(withSword), "Royal Flush: LiuSuYang's scroll sits right after the note icons (beside the tooltip-mismatch icon) with its own label, none in the desc"); delete R.royalHand; inputs.royalSpades = 0; if (cpSaved === undefined) delete R.catPower; else R.catPower = cpSaved; }
         // Cat Crescent Eclipse / Drop Anchor, from the TTO client decompile (TTO1102, 2026-11-02; cat-skill-reference.md "TTO Lv 100 skills"): the worked examples (ATK 200, TAL 100), KO, boxes, Open Wound, reach times
         try { const ce = card("cat_crescentEclipse"), da = card("cat_dropAnchor"), [blade, land, burst, rupture] = ce.dmgGroups, [slam, smash] = da.dmgGroups, SC = vm.runInContext("STATUS_CLASS_MAP", sandbox), SDS = vm.runInContext("STATUS_DESC_SERVER", sandbox), dIn = vm.runInContext("dmgIn", sandbox), ep = sandbox._effectProc;
-          const put = (o) => Object.assign(inputs, { eclipseBlades: 0, eclipseLand: 1, eclipseRecalls: 8, eclipseWounds: 1, anchorHauled: 1 }, o || {}), ceAt = (g, o) => { put(o); return ce.rawModel.parts(1, { ATK: 200, TAL: 100, LV: 100, group: g }).crit; }, daAt = (g, n) => { put({ anchorHauled: n }); return da.rawModel.parts(1, { ATK: 200, TAL: 100, LV: 100, group: g }).crit; };
-          good(ceAt(blade) === 155 && ceAt(land) === 340 && ceAt(burst) === 1087 && ceAt(burst, { eclipseWounds: 3 }) === 1371 && ceAt(rupture) === 280, "Crescent Eclipse: blade cut 155, dive 340, burst 1,087 (9 hits, its own Cut) / 1,371 (3 wounds), death rupture 280");
+          const put = (o) => Object.assign(inputs, { eclipseBlades: 0, eclipseLand: 1, eclipseRecalls: 8, anchorHauled: 1 }, o || {}), ceAt = (g, o, wd) => { put(o); R.catTargetDisarm = (wd || [0, 0])[0]; R.catTargetBleed = (wd || [0, 0])[1]; try { return ce.rawModel.parts(1, { ATK: 200, TAL: 100, LV: 100, group: g }).crit; } finally { delete R.catTargetDisarm; delete R.catTargetBleed; } }, daAt = (g, n) => { put({ anchorHauled: n }); return da.rawModel.parts(1, { ATK: 200, TAL: 100, LV: 100, group: g }).crit; };
+          good(ceAt(blade) === 155 && ceAt(land) === 340 && ceAt(burst) === 1087 && ceAt(burst, null, [1, 2]) === 1371 && ceAt(burst, null, [2, 2]) === 1371 && ceAt(burst, null, [1, 0]) === ceAt(burst, null, [0, 2]) && ceAt(rupture) === 280, "Crescent Eclipse: blade cut 155, dive 340, burst 1,087 (9 hits, its own Cut) / 1,371 (3 wounds: Disarm and Bleed at any level, TTO1114:Cat::EclipseWounds counts presence), death rupture 280");
           put(); good(blade.hitCount() + land.hitCount() + burst.hitCount() === 10 && ce.hitCount() === 10 && 8 * ceAt(blade) + ceAt(land) + ceAt(burst) === 2667, "Crescent Eclipse on the clicked enemy: 8 returns + the dive + the burst = 10 hits, 2,667 in all");
           good(ceAt(burst, { eclipseBlades: 3 }) === ceAt(burst, { eclipseBlades: 8 }) && ceAt(burst, { eclipseBlades: 2 }) < ceAt(burst, { eclipseBlades: 3 }), "the burst counts at most 12 landed hits");
           good(blade.ko === "2" && land.ko === "8" && burst.ko === "12" && rupture.ko === "6" && slam.ko === "8" && smash.ko === "10", "KO: blades 2, dive 8, burst 12, rupture 6; slam 8, smash 10 (TTO1102 hit() nKo)");
-          put({ eclipseWounds: null }); R.openWound = 0; const w0 = dIn("eclipseWounds"); R.openWound = 1; const w1 = dIn("eclipseWounds"); put({ eclipseWounds: null, eclipseRecalls: 0 }); R.openWound = 0; const wNone = dIn("eclipseWounds"); delete R.openWound;
-          good(w0 === 1 && w1 === 3 && wNone === 0, "the wound box follows the enemy's own Cut and, with Open Wound on, Disarm + Bleed: " + [w0, w1, wNone]);
+          put(); R.catTargetDisarm = 2; R.catTargetBleed = 1; const wfi = ce.formulaItems(1, { ATK: 200, TAL: 100, LV: 100, group: burst }); delete R.catTargetDisarm; delete R.catTargetBleed;
+          good(!ce.dmgInputs.some(d => d.key === "eclipseWounds") && !ce.dmgGroups.some(g => (g.inputs || []).includes("eclipseWounds")) && wfi.some(x => x.sub === "ติด Cut + Disarm + Bleed" && x.value === 1.45), "Crescent Eclipse has no wound box: its Cut always counts, Disarm / Bleed come from their target toggles (formula term ×1.45 'ติด Cut + Disarm + Bleed')");
           good(daAt(slam, 1) === 620 && [0, 1, 2, 3, 4, 5].map(n => daAt(smash, n)).join() === "500,550,600,650,700,750", "Drop Anchor (TTO1109): slam 620 (1.6 ATK + talAdjust(100)), smash 500 / 550 / 600 / 650 / 700 / 750 for 0-5 enemies pulled in (talAdjust(80) + 1.3 ATK)");
           const tal30 = (c, g, o) => { put(o); return c.rawModel.parts(1, { ATK: 200, TAL: 30, LV: 100, group: g }).crit; };
           good(tal30(ce, blade) === 119 && tal30(da, slam) === 479 && tal30(da, smash, { anchorHauled: 0 }) === 387, "TTO's float32 talAdjust at TAL 30 (25 / 100 / 80 give 39 / 159 / 127, not 40 / 160 / 128): blade 119, slam 479, smash 387");
-          put(); R.openWound = 1; R.anchorBreak = 0; const owOff = ep.bonus(da, 1, 0); R.anchorBreak = 1; const owOn = ep.bonus(da, 1, 0); delete R.openWound; delete R.anchorBreak;
-          good(owOff === 0 && owOn === 120 && !ep.hitOk(da, 1, 0) && ep.hitOk(da, 1, 1) && ce.effectProc === vm.runInContext("CAT_OPENWOUND_PROC", sandbox), "Open Wound: every Crescent Eclipse hit; on Drop Anchor only the smash (hit 2) after a chain break");
+          put(); R.openWound = 1; R.anchorBreak = 0; R.catTargetDisarm = 2; const owOff = ep.bonus(da, 1, 0); R.anchorBreak = 1; const owOn = ep.bonus(da, 1, 0); R.catTargetDisarm = 0; const owOnD0 = ep.bonus(da, 1, 0); delete R.openWound; delete R.anchorBreak; delete R.catTargetDisarm;
+          good(owOff === 0 && owOn === 120 && owOnD0 === 60 && da.effectProc.controls.some(d => d.id === "catTargetDisarm") && !da.effectProc.controls.some(d => d.id === "catTargetBleed") && !ep.hitOk(da, 1, 0) && ep.hitOk(da, 1, 1) && ce.effectProc === vm.runInContext("CAT_OPENWOUND_PROC", sandbox), "Open Wound: every Crescent Eclipse hit; on Drop Anchor only the smash (hit 2) after a chain break, whose Bleed 2 lands first: 30 x (Disarm + 2) = 60 / 120, no Bleed toggle");
           good(SC.eclipsed === "Debuff, Magical" && SC.anchored === "Debuff, Physical, Crowd Control" && SDS.tto && !SDS.tto.cut(2).includes("1 วินาที"), "eclipsed / anchored classes (TTO1102 StatusData); the TTO cut popup drops BB's flat 1 s");
           good(["anchored", "gilded", "frozenground", "windbound", "scripturebind", "yinyang"].every(k => / Crowd Control$/.test(SC[k] || "")), "the TTO-only statuses in TTO1102:StatusData::isCrowdControlStatus@0x2250F10 (refused in Blade Surge) carry the Crowd Control class word");
           good([ce, da].every(c => c.dataWarn === false && !c.liveCheck && !c.passive && c.onlyServer === "tto") && !ce.cdMapStart && ce.cd === 90 && da.cdMapStart === true && da.cd === 100 && da.duration === 5 && da.secondaryDuration.duration === 10 && da.secondaryDuration.durContested && da.lckProc.chance === 25 && da.lckProc.simulate === false, "Crescent Eclipse: 90 s, no start-of-mission cooldown (TTO1102:Cat::Start); Drop Anchor: 100 s with it, 5 s Anchored (TTO1109), contested 10 s Bleed, chain break lckAdjust(25) not rolled by Test");
@@ -5562,12 +5597,12 @@ async function donateChildTests(env) {
           // landing is sure to pull; a target within 1 m (flat) is not aimed at (Cat::Row6Spot@0x1B8C2F0 falls back to the Cat's forward at the full 14 / 16 m)
           good(/ครบ \*\*5 วินาที\*\* หลังสมอตก สมอจะกระชากเอง/.test(da.desc) && !/กดซ้ำ/.test(da.desc) && !/กดซ้ำ/.test(da.tooltipNote) && /\*\*6\.75 วินาที\*\*/.test(da.desc) && /\*\*6 วินาที\*\* เมื่อมี \*\*Revised Art\*\*/.test(da.desc) && !ce.unintended && !da.unintended, "Drop Anchor (TTO1109): the yank comes by itself 5 s after the landing (no recast: Cat::TryRecast is BaseHero's stub), the 6.75 s lock is 6 s with Revised Art; no 1 m no-aim note on either card (TTO1106:Cat::Row6Spot@0x1B94590 aims at any target in reach since 1.6.2.3)");
           const hc = heroOn("tto", ce), hd = heroOn("tto", da);
-          good(!hc.includes("sk-data-warn") && !hd.includes("sk-data-warn") && !hc.includes('data-dep-id="catPower"') && !hd.includes('data-dep-id="catPower"') && hc.split('data-role="dmg-input"').length - 1 === 4 && ["ใบมีด (ปักลงและบินกลับ)", "ดิ่งลงฟัน", "ระเบิดจันทรคราส", "ระเบิดรอบศพ (ศัตรูรอบ ๆ)"].every(l => hc.includes('<span class="sk-dmg-mode-label">' + l + "</span>")) && hd.includes('data-dep-id="anchorBreak"'), "both cards: no data warning, no Cat Power; four rows and four boxes on Crescent Eclipse, the chain-break toggle on Drop Anchor");
+          good(!hc.includes("sk-data-warn") && !hd.includes("sk-data-warn") && !hc.includes('data-dep-id="catPower"') && !hd.includes('data-dep-id="catPower"') && hc.split('data-role="dmg-input"').length - 1 === 3 && hc.includes('data-dep-id="catTargetDisarm"') && hc.includes('data-dep-id="catTargetBleed"') && /ไม่ขึ้นกับเลเวลของสถานะ แค่ติดอยู่ก็ได้เต็ม \*\*\+15%\*\*/.test(ce.desc) && ["ใบมีด (ปักลงและบินกลับ)", "ดิ่งลงฟัน", "ระเบิดจันทรคราส", "ระเบิดรอบศพ (ศัตรูรอบ ๆ)"].every(l => hc.includes('<span class="sk-dmg-mode-label">' + l + "</span>")) && hd.includes('data-dep-id="anchorBreak"'), "both cards: no data warning, no Cat Power; four rows, three boxes (no wound box), the target Disarm / Bleed toggles and the any-level +15% line on Crescent Eclipse, the chain-break toggle on Drop Anchor");
           const cp = sandbox._reachNormalize(ce.reach, 1), dp = sandbox._reachNormalize(da.reach, 1), at = (ps, lbl) => ps.filter(p => String(p.label).startsWith(lbl)).map(p => p.at).join();
           good(at(cp, "ใบมีดปักลง") === "0.64,0.67,0.7,0.74,0.77,0.8,0.84,0.87" && at(cp, "ใบมีดบินกลับ") === "1.68,1.72,1.76,1.8,1.84,1.88,1.92,1.96" && at(cp, "ดิ่งลงฟัน") === "1.1" && at(cp, "ระเบิดจันทรคราส") === "1.96" && at(dp, "สมอตก") === "0.75" && at(dp, "กระชากทุบ") === "6.45" && dp.find(p => p.label === "สมอตก").r === 7 && dp.find(p => String(p.label).startsWith("กระชากทุบ")).r === 5, "reach times (TTO1109): blades Cat.EclipseThrowAt + 0.2, dive 1.10, returns 1.68 + 0.04 k, burst 1.96; slam r 7 at 0.75, smash r 5 at 6.45 (yank 5.75)");
           const mid = (a, b) => [(a[0] + b[0]) / 2, (a[2] + b[2]) / 2], slots = cp.filter(p => p.shape === "cylinder" && p.r === 2.4).map(p => [p.x0, 6 + p.z0]);
           good(slots.length === 8 && cp.filter(p => p.shape === "box").every((p, k) => { const v = sandbox._reachMesh(p).verts, s = mid(v[0], v[1]), e = mid(v[2], v[3]); return Math.hypot(e[0], e[1] - 6) < 0.01 && Math.hypot(s[0] - slots[k][0], s[1] - slots[k][1]) < 0.01 && Math.abs(Math.hypot(slots[k][0], slots[k][1] - 6) - 5) < 0.01; }), "each return path runs from its blade's slot (5 m from the target) to the target");
-          put({ eclipseWounds: null }); } catch (e) { good(false, "Cat Crescent Eclipse / Drop Anchor checks threw: " + e.message); }
+          put(); } catch (e) { good(false, "Cat Crescent Eclipse / Drop Anchor checks threw: " + e.message); }
         // Sheep Gleaming Breath / Lucent Barrier / Grand Codex, checked against the TTO client decompile (TTO1102, 2026-11-02; sheep-skill-reference.md "TTO Lv 100 skills")
         { const gb = card("sheep_gleamingBreath"), lb = card("sheep_lucentBarrier"), gx = card("sheep_grandCodex"), rvCard = card("sheep_revive"), rv = rvCard.servers.tto, SD = vm.runInContext("STATUS_DESC_MAP", sandbox), SC = vm.runInContext("STATUS_CLASS_MAP", sandbox);
           good([gb, lb, gx].every(c => c && c.dataWarn === false && !c.liveCheck && !heroOn("tto", c).includes("sk-data-warn")), "Sheep's TTO Lv 100 cards: no data warning, no red line");
@@ -6170,7 +6205,7 @@ console.log(`Verified ${checkedUnintended} Unintended-behavior page checks.`);
   const wired = src.includes('<div class="changelog-backdrop patch-backdrop" id="patchModal" hidden') && src.includes("mountPatchPopup();") && !src.includes('id="patchSub"') && !src.includes('id="patchKicker"') && src.includes('<select class="patch-pick" aria-label="เลือกแพตช์">') && src.includes("list.innerHTML = lines(entries[at]);")
     && src.includes('<div class="changelog-patch-btns" id="patchHistoryBtns"></div>')
     && src.includes("let left = 3;") && src.includes("if (ok.disabled) return;") && src.includes("localStorage.setItem(PATCH_SEEN_KEY, forced)")
-    && src.includes("if (seen !== PATCH_HISTORY[0].key){ forced = PATCH_HISTORY[0].key; show(PATCH_HISTORY.filter((e) => e.server === PATCH_HISTORY[0].server), true); }")
+    && src.includes("if (seen !== PATCH_HISTORY[0].key && !newsTakesPatchSlot()){ forced = PATCH_HISTORY[0].key; show(PATCH_HISTORY.filter((e) => e.server === PATCH_HISTORY[0].server), true); }")
     && src.includes("show(PATCH_HISTORY.filter((e) => e.server === b.dataset.patchServer), false)") && /\.patch-ok:disabled\{/.test(src)
     && src.includes("const icon = CLASS_HERO_ICONS[tag] || SKILL_ICONS[\"server_\" + e.server];") && /\.patch-list li\.patch-feature\{/.test(src)
     && /\.patch-list li\.patch-feature\.patch-top\{/.test(src) && src.includes('sec("สำคัญที่สุด", 0, t1) + sec("เรื่องสำคัญ", t1, f) + sec("การเปลี่ยนแปลงอื่น", f, e.items.length)');
@@ -7346,6 +7381,472 @@ if (RUN_DAMAGE_CHECKS) {
   errorCount += skelBad.length;
   console.log(`Verified ${checkedDepGlow} stat glow checks across dep states (every card on BB, each dep at max; LCK on TTO too).`);
 }
+// <SG:checks>
+// Status glossary (spec docs/superpowers/specs/2026-11-16-status-glossary-design.md, plan docs/superpowers/plans/2026-11-16-status-glossary.md).
+{
+  const sg = (m) => { console.error(`[STATUS GLOSSARY ERROR] ${m}`); errorCount++; };
+  const run = (code) => vm.runInContext(code, sandbox);
+  const has = (n) => run(`typeof ${n}`) !== "undefined";
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+  // desc-decided skill sources ("<card>:<status>@<server>") a person has read and confirmed (final review 2026-11-16, finding 2)
+  const STATUS_REVIEWED_APPLY = [
+    // read 2026-11-16 when the scan began turning every linked skill to its top rank (lines a learned skill reveals)
+    "cat_insight:insight@reborn", "cat_twoPair:pillage@reborn", "mole_barrelBot:nodamage@reborn", "sheep_feather:wing@og", "sheep_feather:wing@tto",
+    "sheep_allFeather:wing@og", "sheep_allFeather:wing@tto", "sheep_allFeather:wing@reborn",
+    "bat_chiroptophobia:chiroptophobia@og", "bat_chiroptophobia:chiroptophobia@reborn", "bat_chiroptophobia:chiroptophobia@tto", "bat_darkIntention:spdrain@og",
+    "bat_darkIntention:spdrain@tto", "bat_eternalNight:amplifydamage@reborn", "bat_eternalNight:blind@reborn", "bat_mercilessDrain:spdrain@og",
+    "bat_mercilessDrain:spdrain@tto", "bison_addedSwing:holdcharge@tot", "bison_aftershock:aftershock@og", "bison_aftershock:aftershock@tto",
+    "bison_holdCharge:holdcharge@reborn", "bison_overPower:overpower@og", "bison_overPower:overpower@reborn", "bison_overPower:overpower@tot",
+    "bison_overPower:overpower@tto", "bison_powerReel:cut@og", "bison_powerReel:cut@reborn", "bison_powerReel:cut@tto", "bison_restingGlory:furytrance@reborn",
+    "bison_stampede:paralysis@reborn", "bison_stampede:sticky@reborn", "bison_unchainedFury:berserkerrush@tto", "bison_unchainedFury:unchained@tto",
+    "cat_crescentEclipse:cut@tto", "cat_damageRoulette:damageroulette@og", "cat_damageRoulette:damageroulette@tto", "cat_dropAnchor:bleed@tto",
+    "cat_grandCasinoArcade:doom@og", "cat_grandCasinoArcade:doom@tto", "cat_grandCasinoArcade:nodamage@og", "cat_grandCasinoArcade:nodamage@tto",
+    "cat_grandCasinoArcade:noforce@og", "cat_grandCasinoArcade:noforce@tto", "cat_joker:doom@og", "cat_joker:doom@reborn", "cat_joker:doom@tto",
+    "cat_nineLives:nodamage@og", "cat_nineLives:nodamage@reborn", "cat_nineLives:nodamage@tto", "cat_powerShuffle:agidown@og", "cat_powerShuffle:agidown@tto",
+    "cat_powerShuffle:agiup@og", "cat_powerShuffle:agiup@tto", "cat_powerShuffle:atkdown@og", "cat_powerShuffle:atkdown@tto", "cat_powerShuffle:atkup@og",
+    "cat_powerShuffle:atkup@tto", "cat_powerShuffle:chadown@og", "cat_powerShuffle:chadown@tto", "cat_powerShuffle:chaup@og", "cat_powerShuffle:chaup@tto",
+    "cat_powerShuffle:defdown@og", "cat_powerShuffle:defdown@tto", "cat_powerShuffle:defup@og", "cat_powerShuffle:defup@tto", "cat_powerShuffle:lckdown@og",
+    "cat_powerShuffle:lckdown@tto", "cat_powerShuffle:lckup@og", "cat_powerShuffle:lckup@tto", "cat_powerShuffle:magdown@og", "cat_powerShuffle:magdown@tto",
+    "cat_powerShuffle:magup@og", "cat_powerShuffle:magup@tto", "cat_powerShuffle:taldown@og", "cat_powerShuffle:taldown@tto", "cat_powerShuffle:talup@og",
+    "cat_powerShuffle:talup@tto", "cat_powerShuffle:vitdown@og", "cat_powerShuffle:vitdown@tto", "cat_powerShuffle:vitup@og", "cat_powerShuffle:vitup@tto",
+    "cat_royalFlush:paralysis@tto", "chameleon_adaptiveScale:immunity@reborn", "chameleon_cAttack:poison@tto", "chameleon_phantomBloom:fatalstrike@reborn",
+    "chameleon_phantomBloom:invisible@reborn", "chameleon_phantomBloom:sticky@reborn", "chameleon_poisonArrow:poison@tot", "chameleon_poisonArrow:rust@og",
+    "chameleon_poisonArrow:rust@reborn", "chameleon_poisonArrow:rust@tto", "chameleon_tormentRain:poison@tto", "mole_barrelRailgun:paralysis@tto",
+    "mole_ironOverdrive:nodamage@reborn", "mole_overclockCore:nodamage@reborn", "mole_overclockCore:sticky@reborn", "monkey_fireAvatar:burn@og",
+    "monkey_fireAvatar:burn@reborn", "monkey_fireAvatar:burn@tot", "monkey_fireAvatar:burn@tto", "monkey_fireBall:burn@og", "monkey_fireBall:burn@reborn",
+    "monkey_fireBall:burn@tot", "monkey_fireBall:burn@tto", "monkey_gaiaBulwark:buitensoul@reborn", "monkey_gaiaBulwark:gadinasoul@reborn",
+    "monkey_intenseFire:burn@reborn", "monkey_jaAscension:sunburn@tto", "monkey_jaOverdrive:ja@reborn", "monkey_jaOverdrive:jasoul@reborn",
+    "monkey_jaOverdrive:phoenixsoul@reborn", "monkey_runeGolem:runefracture@tto", "monkey_runicSand:groundlock@og", "monkey_runicSand:groundlock@reborn",
+    "monkey_runicSand:groundlock@tto", "panda_comboLink:comboplus@tot", "panda_comboPlus:comboplus@og", "panda_comboPlus:comboplus@reborn",
+    "panda_comboPlus:comboplus@tot", "panda_comboPlus:comboplus@tto", "panda_delayQi:delayqi@og", "panda_delayQi:delayqi@tto", "panda_drunkenPlus:drunken@og",
+    "panda_drunkenPlus:drunken@reborn", "panda_drunkenPlus:drunken@tto", "panda_drunkenSpin:drunk@og", "panda_drunkenSpin:drunk@reborn", "panda_drunkenSpin:drunk@tto",
+    "panda_nineDragons:lock@tto", "panda_raijinKen:hide@og", "panda_raijinKen:hide@reborn", "panda_raijinKen:hide@tto", "panda_rain&storm:cut@tto",
+    "panda_risingDragons:lock@og", "panda_risingDragons:lock@reborn", "panda_risingDragons:lock@tot", "panda_risingDragons:lock@tto", "panda_risingDragons:noforce@og",
+    "panda_risingDragons:noforce@reborn", "panda_risingDragons:noforce@tot", "panda_risingDragons:noforce@tto", "panda_tempestDance:cut@tto", "panda_tigerToss:grab@og",
+    "panda_tigerToss:grab@reborn", "panda_tigerToss:grab@tot", "panda_tigerToss:grab@tto", "panda_yinYangFist:yinyang@tto", "penguin_absoluteWinter:frost@reborn",
+    "penguin_arcticFrost:frost@og", "penguin_arcticFrost:frost@reborn", "penguin_arcticFrost:frost@tot", "penguin_arcticFrost:frost@tto", "penguin_arcticWind:ice@og",
+    "penguin_arcticWind:ice@reborn", "penguin_arcticWind:ice@tot", "penguin_arcticWind:ice@tto", "penguin_constellation:manafracture@tto",
+    "penguin_crownOfStars:noforce@reborn", "penguin_crownOfStars:noko@reborn", "penguin_dispell:dispell@og", "penguin_dispell:dispell@tto",
+    "penguin_doubleCast:multicast@og", "penguin_doubleCast:multicast@tto", "penguin_doubleSpell:multicast@og", "penguin_doubleSpell:multicast@tto",
+    "penguin_emperorsMarch:frost@tto", "penguin_emperorsMarch:frostbite@tto", "penguin_frostBite:frost@og", "penguin_frostBite:frost@reborn",
+    "penguin_frostBite:frost@tto", "penguin_frostBite:ice@og", "penguin_frostBite:ice@reborn", "penguin_frostBite:ice@tto", "penguin_frostField:frost@tto",
+    "penguin_frostField:frostbite@tto", "penguin_frostField:frostfield@tto", "penguin_frostField:frostmark@tto", "penguin_frostField:frozenground@tto",
+    "penguin_frostSpike:frost@og", "penguin_frostSpike:frost@reborn", "penguin_frostSpike:frost@tot", "penguin_frostSpike:frost@tto", "penguin_iceShield:iceshield@og",
+    "penguin_iceShield:iceshield@reborn", "penguin_iceShield:iceshield@tot", "penguin_iceShield:iceshield@tto", "penguin_iceTwister:frost@og",
+    "penguin_iceTwister:frost@reborn", "penguin_iceTwister:frost@tot", "penguin_iceTwister:frost@tto", "penguin_manaSurge:manaburn@og",
+    "penguin_manaSurge:manaburn@reborn", "penguin_manaSurge:manaburn@tto", "penguin_manaVortex:mpsap@og", "penguin_manaVortex:mpsap@reborn",
+    "penguin_manaVortex:mpsap@tto", "penguin_snowBall:snowball@og", "penguin_snowBall:snowball@reborn", "penguin_snowBall:snowball@tto", "penguin_snowMan:snowman@og",
+    "penguin_snowMan:snowman@reborn", "penguin_snowMan:snowman@tto", "penguin_spreadShot:frost@og", "penguin_spreadShot:frost@reborn", "penguin_spreadShot:frost@tto",
+    "penguin_spreadShot:ice@og", "penguin_spreadShot:ice@reborn", "penguin_spreadShot:ice@tto", "penguin_tripleCast:multicast@og", "penguin_tripleCast:multicast@tto",
+    "rabbit_bounce:hide@og", "rabbit_bounce:hide@reborn", "rabbit_bounce:hide@tto", "rabbit_bulletRain:hide@reborn", "rabbit_coinItalus_bulletRain:hide@og",
+    "rabbit_fieldPharmacy:boost@reborn", "rabbit_fieldPharmacy:heat@reborn", "rabbit_immuneShot:remedy@og", "rabbit_immuneShot:remedy@reborn",
+    "rabbit_immuneShot:remedy@tot", "rabbit_immuneShot:remedy@tto", "rabbit_medicTurret:autolife@tto", "rabbit_medicTurret:boost@tto", "rabbit_medicTurret:heat@tto",
+    "rabbit_miracleBlend:enlarge@og", "rabbit_miracleBlend:enlarge@reborn", "rabbit_miracleBlend:enlarge@tto", "rabbit_miracleBlend:invisible@og",
+    "rabbit_miracleBlend:invisible@reborn", "rabbit_miracleBlend:invisible@tto", "rabbit_miracleBlend:poison@og", "rabbit_miracleBlend:poison@reborn",
+    "rabbit_miracleBlend:poison@tto", "rabbit_miracleBlend:reduce@og", "rabbit_miracleBlend:reduce@reborn", "rabbit_miracleBlend:reduce@tto",
+    "rabbit_miracleDrop:miracledrop@og", "rabbit_miracleDrop:miracledrop@reborn", "rabbit_miracleDrop:miracledrop@tto", "rabbit_rapidTrance:rapidtrance@og",
+    "rabbit_rapidTrance:rapidtrance@reborn", "rabbit_rapidTrance:rapidtrance@tto", "rabbit_stickyGum:sticky@og", "rabbit_stickyGum:sticky@reborn",
+    "rabbit_stickyGum:sticky@tto", "rabbit_tradingWithWind:cleanse@reborn", "rabbit_tradingWithWind:spiritofwind@reborn", "rabbit_tradingWithWind:zephyrlore@reborn",
+    "sheep_aegisOfFlock:repel@reborn", "sheep_allFeather:feather@og", "sheep_allFeather:feather@reborn", "sheep_allFeather:feather@tto", "sheep_feather:feather@og",
+    "sheep_feather:feather@tto", "sheep_floatingWing:wing@og", "sheep_floatingWing:wing@reborn", "sheep_floatingWing:wing@tto", "sheep_heavensVerdict:bless@reborn",
+    "sheep_sealOfEarth:sealofearth@og", "sheep_sealOfEarth:sealofearth@reborn", "sheep_sealOfEarth:sealofearth@tto", "sheep_sealOfHeaven:sealofheaven@og",
+    "sheep_sealOfHeaven:sealofheaven@reborn", "sheep_sealOfHeaven:sealofheaven@tto", "tot_ex_blackhole:mpdrain@tot", "tot_ex_earthquake:heavy@tot",
+    "tot_ex_eternalsalvation:nodamage@tot", "tot_ex_fullmoon:maim@tot", "tot_ex_leviathan:paralysis@tot", "tot_ex_miracleshot:nodamage@tot",
+    "tot_ex_miracleshot:noforce@tot", "tot_ex_paydayshot:nodamage@tot", "tot_ex_rumbling:groundlock@tot", "tot_ex_shadowexecution:bleed@tot",
+    "tot_ex_shadowexecution:disarm@tot", "tot_ex_shadowexecution:hide@tot", "tot_ex_soulcapture:hpdrain@tot", "tot_ex_soulcapture:mpdrain@tot",
+    "tot_ex_spiralshield:sticky@tot", "tot_ex_venomsplash:defdown@tot", "tot_ex_voidbreaker:chadown@tot", "tot_ex_voidbreaker:taldown@tot",
+    "whale_12thKingdomKnight:kingdomknight@og", "whale_12thKingdomKnight:kingdomknight@tot", "whale_12thKingdomKnight:kingdomknight@tto",
+    "whale_bubbleShield:bubbleshield@og", "whale_bubbleShield:bubbleshield@tto", "whale_hardenSkin:hardenskin@og", "whale_hardenSkin:hardenskin@reborn",
+    "whale_hardenSkin:hardenskin@tot", "whale_hardenSkin:hardenskin@tto", "whale_hardenSkin:sticky@tot", "whale_heavyWeight:heavy@og", "whale_heavyWeight:heavy@tto",
+    "whale_leviathanTide:bubbleshield@reborn", "whale_oceansResilience:oceanresilience@tto", "whale_overPresence:overpresence@og",
+    "whale_overPresence:overpresence@reborn", "whale_overPresence:overpresence@tto", "whale_overWeight:heavy@og", "whale_overWeight:heavy@tto",
+    "whale_podCall:salvation@reborn", "whale_salvation:salvation@og", "whale_salvation:salvation@reborn", "whale_salvation:salvation@tto",
+    "whale_sovereignImpaler:impaler@tto", "whale_swallow:gobble@og", "whale_swallow:gobble@reborn", "whale_swallow:gobble@tto", "wolf_alphaHowl:damageplus@reborn",
+    "wolf_artBreaker:artcancel@og", "wolf_artBreaker:artcancel@tto", "wolf_artCancel:artcancel@og", "wolf_artCancel:artcancel@reborn", "wolf_artCancel:artcancel@tto",
+    "wolf_bladeSurge:bladesurge@tto", "wolf_guardianOath:defup@reborn", "wolf_holyArmor:holyarmor@og", "wolf_holyArmor:holyarmor@reborn", "wolf_holyArmor:holyarmor@tot",
+    "wolf_holyArmor:holyarmor@tto", "wolf_holySword:holysword@og", "wolf_holySword:holysword@reborn", "wolf_holySword:holysword@tot", "wolf_holySword:holysword@tto",
+    "wolf_unyieldingOath:damageplus@reborn", "wolf_windBoundDomain:cleanse@tto"
+  ];
+  try {
+    // ---- Task 1: the status list per server, names, tags
+    const need1 = ["STATUS_GAME_KEYS", "STATUS_NAME_FIX", "statusKeysFor", "statusAllKeys", "statusServersOf", "statusDisplayName", "statusTags"];
+    const miss1 = need1.filter(n => !has(n));
+    miss1.forEach(n => sg(`missing ${n}`));
+    if (!miss1.length) {
+      const K = run("statusKeysFor"), G = run("STATUS_GAME_KEYS"), name = run("statusDisplayName"), tags = run("statusTags"), srvOf = run("statusServersOf");
+      for (const [srv, n] of Object.entries({ og: 207, tot: 207, tto: 250, reborn: 215 })) {
+        const ks = K(srv);
+        if (ks.length !== n) sg(`${srv}: ${ks.length} statuses, expected ${n}`);
+        if (new Set(ks.map(k => k.toLowerCase())).size !== ks.length) sg(`${srv}: a key appears twice (case-insensitive)`);
+        const names = ks.map(name);
+        if (names.some((x, i) => i && names[i - 1].localeCompare(x, "en") > 0)) sg(`${srv}: not sorted A-Z by display name`);
+      }
+      if (run("statusAllKeys()").length !== 258) sg(`statusAllKeys() has ${run("statusAllKeys()").length}, expected 258`);
+      for (const h of ["crimsonBrand", "dealersMark", "spireLink", "gmDropBoost", "gmExpBoost"]) if (K("tto").includes(h) || run("statusGameKey")(h)) sg(`${h} is not encounterable on TTO yet and must be hidden (STATUS_HIDDEN)`);
+      if (!run("statusKeysFor(\"tto\")").includes("overLord") || !run("statusKeysFor(\"og\")").includes("astralShift")) sg("astralShift and overLord (applied but missing from getStatusCode) must be on every server");
+      for (const [k, want] of [["snowMan", "Snowman"], ["artCancel", "Art Cancel"], ["hpRegen", "HP Regen"], ["guardianOfTheNight", "Guardian of the Night"], ["magDown", "INT Down"], ["noKo", "No KO"], ["atkUp", "ATK Up"], ["dealersMark", "Dealer's Mark"]])
+        if (name(k) !== want) sg(`statusDisplayName(${k}) = ${JSON.stringify(name(k))}, expected ${want}`);
+      for (const [k, want] of [["frost", ["Debuff", "Magical", "Lock"]], ["blackServant", ["Debuff", "Magical", "State"]], ["atkup", ["Buff", "Physical"]], ["gilded", ["Debuff", "Physical", "Crowd Control"]], ["nosuchstatus", []]])
+        if (!same(tags(k), want)) sg(`statusTags(${k}) = ${JSON.stringify(tags(k))}, expected ${JSON.stringify(want)}`);
+      for (const [k, want] of [["gilded", ["tto"]], ["ice", ["og", "tot", "tto", "reborn"]], ["seraph", ["reborn"]], ["ICE", ["og", "tot", "tto", "reborn"]]])
+        if (!same(srvOf(k), want)) sg(`statusServersOf(${k}) = ${JSON.stringify(srvOf(k))}, expected ${JSON.stringify(want)}`);
+      // the lists still match the games' tables (only where those git-ignored folders exist)
+      const root = path.resolve(__dirname, "..");
+      const bbFile = path.join(root, "DecompiledSource/StatusData.cs");
+      if (fs.existsSync(bbFile)) {
+        const lines = fs.readFileSync(bbFile, "utf8").split(/\r?\n/).slice(49, 2333).join("\n");
+        const bb = [...new Set([...lines.matchAll(/nStatus == "([A-Za-z0-9]+)"/g)].map(m => m[1]))];
+        if (!same([...bb].sort(), [...G.og].sort())) sg(`STATUS_GAME_KEYS.og differs from DecompiledSource/StatusData.cs getStatusCode`);
+      }
+      const ttoDump = path.join(root, "DecompiledSource_TTO_2026-11-02/dump.cs");
+      if (fs.existsSync(ttoDump)) {
+        const d = fs.readFileSync(ttoDump, "utf8"), a = d.indexOf("public enum eStatus : int"), body = d.slice(a, d.indexOf("\n}", a));
+        const all = [...body.matchAll(/public const eStatus ([A-Za-z0-9_]+) =/g)].map(m => m[1]).filter(n => n !== "none");
+        const bbL = new Set(G.og.map(k => k.toLowerCase()));
+        if (!same(all.filter(n => !bbL.has(n.toLowerCase())).sort(), [...G.tto].sort())) sg(`STATUS_GAME_KEYS.tto differs from TTO1102 eStatus`);
+      }
+      // ---- Task 2: every status of every server has a class (or the verified "Unclassified") and a text
+      { const CLSM = run("STATUS_CLASS_MAP"), desc = run("getStatusDesc"), noCls = new Set(), noTxt = new Set();
+        for (const srv of ["og", "tot", "tto", "reborn"]) for (const k of K(srv)) {
+          if (!(CLSM[k.toLowerCase()] || CLSM[k])) noCls.add(k);
+          let d = ""; try { d = desc(k, null, null, srv); } catch (e) { d = ""; sg(`getStatusDesc(${k}) throws on ${srv}: ${e.message}`); }
+          if (!d) noTxt.add(k);
+        }
+        if (noCls.size) sg(`${noCls.size} statuses have no class: ${[...noCls].join(" ")}`);
+        if (noTxt.size) sg(`${noTxt.size} statuses have no text: ${[...noTxt].join(" ")}`);
+        for (const [k, v] of Object.entries(CLSM)) if (!String(v).split(/,\s*/).every(x => ["Buff", "Debuff", "Physical", "Magical", "State", "System", "Lock", "Shield", "Crowd Control", "Unclassified"].includes(x))) sg(`STATUS_CLASS_MAP.${k} = "${v}" has an unknown tag`);
+      }
+      console.log(`Verified the status glossary list: ${run("statusAllKeys()").length} statuses (BB ${K("og").length}, TTO ${K("tto").length}, Reborn ${K("reborn").length}).`);
+    }
+    // ---- Task 4: icons (assets.js STATUS_ICONS, 128 px WebP; a key with no icon in any client is in STATUS_ICON_NONE and shows the game's fallback)
+    const need4 = ["STATUS_ICONS", "STATUS_ICON_NONE", "statusIconSrc"];
+    const miss4 = need4.filter(n => !has(n));
+    miss4.forEach(n => sg(`missing ${n}`));
+    if (!miss4.length && !miss1.length) {
+      const I = run("STATUS_ICONS"), NONE = run("STATUS_ICON_NONE"), src = run("statusIconSrc");
+      const webpSize = (uri) => {
+        const b = Buffer.from(String(uri).replace(/^data:image\/webp;base64,/, ""), "base64");
+        if (b.toString("ascii", 0, 4) !== "RIFF" || b.toString("ascii", 8, 12) !== "WEBP") return null;
+        const t = b.toString("ascii", 12, 16);
+        if (t === "VP8X") return [1 + b.readUIntLE(24, 3), 1 + b.readUIntLE(27, 3)];
+        if (t === "VP8 ") return [b.readUInt16LE(26) & 0x3fff, b.readUInt16LE(28) & 0x3fff];
+        if (t === "VP8L") { const v = b.readUInt32LE(21); return [1 + (v & 0x3fff), 1 + ((v >> 14) & 0x3fff)]; }
+        return null;
+      };
+      let bad = 0;
+      for (const [k, uri] of Object.entries(I)) {
+        if (!/^data:image\/webp;base64,/.test(uri)) { sg(`STATUS_ICONS.${k} is not a WebP data URI`); bad++; continue; }
+        const s = webpSize(uri); if (!s || s[0] !== 128 || s[1] !== 128) { sg(`STATUS_ICONS.${k} is ${s ? s.join("x") : "unreadable"}, expected 128x128`); bad++; }
+        if (k !== k.toLowerCase()) sg(`STATUS_ICONS key ${k} is not lower-case`);
+      }
+      if (!I._unknown) sg("STATUS_ICONS has no _unknown (the game's fallback icon)");
+      for (const k of run("statusAllKeys()")) {
+        const own = !!I[k.toLowerCase()], none = NONE.includes(k);
+        if (!own && !none) sg(`${k}: no icon and not in STATUS_ICON_NONE`);
+        if (own && none) sg(`${k}: has an icon but is listed in STATUS_ICON_NONE`);
+        if (!src(k)) sg(`statusIconSrc(${k}) is empty`);
+      }
+      if (src("cookFeast") !== I.happy) sg("cookFeast must show the happy icon (Reborn1027:StatusData.cs:10-17)");
+      if (src("weak") !== I.amplifydamage || src("abyssDoom") !== I.doom) sg("weak / abyssDoom must show the icons TTO's getIcon remaps them to (amplifyDamage / doom)");
+      for (const h of ["crimsonbrand", "dealersmark"]) if (I[h]) sg(`STATUS_ICONS.${h}: a hidden status keeps no icon`);
+      if (src("nosuchstatus") !== I._unknown) sg("an unknown key must show the unknown icon");
+      console.log(`Verified ${Object.keys(I).length} status icons (${NONE.length} statuses use the game's fallback).`);
+    }
+    // ---- Task 3: sources (skills derived from the cards + STATUS_SOURCE_FIX; gear, consumables and pets from STATUS_SOURCES_ITEM / _PET)
+    const need3 = ["statusMentionKind", "STATUS_SOURCE_FIX", "statusSkillRows", "STATUS_SOURCES_ITEM", "STATUS_SOURCES_PET", "statusSources", "statusMaxLevel", "statusItemName"];
+    const miss3 = need3.filter(n => !has(n));
+    miss3.forEach(n => sg(`missing ${n}`));
+    if (!miss3.length && !miss1.length) {
+      const rows = run("statusSkillRows()"), FIX = run("STATUS_SOURCE_FIX"), S = run("statusSources"), maxLv = run("statusMaxLevel");
+      const cardIds = new Set(SKILLS.map(s => s.id)), CLS = run("STATUS_CLASS_MAP");
+      const unsure = rows.filter(r => r.kind === "unsure");
+      unsure.slice(0, 30).forEach(r => sg(`unclassified mention: ${r.card}:${r.key}${r.srv !== "og" ? "@" + r.srv : ""} — "${r.ctx}" (add it to STATUS_SOURCE_FIX)`));
+      if (unsure.length > 30) sg(`... and ${unsure.length - 30} more unclassified mentions`);
+      for (const [k, v] of Object.entries(FIX)) {
+        const m = /^([A-Za-z0-9_]+):([A-Za-z]+)(?:@(og|tot|tto|reborn))?$/.exec(k);
+        if (!m) { sg(`STATUS_SOURCE_FIX key "${k}" is not <cardId>:<status>[@server]`); continue; }
+        if (!cardIds.has(m[1])) sg(`STATUS_SOURCE_FIX ${k}: no card ${m[1]}`);
+        if (!CLS[m[2].toLowerCase()] && !CLS[m[2]]) sg(`STATUS_SOURCE_FIX ${k}: ${m[2]} is not a status`);
+        if (!["apply", "mention", "apply-checked"].includes(v)) sg(`STATUS_SOURCE_FIX ${k}: value ${v}`);
+        const hit = rows.filter(r => r.card === m[1] && r.key === m[2].toLowerCase() && (!m[3] || r.srv === m[3]));
+        if (!hit.length) sg(`STATUS_SOURCE_FIX ${k}: the card does not mention that status`);
+        else if (v !== "apply-checked" && hit.every(r => r.raw === v)) sg(`STATUS_SOURCE_FIX ${k}: redundant (the classifier already says ${v})`);
+      }
+      // BB code cross-check: a BB skill source's class code applies that status
+      const dsDir = path.resolve(__dirname, "../DecompiledSource");
+      if (fs.existsSync(dsDir)) {
+        const files = fs.readdirSync(dsDir).filter(f => f.endsWith(".cs"));
+        const SUMMON = { Mole: ["BarrelBot", "AutoGyro", "RangerRobot", "KingKaiser", "MineWalker"], Monkey: ["Phoenix", "Ja", "Gadina", "Buiten", "Gaos", "Lavu"], Rabbit: ["MedicTurret"] };
+        const applied = new Map();
+        const appliedBy = (cls) => {
+          if (applied.has(cls)) return applied.get(cls);
+          const pre = cls === "Common" ? ["Bat", "Bison", "Cat", "Chameleon", "Mole", "Monkey", "Panda", "Penguin", "Rabbit", "Sheep", "Whale", "Wolf"] : [cls, ...(SUMMON[cls] || [])];
+          const set = new Set();
+          for (const f of files) if (pre.some(p => f === p + ".cs" || f.startsWith(p + "_") || (SUMMON[cls] || []).some(s => f.startsWith(s)))) {
+            for (const m of fs.readFileSync(path.join(dsDir, f), "utf8").matchAll(/(?:RPC_AddStatus|addStatus)"?,?\s*\(?\s*(?:new object\[\]\s*\{\s*)?"([A-Za-z0-9]+)"/g)) set.add(m[1].toLowerCase());
+          }
+          applied.set(cls, set); return set;
+        };
+        let checked = 0;
+        // statuses every hero file applies come from the shared item / flag / food / pet code, so they prove nothing about a class's skills
+        const HEROES = ["Bat", "Bison", "Cat", "Chameleon", "Mole", "Monkey", "Panda", "Penguin", "Rabbit", "Sheep", "Whale", "Wolf"];
+        // so a class "owns" a status when its files apply it more often than the shared baseline (the fewest times any hero file applies it)
+        const countIn = (f) => { const c = {}; for (const m of fs.readFileSync(path.join(dsDir, f), "utf8").matchAll(/(?:RPC_AddStatus|addStatus)"?,?\s*\(?\s*(?:new object\[\]\s*\{\s*)?"([A-Za-z0-9]+)"/g)) { const k = m[1].toLowerCase(); c[k] = (c[k] || 0) + 1; } return c; };
+        const perHero = HEROES.map(h => countIn(h + ".cs"));
+        const baseline = {}; for (const k of new Set(perHero.flatMap(Object.keys))) baseline[k] = Math.min(...perHero.map(c => c[k] || 0));
+        const ownCache = new Map();
+        const own = (cls) => {
+          if (ownCache.has(cls)) return ownCache.get(cls);
+          const extra = [...(SUMMON[cls] || []), ...(cls === "Penguin" ? ["ManaVortex"] : [])], c = {};
+          for (const f of files) if (f === cls + ".cs" || f.startsWith(cls + "_") || extra.some(s => f.startsWith(s))) for (const [k, n] of Object.entries(countIn(f))) c[k] = (c[k] || 0) + n;
+          const set = new Set(Object.keys(c).filter(k => c[k] > (baseline[k] || 0)));
+          ownCache.set(cls, set); return set;
+        };
+        for (const r of rows) if (r.srv === "og" && r.kind === "apply" && r.fix !== "apply-checked") {
+          const card = SKILLS.find(s => s.id === r.card);
+          if (!card || card.onlyServer) continue;
+          checked++;
+          if (!(card.class === "Common" ? appliedBy(card.class) : own(card.class)).has(r.key)) sg(`${r.card} is listed as a source of ${r.key}, but no ${card.class} skill code applies "${r.key}" (the shared item code every hero file carries does not count; mark it apply-checked in STATUS_SOURCE_FIX with the reason, or mention)`);
+        }
+        // the other way round: a status a class's own code applies needs a source of that class (a skill, its class weapon, a pet) or a ruling
+        const CODE = { Wolf: "wlf", Bison: "bsn", Panda: "pnd", Whale: "whl", Cat: "cat", Chameleon: "chm", Rabbit: "rab", Mole: "mol", Monkey: "mnk", Sheep: "shp", Penguin: "pgn", Bat: "bat" };
+        const NONE = has("STATUS_SOURCE_NONE") ? run("STATUS_SOURCE_NONE") : (sg("missing STATUS_SOURCE_NONE"), {});
+        let reverse = 0;
+        for (const cls of HEROES) for (const k of own(cls)) {
+          const gk = run("statusGameKey")(k);
+          if (!gk) continue;
+          reverse++;
+          const src = S(gk, "og");
+          const ok = src.skills.some(x => (SKILLS.find(s => s.id === x.card) || {}).class === cls) || src.items.some(r => (r.items || []).some(id => id.startsWith("w_" + CODE[cls]))) || src.pets.length;
+          if (!ok && !NONE[`${cls}:${gk}`]) sg(`${cls} code applies ${gk} but the glossary lists no ${cls} source (add the card to STATUS_SOURCE_ADD, or rule it in STATUS_SOURCE_NONE with the reason)`);
+        }
+        for (const k of Object.keys(NONE)) { const [cls, key] = k.split(":"); if (!HEROES.includes(cls) || !own(cls).has(String(key).toLowerCase())) sg(`STATUS_SOURCE_NONE ${k}: ${cls} code does not apply ${key} (stale ruling)`); }
+        console.log(`Cross-checked ${checked} BB skill sources against the class code, and ${reverse} class-applied statuses back to a source.`);
+      }
+      // final review fixes (2026-11-16): sources the class code gives but the card text never names, mentions read as sources, server ranges
+      const skillIds = (k, srv) => S(k, srv).skills.map(x => x.card);
+      for (const [k, card] of [["allMimic", "bat_allMimic"], ["overLord", "bison_overlord"], ["lastHope", "whale_lastHope"], ["rejuvenate", "whale_rejuvenate"], ["rejuvenate", "whale_revitalize"],
+        ["overPresence", "whale_overPresence"], ["phoenixSoul", "monkey_summonSoul"], ["jaSoul", "monkey_summonSoul"], ["gadinaSoul", "monkey_summonSoul"], ["buitenSoul", "monkey_summonSoul"],
+        ["gaosSoul", "monkey_summonSoul"], ["runicSand", "monkey_runicSand"], ["transform", "mole_kingKaiser"], ["rust", "chameleon_poisonArrow"]])
+        if (!skillIds(k, "og").includes(card)) sg(`${card} applies ${k} in its class code but is not listed as its source`);
+      const hw = S("heavy", "og").skills.find(x => x.card === "whale_heavyWeight");
+      if (!hw || hw.lvMax > 2) sg(`Heavy Weight gives heavy Lv 1-2 (Hydro Blast's damage table is not a source): got ${hw ? hw.lvMin + "-" + hw.lvMax : "none"}`);
+      if (skillIds("blind", "og").includes("bat_shame") || skillIds("confuse", "og").includes("bat_shame")) sg("Shame (an active curse) is a condition on Blind / Confusion, not their source");
+      const bl = S("blind", "og").skills.find(x => x.card === "bat_blind");
+      if (!bl || bl.lvMax < 2) sg("Blind's boosted level (blind2 with Shame) belongs to the Blind card");
+      const cpR = S("comboPlus", "reborn").skills.find(x => x.card === "panda_comboPlus"), cpO = S("comboPlus", "og").skills.find(x => x.card === "panda_comboPlus");
+      if (!cpR || !cpO || cpR.lvMin > cpO.lvMin || cpR.lvMax < cpO.lvMax) sg(`a credited row on Reborn must not hide panda_comboPlus's own BB levels (og ${cpO && cpO.lvMin + "-" + cpO.lvMax}, reborn ${cpR && cpR.lvMin + "-" + cpR.lvMax})`);
+      // every desc-decided source was read by a person: a new one fails until it is reviewed (STATUS_REVIEWED_APPLY below) or ruled in STATUS_SOURCE_FIX
+      const reviewed = new Set(STATUS_REVIEWED_APPLY);
+      const fresh = rows.filter(r => r.kind === "apply" && !r.field && !r.fix && !reviewed.has(`${r.card}:${r.key}@${r.srv}`));
+      fresh.slice(0, 25).forEach(r => sg(`new source read from a card's text, not reviewed yet: ${r.card}:${r.key}@${r.srv} — "${r.ctx}" (read it; add it to STATUS_REVIEWED_APPLY in this check, or rule it in STATUS_SOURCE_FIX)`));
+      if (fresh.length > 25) sg(`... and ${fresh.length - 25} more unreviewed sources`);
+      const liveKeys = new Set(rows.filter(r => r.kind === "apply" && !r.field && !r.fix).map(r => `${r.card}:${r.key}@${r.srv}`));
+      const stale = STATUS_REVIEWED_APPLY.filter(k => !liveKeys.has(k));
+      if (stale.length) sg(`STATUS_REVIEWED_APPLY has ${stale.length} entries no longer read from the cards (remove them): ${stale.slice(0, 8).join(" ")}`);
+      // Reborn rolls built-in item effects through lckItemAdjust = ceil(1.3 x n) with no LCK (Reborn-Mechanics-Reference.md §2.2)
+      if (has("statusItemChanceText")) {
+        const ch = run("statusItemChanceText");
+        if (!/16%/.test(ch({ chance: { lck: 12 } }, "reborn")) || /LCK/.test(ch({ chance: { lck: 12 } }, "reborn").replace("ไม่ขึ้นกับ LCK", ""))) sg(`Reborn item chance for lckAdjust(12) must read 16% with no LCK: "${ch({ chance: { lck: 12 } }, "reborn")}"`);
+        if (!/26%/.test(ch({ chance: { pool: [12, 8] } }, "reborn"))) sg(`Reborn pool chance (12 + 8) must give the full set 26%: "${ch({ chance: { pool: [12, 8] } }, "reborn")}"`);
+        if (!/เพิ่มตาม LCK/.test(ch({ chance: { lck: 12 } }, "og"))) sg("BB item chance keeps its LCK note");
+      } else sg("missing statusItemChanceText");
+      for (const r of run("STATUS_SOURCES_ITEM")) if (r.chance && r.chance.pool && !Array.isArray(r.chance.pool)) sg(`item source ${r.key}: pool chances are [weapon, hat] numbers`);
+      if (!skillIds("ice", "og").includes("penguin_frostBite")) sg("penguin_frostBite (the normal attack freeze) should be a source of ice");
+      if (skillIds("ice", "og").includes("penguin_nAttack")) sg("a **Frost Bite:** line on penguin_nAttack is credited to penguin_frostBite, not the host card");
+      if (skillIds("poison", "og").includes("chameleon_immunity")) sg("chameleon_immunity removes poison; it is not a source");
+      if (!S("hpDrain", "og").items.length) sg("hpDrain should have item sources (Poseidon weapons / helmet)");
+      if (!S("ice", "og").pets.some(p => p.pet === "p_sim")) sg("S. Ice Mixer (p_sim) should be a pet source of ice");
+      if (S("gilded", "og").skills.length) sg("gilded is TTO-only; it has no BB source");
+      if (!S("gilded", "tto").skills.length) sg("gilded should have a TTO skill source (Coin Ricochet)");
+      if (maxLv("ice", "og") < 2) sg(`statusMaxLevel(ice, og) = ${maxLv("ice", "og")}`);
+      if (maxLv("charm", "og") !== Math.max(...S("charm", "og").skills.map(x => x.lvMax || 0), ...S("charm", "og").items.map(x => x.lvMax || 0), ...S("charm", "og").pets.map(x => x.lvMax || 0), 0)) sg("statusMaxLevel(charm) is not the highest source level");
+      // items and pets name real things
+      const petFind = run("petInfoFind");
+      for (const r of run("STATUS_SOURCES_ITEM")) {
+        for (const id of r.items || []) if (!run("statusItemName")(id)) sg(`item source ${r.key}: ${id} has no name`);
+        if (!r.cite) sg(`item source ${r.key} ${(r.items || []).join(",")}: no citation`);
+        if (!statusOk(r.key)) sg(`item source: ${r.key} is not a status`);
+      }
+      for (const r of run("STATUS_SOURCES_PET")) {
+        if (!petFind(r.pet)) sg(`pet source ${r.key}: ${r.pet} is not in PET_INFO`);
+        if (!r.cite) sg(`pet source ${r.key} ${r.pet}: no citation`);
+        if (!statusOk(r.key)) sg(`pet source: ${r.key} is not a status`);
+      }
+      function statusOk(k){ return !!run("statusGameKey")(k); }
+      // ---- Task 5: the page
+      const K = run("statusKeysFor"), name = run("statusDisplayName"), tags = run("statusTags");
+      const need5 = ["statusGlossaryState", "statusRingColors", "statusTileHtml", "statusPanelHtml", "statusRailCounts", "mountStatusGlossary"];
+      const miss5 = need5.filter(n => !has(n));
+      miss5.forEach(n => sg(`missing ${n}`));
+      const tool = run("TOOLS").find(t => t.id === "status-glossary");
+      if (!tool) sg("no TOOLS entry status-glossary");
+      else {
+        if (tool.title !== "สารานุกรมสถานะ" || tool.shortTitle !== "สถานะ" || tool.category !== "Reference") sg(`TOOLS entry: title ${tool.title} / ${tool.shortTitle} / ${tool.category}`);
+        if (!tool.fact || tool.fact()[0] !== 258) sg("TOOLS fact must count all 258 statuses");
+        // menu art = raining status icons, never the "?" icon (user 2026-11-16); each icon's data is written once (CSS var / SVG defs)
+        if (tool.collage !== "statusRain" || tool.art) sg('TOOLS status-glossary: menu art must be collage "statusRain" with no art list');
+        const LA = run("LN_ART"), unk = run("STATUS_ICONS")._unknown, rainIcons = has("statusRainIcons") ? run("statusRainIcons")() : [];
+        if (rainIcons.length < 100 || new Set(rainIcons).size !== rainIcons.length || rainIcons.includes(unk)) sg(`statusRainIcons(): ${rainIcons.length} icons, duplicates or the "?" icon`);
+        if (!LA || typeof LA.statusRain !== "function") sg("LN_ART.statusRain missing");
+        else for (const m of ["stage", "thumb"]) { const h = LA.statusRain(m), srcs = h.match(/data:image\/[^"')\s]+/g) || [];
+          if (srcs.length < 20) sg(`LN_ART.statusRain(${m}) shows only ${srcs.length} icons`);
+          if (unk && h.includes(unk)) sg(`LN_ART.statusRain(${m}) shows the "?" icon`);
+          if (new Set(srcs).size !== srcs.length) sg(`LN_ART.statusRain(${m}) writes an icon's data more than once`); }
+      }
+      // top levels (user 2026-11-16: "Bless ... up to level 6 with the help of skill C dep Gospel and another sheep casting on the same target"):
+      // every linked skill at its top rank, then +1 from a second caster at the same level (12Tails-Mechanics-Reference.md §4.2.1) when a skill
+      // puts the status on another unit; never for hp / mp / sp drain, never on Reborn (Reborn-Mechanics-Reference.md §2.7)
+      if (has("statusTopLevel")) {
+        const top = run("statusTopLevel"), pm = run("statusPillMax");
+        // the skill page's Buff popup (STAT_BUFFS / ENEMY_STAT_DEBUFFS, researched levels with a second caster)
+        for (const [k, srv, want] of [["bless", "og", 6], ["heat", "og", 5], ["honor", "og", 5], ["honor", "tto", 6], ["fortune", "og", 6], ["jaSoul", "og", 5], ["shame", "og", 7], ["petrify", "og", 3]])
+          if (top(k, srv) !== want || pm(k, srv) !== want) sg(`top level ${k}@${srv}: ${top(k, srv)} (pills ${pm(k, srv)}), the Buff popup says ${want}`);
+        if (maxLv("bless", "og") !== 5) sg(`bless@og: one Sheep with Gospel gives level ${maxLv("bless", "og")}, expected 5`);
+        if (top("bless", "reborn") !== maxLv("bless", "reborn")) sg("Reborn has no second-caster level (§2.7)");
+        for (const k of ["hpDrain", "mpDrain", "spDrain"]) if (maxLv(k, "og") && top(k, "og") !== maxLv(k, "og")) sg(`${k}: drains never stack a level`);
+        const panel = run("statusPanelHtml");
+        if (!/class="stg-pill[^"]*is-stack[^"]*"/.test(panel("bless", "og", 6, 156))) sg("the stacked level's pill must be marked is-stack");
+        if (!/<div class="stg-hint">เลเวล 6 ต้องมีผู้ร่ายอีกคน/.test(panel("bless", "og", 6, 156))) sg("the stacked level must say it needs a second caster");
+        if (/<div class="stg-hint">เลเวล \d+ ต้องมีผู้ร่ายอีกคน/.test(panel("bless", "og", 5, 156))) sg("a level one caster reaches must not carry the second-caster hint");
+      } else sg("missing statusTopLevel");
+      // the rain is diagonal and fast, a blur of icons on purpose (user 2026-11-16: "diagonal and much faster", not meant to be readable)
+      { const outs = [has("LN_ART") ? run("LN_ART").statusRain("stage") : "", has("newsPopupHtml") ? run("newsPopupHtml")() : ""];
+        for (const h of outs) { const durs = [...h.matchAll(/animation-duration:([\d.]+)s/g)].map(m => +m[1]);
+          if (!/class="ln-srain-tilt"/.test(h) || !durs.length || durs.some(d => d > 5)) sg(`status rain: a tilted layer (ln-srain-tilt) and every loop ≤ 5 s (got ${durs.length ? Math.max(...durs) : "none"})`); }
+        // dealt like cards (user 2026-11-16: "some statuses appeared too much"): no icon twice in a column, every picked icon used, counts within 1
+        for (const h of outs) {
+          const halves = [...h.matchAll(/<div class="ln-srain-col"[^>]*>([\s\S]*?)<\/div>/g)].map(m => { const c = [...m[1].matchAll(/var\(--si(\d+)\)/g)].map(x => +x[1]); return c.slice(0, c.length / 2); });
+          if (halves.some(c => new Set(c).size !== c.length)) sg("status rain: an icon repeats inside one column");
+          const cnt = {}; halves.flat().forEach(i => { cnt[i] = (cnt[i] || 0) + 1; }); const v = Object.values(cnt), nv = (h.match(/--si\d+:url/g) || []).length;
+          if (!v.length || Math.max(...v) - Math.min(...v) > 1 || v.length !== nv) sg(`status rain: icons not dealt evenly (${v.length} of ${nv} used, ${v.length ? Math.min(...v) + "-" + Math.max(...v) : 0} times each)`);
+          if (nv < (h.includes("is-stage") ? 60 : 40)) sg(`status rain: only ${nv} distinct icons`);
+        }
+        if (!/\.ln-srain-tilt\{[^}]*rotate:/.test(html)) sg(".ln-srain-tilt must rotate the columns");
+        // the menu rain fills the whole art column and a little past it (user 2026-11-16: "can it occupy larger area?")
+        if (!/\.ln-srain\.is-stage\{position:absolute; inset:-4% -12% -4% -10%;[^}]*ellipse closest-side/.test(html)) sg(".ln-srain.is-stage: absolute past the art column (inset -4% -12% -4% -10%) with an elliptical fade");
+        if (has("LN_ART") && !/<g transform="rotate\(/.test(run("LN_ART").statusRain("thumb"))) sg("the still rain thumb slants like the stage"); }
+      // the two type rings read apart (user 2026-11-16: "thicker and with really thin black border"): bands of --ro / --ri, 1 px black edges
+      { const ringCss = (sel) => (html.match(new RegExp("\\n  " + sel.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\{[^}]*\\}")) || [""])[0];
+        const r = ringCss(".stg-ring"), ri = ringCss(".stg-ring-in"), ra = ringCss(".stg-ring-in::after"), big = ringCss(".stg-ring.is-big");
+        const px = (s, v) => parseFloat((s.match(new RegExp("--" + v + ":(\\d+(?:\\.\\d+)?)px")) || [0, 0])[1]);
+        if (px(r, "ro") < 5 || px(r, "ri") < 4 || !/border:var\(--ro\) solid var\(--c\)/.test(r) || !/box-shadow:0 0 0 1px #000/.test(r)) sg(".stg-ring: outer band var(--ro) ≥ 5px, inner ≥ 4px, a 1 px black outer edge");
+        if (!/border:var\(--ri\) solid transparent/.test(ri) || !/box-shadow:0 0 0 1px #000/.test(ri)) sg(".stg-ring-in: inner band var(--ri) with a 1 px black line between the bands");
+        if (!/box-shadow:inset 0 0 0 1px #000/.test(ra) || !/z-index:1/.test(ra)) sg(".stg-ring-in::after: a 1 px black line round the icon, above it");
+        if (px(big, "ro") < 7 || px(big, "ri") < 5) sg(".stg-ring.is-big: bands ≥ 7px / 5px");
+        if (!/\.news-ring \.stg-ring\{box-shadow:0 0 0 1px #000,/.test(html)) sg("the news rings keep the black outer edge under their drop shadow"); }
+      // one-time "ของเล่นใหม่" pop-up (user 2026-11-16), shown on load instead of the TTO patch notes it replaces
+      { const NP = has("NEWS_POPUP") ? run("NEWS_POPUP") : null, PH = run("PATCH_HISTORY");
+        if (!NP) sg("missing NEWS_POPUP");
+        else {
+          if (NP.tool !== "status-glossary" || NP.kicker !== "ของเล่นใหม่" || NP.title !== "สารานุกรมสถานะในเกม" || !NP.key) sg("NEWS_POPUP: tool / kicker / title / key");
+          if (!PH.some(e => e.key === NP.replaces)) sg(`NEWS_POPUP.replaces ${NP.replaces} is not a PATCH_HISTORY key`);
+          const due = run("newsPopupDue");
+          if (!due(null, "", true) || due(NP.key, "", true) || due(null, "#status-glossary", true) || due(null, "#status-glossary/ice", true) || due(null, "", false)) sg("newsPopupDue: unseen = due; seen, on the tool itself, or no storage = not due");
+          if (run("newsTakesPatchSlot")() !== (NP.replaces === PH[0].key)) sg("newsTakesPatchSlot must be true only while the news replaces the newest patch");
+          const h = run("newsPopupHtml")(), plain = h.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ");
+          if (!/<h2 id="newsTitle"[^>]*>[\s\S]*ของเล่นใหม่[\s\S]*สารานุกรมสถานะในเกม[\s\S]*<\/h2>/.test(h)) sg("the pop-up header must read ของเล่นใหม่ สารานุกรมสถานะในเกม");
+          if (!plain.includes(String(run("statusAllKeys")().length))) sg("the pop-up must show the live status count");
+          if (!/href="#status-glossary"/.test(h)) sg("the pop-up needs a link that opens #status-glossary");
+          if (h.includes(run("STATUS_ICONS")._unknown)) sg('the pop-up shows the "?" icon');
+          if (["og", "tot", "tto", "reborn"].some(s => !h.includes(run("SKILL_ICONS")["server_" + s]))) sg("the pop-up shows the four server logos");
+          if (!/<div class="changelog-backdrop news-backdrop" id="newsModal" hidden aria-modal="true" role="dialog" aria-labelledby="newsTitle">/.test(html)) sg("#newsModal: aria-modal dialog toggled by hidden (the donate nudge waits for it)");
+          if (!/class="changelog-popup news-pop"/.test(html)) sg("the news card must carry changelog-popup (theme surfaces)");
+          const mp = (html.match(/function mountPatchPopup\(\)\{[\s\S]*?\n\}/) || [""])[0];
+          if (!/seen !== PATCH_HISTORY\[0\]\.key && !newsTakesPatchSlot\(\)/.test(mp)) sg("mountPatchPopup must not force the patch notes the news replaces");
+          if (!/mountPatchPopup\(\);\r?\nmountNewsPopup\(\);/.test(html)) sg("mountNewsPopup() must run right after mountPatchPopup()");
+          const mn = (html.match(/function mountNewsPopup\(\)\{[\s\S]*?\n\}/) || [""])[0];
+          if (!/NEWS_SEEN_KEY, NEWS_POPUP\.key/.test(mn) || !/PATCH_SEEN_KEY, NEWS_POPUP\.replaces/.test(mn)) sg("closing the news must remember it and the patch it replaces");
+          if (!/patchModal/.test(mn)) sg("the news must wait while the patch notes are open");
+        } }
+      for (const sel of [".stg-panel", ".stg-desc", ".stg-tile:not(.is-on)", ".stg-close", ".stg-search"]) if (!html.includes(`"${sel}"`)) sg(`THEME_SURFACES lacks ${sel}`);
+      // phone sheet: a deep link opens it and updates the address; it stays solid on the glass looks (ToT / Reborn --th-solid 0%)
+      { const pg = (html.match(/function openByKey\(key, srv\)\{[\s\S]*?\n  \}/) || [""])[0];
+        if (!/openSheet\(\)/.test(pg) || !/linkHash\(\)/.test(pg)) sg("openByKey must open the phone sheet and update the address (linkHash)");
+        if (!/\.stg-panel\.is-sheet\{[^}]*--th-solid:\s*100%/.test(html)) sg("the phone sheet must set --th-solid to 100% (ToT / Reborn looks make panels see-through)"); }
+      if (!/html\.tool-status/.test(html) || !/tool-status", tool\.id === "status-glossary"/.test(html)) sg("showTool must toggle html.tool-status");
+      if (!/tool\.id === "status-glossary"[^\n]*_statusGlossary/.test(html)) sg("route() must open #status-glossary/<key>");
+      if (!miss5.length) {
+        const ring = run("statusRingColors"), state = run("statusGlossaryState"), panel = run("statusPanelHtml"), tile = run("statusTileHtml"), counts = run("statusRailCounts");
+        for (const [tags, want] of [[["Debuff", "Magical", "Lock"], "lock/debuff"], [["Buff", "Magical", "Shield"], "shield/buff"], [["Buff", "Debuff", "Magical"], "mag/both"], [["Debuff", "Physical", "Crowd Control"], "cc/debuff"], [["System"], "sys/none"], [[], "none/none"]])
+          { const r = ring(tags); if (r.outer + "/" + r.inner !== want) sg(`statusRingColors(${tags}) = ${r.outer}/${r.inner}, expected ${want}`); }
+        const st1 = state({ server: "xx", type: "nope", key: "nope", lv: -3 });
+        if (st1.server !== "og" || !Array.isArray(st1.filters) || st1.filters.length || !K("og").includes(st1.key) || !(st1.lv >= 1)) sg(`statusGlossaryState garbage -> ${JSON.stringify(st1)}`);
+        const st2 = state({ server: "og", key: "gilded" });
+        if (st2.server !== "tto" || st2.key !== "gilded") sg(`a TTO-only status linked on BB should open on TTO, got ${JSON.stringify(st2)}`);
+        const st3 = state({ server: "og", key: "ice", lv: 99 });
+        if (st3.lv > Math.max(1, maxLv("ice", "og"), 5)) sg(`statusGlossaryState clamps the level, got ${st3.lv}`);
+        if (JSON.stringify(state({ type: "Buff" }).filters) !== '["Buff"]') sg("a stored single type (first version) must become filters [type]");
+        if (JSON.stringify(state({ filters: ["Buff", "nope", "Buff", "Exclusive"] }).filters) !== '["Buff","Exclusive"]') sg("statusGlossaryState must keep known, unique filters");
+        const fm = run("statusFilterMatch"), excl = run("statusIsExclusive");
+        // every picked filter must hold, inside a group too (user 2026-11-16: "the all filters combination are AND not OR")
+        const both = K("og").filter(k => fm(k, "og", ["Debuff", "Magical"])), pm = K("og").filter(k => fm(k, "og", ["Physical", "Magical"]));
+        if (!both.length || both.some(k => !(tags(k).includes("Debuff") && tags(k).includes("Magical")))) sg("Debuff + Magical must show statuses that are both (AND)");
+        if (pm.length !== K("og").filter(k => tags(k).includes("Physical") && tags(k).includes("Magical")).length) sg("Physical + Magical must show only statuses that are both (AND inside a group too)");
+        if (K("tto").filter(k => fm(k, "tto", ["Buff", "Debuff"])).some(k => !(tags(k).includes("Buff") && tags(k).includes("Debuff")))) sg("Buff + Debuff must show only statuses that are both");
+        if (!excl("gilded", "tto") || !excl("hardenSkin", "tto") || excl("ice", "tto") || excl("hardenSkin", "og")) sg("statusIsExclusive: TTO-only keys and TTO-changed texts on TTO only");
+        if (counts("og", "", []).Exclusive !== 0) sg("BB has no server-exclusive status");
+        // a row's count = the results if that row were added to the picks (a picked row = the current results)
+        const ct = counts("tto", "", ["Debuff"]), dTto = K("tto").filter(k => tags(k).includes("Debuff"));
+        if (ct.Debuff !== dTto.length) sg("a picked row counts the current results");
+        if (ct.Magical !== dTto.filter(k => tags(k).includes("Magical")).length) sg("Magical counts inside the picked Debuff");
+        if (ct.Buff !== dTto.filter(k => tags(k).includes("Buff")).length) sg("Buff counts inside the picked Debuff (AND, same group)");
+        if (counts("og", "", ["Physical"]).Magical !== K("og").filter(k => tags(k).includes("Physical") && tags(k).includes("Magical")).length) sg("Magical counts inside the picked Physical (AND, same group)");
+        // the server picker = the four logos only (user 2026-11-16): no box, no name text; the name is the button's aria-label
+        { const rh = run("statusRailHtml")(state({ server: "tto" }), counts("tto", "", []));
+          const btns = rh.match(/<button[^>]*data-stg-srv="[^"]+"[^>]*>[\s\S]*?<\/button>/g) || [];
+          if (btns.length !== 4 || btns.some(b => b.replace(/<[^>]*>/g, "").trim() || !/aria-label="(BB|ToT|TTO|Reborn)"/.test(b) || !/<img /.test(b))) sg("server buttons must be the logo only, named by aria-label");
+          if (/"\.stg-srvbtn/.test(html)) sg("THEME_SURFACES must not paint the server logos (they have no box)");
+          if (!/\.stg-srvbtn\{[^}]*background:\s*none/.test(html) || /\.stg-srvbtn\.is-on\{[^}]*background/.test(html)) sg("the server logos have no background, picked or not"); }
+        const c = counts("og", "", []);
+        if (c.all !== 207) sg(`statusRailCounts(og).all = ${c.all}`);
+        if (c.Buff !== K("og").filter(k => tags(k).includes("Buff")).length) sg("statusRailCounts Buff count");
+        if (c.Unclassified !== K("og").filter(k => !tags(k).length).length) sg("statusRailCounts Unclassified count");
+        if (counts("og", "zzzz-nothing", []).all !== 0) sg("a search with no match must count 0");
+        if (!(counts("og", "ice", []).all >= 1)) sg("search 'ice' must find Ice");
+        const t1 = tile("ice", true);
+        if (!t1.includes(run("statusIconSrc")("ice")) || !t1.includes("Ice") || !/is-on/.test(t1)) sg("statusTileHtml(ice) misses its icon, name or on state");
+        let checked = 0;
+        const mapped = (n) => !!(run("STATUS_CLASS_MAP")[n.toLowerCase()] || run("STATUS_CLASS_MAP")[n]);
+        // nested pop-ups inside the panel use the glossary's server, not the skill page's
+        { const plain = (s) => String(s).replace(/<[^>]*>/g, " ").replace(/\*\*|__|\^\^|\s+/g, " ");
+          const dsc = run("getStatusDesc"), tt = plain(dsc("iceShield", null, 156, "tto")), bb = plain(dsc("iceShield", null, 156, "og"));
+          if (tt !== bb) { const words = tt.split(" ").filter(w => w.length > 3 && !bb.includes(w)); const h = plain(panel("armorShatter", "tto", 1, 156));
+            if (words.length && !words.some(w => h.includes(w))) sg("nested [iceShield] inside armorShatter on TTO shows BB's text (pass the server down)"); } }
+        const pillMax = run("statusPillMax");
+        for (const srv of ["og", "tot", "tto", "reborn"]) for (const k of K(srv)) for (const lv of [null, ...Array.from({ length: Math.max(1, pillMax(k, srv)) }, (_, i) => i + 1)]) {
+          let h; try { h = panel(k, srv, lv, 156); } catch (e) { sg(`statusPanelHtml(${k}, ${srv}, ${lv}) throws: ${e.message}`); continue; }
+          checked++;
+          const bad = [];
+          if (/\*\*|\^\^|NaN|undefined/.test(h.replace(/<[^>]*>/g, ""))) bad.push("raw markup / NaN / undefined");
+          if (/(^|[^_])__[^_]/.test(h.replace(/<[^>]*>/g, ""))) bad.push("raw __");
+          for (const m of h.matchAll(/\[([a-zA-Z]+)\d*\]/g)) if (mapped(m[1]) && !/<span class="sk-status"[^>]*>$/.test(h.slice(Math.max(0, m.index - 300), m.index))) { bad.push(`raw [${m[1]}]`); break; }
+          if (bad.length) { sg(`statusPanelHtml(${k}, ${srv}, ${lv}): ${bad.join(", ")}`); }
+        }
+        // mount on stubs: the grid lists the server's statuses, the panel shows the picked one; blocked storage still mounts
+        const root = run("(() => { const r = makeSmartRoot(); mountStatusGlossary(r); return r; })()");
+        const api = root._statusGlossary;
+        if (!api) sg("mountStatusGlossary must expose root._statusGlossary");
+        else {
+          const grid = root.querySelector('[data-stg="grid"]').innerHTML, pan = root.querySelector('[data-stg="panel"]').innerHTML;
+          const n = (grid.match(/class="stg-tile(?: is-on)?"/g) || []).length;
+          if (n !== K(api.state.server).length) sg(`mounted grid has ${n} tiles, expected ${K(api.state.server).length}`);
+          if (!pan.includes(name(api.state.key))) sg("mounted panel does not show the picked status");
+          api.openByKey("gilded", "og");
+          if (api.state.server !== "tto" || api.state.key !== "gilded") sg("openByKey(gilded, og) should switch to TTO");
+          if (!root.querySelector('[data-stg="panel"]').innerHTML.includes("Gilded")) sg("panel did not follow openByKey");
+        }
+        const keepLS = sandbox.localStorage;
+        sandbox.localStorage = { getItem() { throw new Error("blocked"); }, setItem() { throw new Error("blocked"); } };
+        try { run("(() => { const r = makeSmartRoot(); mountStatusGlossary(r); return r; })()"); } catch (e) { sg("mount with blocked storage throws: " + e.message); }
+        sandbox.localStorage = keepLS;
+        console.log(`Verified the status glossary page: ${checked} panels (every status, server and level), the mount and its state cleaning.`);
+      }
+      console.log(`Verified status sources: ${rows.filter(r => r.kind === "apply").length} skill source rows, ${Object.keys(FIX).length} hand rulings, ${run("STATUS_SOURCES_ITEM").length} item rows, ${run("STATUS_SOURCES_PET").length} pet rows.`);
+    }
+  } catch (e) { sg("threw: " + (e && e.stack || e)); }
+}
+// </SG:checks>
 console.log("=== AUDIT SUMMARY ===");
 if (errorCount === 0) {
   console.log(`SUCCESS: All ${SKILLS.length} skills, ${checkedFormulas} formula permutations, ${checkedLckFloors} LCK-floor checks, ${checkedGaosHeroRouting} Gaos render checks, and ${Object.keys(SKILL_ICONS).length} icons passed 100% of automated integrity checks!`);
