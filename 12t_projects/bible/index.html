@@ -4406,9 +4406,9 @@
   .sk-roster-grid.fade-t{-webkit-mask-image:linear-gradient(to bottom, transparent, #000 70px); mask-image:linear-gradient(to bottom, transparent, #000 70px)}
   .sk-roster-grid.fade-t.fade-b{-webkit-mask-image:linear-gradient(to bottom, transparent, #000 70px, #000 calc(100% - 120px), transparent); mask-image:linear-gradient(to bottom, transparent, #000 70px, #000 calc(100% - 120px), transparent)}
   @media (max-width: 1024px){ .sk-roster-grid:has(.is-halo){--hc:6} }
-  .sk-roster-grid.is-roomy:has(.is-halo){--hc:6}   /* a tab of 6 or fewer cards (desktop): the big cards, text in proportion (user 2026-11-18) */
+  .sk-roster-grid.is-roomy:has(.is-halo){--hc:6}   /* a tab of 12 or fewer cards (desktop): the big cards, text in proportion (user 2026-11-18) */
   .sk-roster-grid.is-roomy .sk-roster-card.is-halo .sk-roster-name{margin-top:10px; font-size:16px; line-height:1.25}
-  .sk-roster-card.is-halo{flex:0 0 calc((100% - (var(--hc) - 1) * var(--hgx)) / var(--hc) - 0.1px); min-width:0}
+  .sk-roster-card.is-halo{flex:0 0 var(--cw, calc((100% - (var(--hc) - 1) * var(--hgx)) / var(--hc) - 0.1px)); min-width:0}   /* --cw: pinned by gridFitPaged for balanced rows */
   .sk-roster-card.is-halo .sk-roster-name{overflow-wrap:anywhere}
   .sk-roster-card.is-halo{--halo:rgba(201,162,39,.30); --orbit:var(--gold); background:none; border:0; box-shadow:none; padding:4px 0 0; min-height:0; gap:0; overflow:visible; justify-content:flex-start}
   .sk-roster-card.is-halo.is-passive{--halo:rgba(170,188,220,.17); --orbit:color-mix(in srgb, #9fb2d2 80%, var(--text))}
@@ -22125,34 +22125,36 @@ function mountSkillCooldownLookup(root){
       + '<svg class="sk-halo-ranks" viewBox="0 0 100 100" aria-hidden="true">' + haloStars(Math.max(1, s.maxRank || 1)) + "</svg></span>"
       + '<span class="sk-roster-name">' + s.name + "</span></button>";   // no ติดตัว tag: the orbit style tells a passive (user 2026-11-18)
   }
-  // Roster and global search grid (user 2026-11-18, replacing the tight cards and the pager of 2026-10-19, which moved the page around): two rows plus 45 % of
-  // the third (never above the CSS max-height, which the landing's fit reference already counts, so the page never rescales), the rest scrolled inside
-  // with no scrollbar; the cut-off edge fades (.fade-b while more is below, .fade-t once scrolled). Name and state argument kept for the callers.
+  // Roster and global search grid (user 2026-11-18; replaced the tight cards and the pager of 2026-10-19, which moved the page around). Desktop (> 1024 px):
+  // 1-6 cards: the big 6-a-row cards in one row; 7-12: big cards in two balanced rows (ceil(n / 2) a row: 8 = 4 + 4, 11 = 6 + 5); 13-16: the small 8-a-row
+  // cards in two balanced rows (14 = 7 + 7); 17+: small cards, 8 a row. Rows are balanced by pinning the card width (--cw) and narrowing the side padding
+  // so exactly that many cards fit; flex centres every row. The grid is one fixed height on every tab: the taller of two big-card rows and two small-card
+  // rows plus 45 % of a third (cards measured with a two-line name), and the roster's shell height is the landing's fit reference (landingRefH), so
+  // fitStageToScreen centres exactly this box. Cards past it scroll inside with no scrollbar; the cut-off edge fades (.fade-b / .fade-t).
+  // Phones: two rows and part of the third, natural wrap. Name and state argument kept for the callers.
   function gridFitPaged(grid, state){
     if (!grid || !grid.children || !grid.parentElement || typeof getComputedStyle !== "function") return;
     const old = grid.parentElement.querySelector(".sk-roster-pager"); if (old) old.remove();
-    const cards = Array.from(grid.children);
-    grid.classList.remove("is-tight"); grid.style.maxHeight = "";
-    const roomy = window.innerWidth > 1024 && cards.length > 0 && cards.length <= 6;   // a short tab keeps the big 6-a-row cards (user 2026-11-18)
-    grid.classList.remove("is-roomy");   // measured with the small cards below, then put back
+    const cards = Array.from(grid.children), n = cards.length, wide = window.innerWidth > 1024;
+    const big = wide && n > 0 && n <= 12, cols = wide && n > 6 && n <= 16 ? Math.ceil(n / 2) : 0;
+    grid.classList.remove("is-tight", "is-roomy"); grid.style.maxHeight = ""; grid.style.height = ""; grid.style.boxSizing = "";
+    grid.style.removeProperty("--cw"); grid.style.paddingLeft = grid.style.paddingRight = "";
     cards.forEach(c => { c.hidden = false; });
-    const cs = getComputedStyle(grid), gap = parseFloat(cs.rowGap) || 0, pt = parseFloat(cs.paddingTop) || 0, cssMax = parseFloat(cs.maxHeight) || Infinity;
-    const h = cards.length ? Math.max(...cards.map(c => c.offsetHeight)) : 0;
+    const cs = getComputedStyle(grid), gap = parseFloat(cs.rowGap) || 0, pt = parseFloat(cs.paddingTop) || 0, pb = parseFloat(cs.paddingBottom) || 0, cssMax = parseFloat(cs.maxHeight) || Infinity;
+    const h = n ? Math.max(...cards.map(c => c.offsetHeight)) : 0;
     const shell = grid.closest(".tool-shell");
-    grid.style.height = ""; grid.style.boxSizing = "";
-    if (window.innerWidth >= 900 && shell && shell.classList.contains("is-hero-empty") && typeof landingRefH === "function"){
-      // desktop: a fixed height, so the shell is exactly the fit reference (centred, and the same height on every tab and search)
-      // desktop: two card rows plus 45 % of a third, from a card with a two-line name (the same height on every tab); the roster's shell height is the
-      // landing's fit reference (landingRefH), so fitStageToScreen centres exactly this content
+    if (window.innerWidth >= 900 && shell && shell.classList.contains("is-hero-empty") && typeof landingRefH === "function" && n){
       grid.style.maxHeight = "none"; grid.style.boxSizing = "border-box";
-      const card = cards[0], halo = card && card.querySelector(".sk-halo"), nm = card && card.querySelector(".sk-roster-name");
-      if (halo){
-        const ncs = nm ? getComputedStyle(nm) : null, lh = ncs ? (parseFloat(ncs.lineHeight) || 16.5) : 16.5;
-        const h2 = (parseFloat(getComputedStyle(card).paddingTop) || 0) + halo.offsetHeight + (ncs ? (parseFloat(ncs.marginTop) || 0) : 0) + 2 * lh;
-        grid.style.height = Math.round(pt + 2 * (h2 + gap) + 0.45 * h2 + (parseFloat(cs.paddingBottom) || 0)) + "px";
+      const card = cards[0], halo = card.querySelector(".sk-halo"), nm = card.querySelector(".sk-roster-name");
+      const cardH = () => { const ncs = nm ? getComputedStyle(nm) : null, lh = ncs ? (parseFloat(ncs.lineHeight) || 16.5) : 16.5; return (parseFloat(getComputedStyle(card).paddingTop) || 0) + (halo ? halo.offsetHeight : 0) + (ncs ? (parseFloat(ncs.marginTop) || 0) : 0) + 2 * lh; };
+      const small = cardH(); grid.classList.add("is-roomy"); const large = cardH(); grid.classList.toggle("is-roomy", big);
+      grid.style.height = Math.round(Math.max(pt + 2 * (small + gap) + 0.45 * small, pt + 2 * large + gap) + pb) + "px";
+      if (cols){
+        const g = getComputedStyle(grid), hgx = parseFloat(g.columnGap) || 0, pl = parseFloat(g.paddingLeft) || 0, hc = parseFloat(g.getPropertyValue("--hc")) || 8;
+        const inner = grid.clientWidth - pl - (parseFloat(g.paddingRight) || 0), cw = (inner - (hc - 1) * hgx) / hc, side = pl + (inner - (cols * cw + (cols - 1) * hgx)) / 2 - 0.5;
+        grid.style.setProperty("--cw", cw + "px"); grid.style.paddingLeft = grid.style.paddingRight = Math.max(pl, side) + "px";
       }
       if (shell.querySelector(".sk-roster-header")) landingRefKnown[landingRefKey()] = shell.offsetHeight;
-      grid.classList.toggle("is-roomy", roomy);
       if (typeof fitStageToScreen === "function") requestAnimationFrame(() => fitStageToScreen(true));
     } else if (h) grid.style.maxHeight = Math.round(Math.min(cssMax, pt + 2 * (h + gap) + 0.45 * h)) + "px";   // phones: two rows and part of the third
     const fade = () => { const top = grid.scrollTop, more = grid.scrollHeight - grid.clientHeight - top > 2; grid.classList.toggle("fade-b", more); grid.classList.toggle("fade-t", top > 2); };
@@ -41054,6 +41056,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-18T14:24:48.871Z","feat(bible): แท็บรายชื่อสกิลจัดแถวสมดุล 7-12 สกิลใช้การ์ดใหญ่ 2 แถว 13-16 สกิลใช้การ์ดเล็ก 2 แถวเท่ากัน"],
     ["2026-11-18T14:10:31.842Z","feat(bible): รายชื่อสกิลแถวละ 8 จัดกลางทุกแถว แท็บที่มี 6 สกิลหรือน้อยกว่าใช้การ์ดใหญ่ ดาวสีเงินสำหรับสกิลติดตัว ชื่อสกิล ToT EX อ่านง่าย ไอคอนมูคมขึ้น Fire Avatar - Fireball อยู่แท็บ C"],
     ["2026-11-18T13:55:06.034Z","feat(bible): รายชื่อสกิลอยู่กลางจอเสมอ แถวเกินเลื่อนดูในกรอบพร้อมจางหาย ไอคอนใช้ภาพ rank 0 เฉพาะที่เกมมี นอกนั้นใช้ rank 1 และซอมบี้ของค้างคาวใช้หน้าคลาสสีเทา"],
     ["2026-11-18T13:34:04.481Z","feat(bible): หน้ารายชื่อสกิลไม่มีกล่อง หัวคลาสกับแท็บอยู่แถวเดียว การ์ดขนาดเท่ากันและจัดกลางเมื่อมีน้อย ดาวใหญ่ขึ้น เอาคำว่าติดตัวออก ไม่มีแถบเลื่อนแนวนอนตอนชี้"],
