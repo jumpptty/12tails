@@ -73,7 +73,7 @@ The other 7 groups' card updates are merged on the branch **`tto170-cards`**: Ba
    - title `TAILSTOPIA 1.7.0`, at the top of the array;
    - one ranked list built from the Sheep and Rabbit lines above plus the groups' lines below, with `tiers`;
    - follow the house style of the `tto-1.6.2.4` entry; the validator refuses เซิร์ฟเวอร์, server-side and โค้ด in a line.
-5. Finish: run `node scripts/validate_skills.js --full`, add the changelog entry, commit, merge into `skill-cooldown-lookup` (a fast-forward), push, and delete the branch (`git push origin --delete tto170-cards`).
+5. Finish: run `node scripts/validate_skills.js --full`, add the changelog entry, commit, merge it into `skill-cooldown-lookup` (`git switch skill-cooldown-lookup && git merge tto170-cards`; HANDOFF.md is the same on both, so it merges cleanly), push, and delete the branch (`git push origin --delete tto170-cards`).
 
 ### Sheep: open points
 
