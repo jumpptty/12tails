@@ -662,8 +662,8 @@ Read from TTO's own client (`TTO1102:`, `DecompiledSource_TTO_2026-11-02/`, AGEN
   | prey (614) | Debuff, Magical | read by the Slayer / All Slayer fire RPCs like `slayerMark` | Chameleon Apex Hunt |
   | stormCharge (616) | Buff, State | `ApplyMovement`: run state at 1.2 × runSpeed | Chameleon Chain Lightning |
   | staticDrain (617) | Debuff, State | `ApplyMovement`: speed at most 0.4 × runSpeed; exempt from immunity | Chameleon Chain Lightning |
-  | gilded (718) | Debuff, Physical, CC | `ApplyMovement`: speed at most (1 − 0.1 × level) × runSpeed | Rabbit Coin Ricochet |
-  | bounty (719) | Debuff, Magical | hitMod +0.15 (apply 0x24FD5B5, removal 0x24E8B97) | Rabbit Bounty Hunt |
+  | gilded (718) | Debuff, Physical, CC | `ApplyMovement`: speed at most (1 − 0.1 × level) × runSpeed; since 1.7.0 Shooting Array hits on it ×1.35, floor (`TTO1118:Rabbit::GildedArray@0x1E31F50`) | Rabbit Coin Ricochet |
+  | bounty (719) | Debuff, Magical | hitMod +0.2 since 1.7.0 (`TTO1118:CharacterControl::ShiftHitMod@0x2519B10` from `<addStatus>d__562`; +0.15 in TTO1102-1109, apply 0x24FD5B5, removal 0x24E8B97) | Rabbit Bounty Hunt |
   | stoneAegis (918) / runeFracture (919) | Buff, Magical / Debuff, Magical | hitMod −0.15 / +0.08 × level (`AddMonkeyRow6Status`) | Monkey Rune Golem |
   | bastionWard (920) | Buff, Magical, Shield | `CharacterControl::BastionWardSoak@0x24B1960` (physical hits, after hitMod; not under armorShatter or a piercing hit) | Monkey Buiten Bastion |
   | solarCrown (921) | Buff, Magical | `addTimeOut` × 0.7 on the sun-fire keys | Monkey Ja Ascension |
