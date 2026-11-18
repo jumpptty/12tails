@@ -6274,7 +6274,7 @@ console.log(`Verified ${checkedUnintended} Unintended-behavior page checks.`);
   const data = keys.length >= 200 && keys.every((k) => icons[k] && /^data:image\/webp;base64,/.test(r0[k]) && r0[k] !== icons[k]);
   const wired = (src.match(/\$\{skillHaloCard\(s, /g) || []).length === 2 && !src.includes('<img class="sk-roster-icon" src="${SKILL_ICONS[s.icon]')
     && src.includes('".sk-roster-card:not(.is-halo)"') && src.includes(", .sk-halo-disc > img\")) centreRingImg(t);") && /\.sk-roster-card\.is-halo::before\{display:none\}/.test(src)
-    && src.includes("function haloStars(n){") && src.includes("if (typeof SKILL_ICONS_R0 !== \"undefined\" && SKILL_ICONS_R0[icon]) return SKILL_ICONS_R0[icon];") && src.includes("const art = haloArt(s.icon);");
+    && src.includes("function haloDots(n){") && src.includes("if (typeof SKILL_ICONS_R0 !== \"undefined\" && SKILL_ICONS_R0[icon]) return SKILL_ICONS_R0[icon];") && src.includes("const art = haloArt(s.icon);");
   if (!data || !wired) { errorCount++; console.error(`[HALO ROSTER ERROR] SKILL_ICONS_R0 needs 200+ WebP entries keyed by real SKILL_ICONS keys (${data}, ${keys.length}); both roster builders must use skillHaloCard, its art must prefer SKILL_ICONS_R0, centreRingImg must cover .sk-halo-disc > img and the theme fill must skip .is-halo (${wired})`); }
   else console.log(`Verified the Halo roster: ${keys.length} numeral-free icons, both builders on skillHaloCard.`);
 }

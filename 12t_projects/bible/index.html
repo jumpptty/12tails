@@ -4403,7 +4403,7 @@
   .sk-roster-empty-sub{font-size:13px; color:var(--muted)}
   /* Halo roster (user 2026-11-18: "rework these to circular icons too with good looking frames ... remove the containers and it can become much bigger
      icons"; mock #5 Halo picked: "Halo looks really good"). No tile: the skill's art in a round disc on a soft gold halo, a thin dashed orbit (dotted and
-     moon-pale for a passive; no tag, user 2026-11-18) that lights up and turns while hovered, and the max rank as gold stars on the orbit's bottom (haloStars).
+     moon-pale for a passive; no tag, user 2026-11-18) that lights up and turns while hovered, and the max rank as gold dots on the orbit's bottom (haloDots).
      The art is haloArt(): SKILL_ICONS_R0 (the ranked icon with its baked numeral replaced by the game's rank-0 art) where the game has a rank-0
      picture, else the rank-1 icon, else the icon itself (C skills keep their C); all at 1.3x. */
   /* Halo grid (user 2026-11-18): a wrapping flex row of equal cards, --hc a row (8 on desktop, so the many 16-skill tabs fill two rows exactly; 6 up to
@@ -4435,14 +4435,14 @@
   .sk-halo-disc{position:absolute; inset:11%; border-radius:50%; overflow:hidden; background:#0d0907; box-shadow:0 10px 24px rgba(0,0,0,.55); transition:transform .3s ease}
   .sk-roster-grid .sk-roster-card.is-halo .sk-halo-disc > .sk-roster-icon{display:block; width:100%; height:100%; object-fit:cover; filter:none; transform:scale(1.3) translate(var(--ring-x,0%), var(--ring-y,0%)); transition:none}
   .sk-halo-disc::after{content:""; position:absolute; inset:0; border-radius:50%; box-shadow:inset 0 0 0 1px rgba(255,236,190,.26), inset 0 -12px 20px rgba(0,0,0,.32); background:radial-gradient(circle at 32% 24%, rgba(255,255,255,.13), transparent 46%)}
-  .sk-halo-ranks path{fill:var(--gold); stroke:var(--ink); stroke-width:1.5; stroke-linejoin:round; paint-order:stroke; transition:fill .3s ease}
+  .sk-halo-ranks circle{fill:var(--gold); stroke:var(--ink); stroke-width:1.5; stroke-linejoin:round; paint-order:stroke; transition:fill .3s ease}
   .sk-roster-card.is-halo .sk-roster-name{margin-top:8px; padding:0 3px; font-size:13.5px; line-height:1.22}   /* inside its own card (borrowing the gap ran names together, user 2026-11-18); a long one takes two lines */
   .sk-roster-card.is-halo:hover .sk-halo::before, .sk-roster-card.is-halo:focus-visible .sk-halo::before{opacity:1; transform:scale(1.04)}
   .sk-roster-card.is-halo:hover .sk-halo-orbit, .sk-roster-card.is-halo:focus-visible .sk-halo-orbit{opacity:1; animation-play-state:running}
   .sk-roster-card.is-halo:hover .sk-halo-disc, .sk-roster-card.is-halo:focus-visible .sk-halo-disc{transform:scale(1.035)}
-  .sk-roster-card.is-halo:hover .sk-halo-ranks path, .sk-roster-card.is-halo:focus-visible .sk-halo-ranks path{fill:#f0cd5a}
-  .sk-roster-card.is-halo.is-passive .sk-halo-ranks path{fill:#c3ccd9}   /* passive: silver stars to match its moon-pale orbit (user 2026-11-18) */
-  .sk-roster-card.is-halo.is-passive:hover .sk-halo-ranks path, .sk-roster-card.is-halo.is-passive:focus-visible .sk-halo-ranks path{fill:#eef2f8}
+  .sk-roster-card.is-halo:hover .sk-halo-ranks circle, .sk-roster-card.is-halo:focus-visible .sk-halo-ranks circle{fill:#f0cd5a}
+  .sk-roster-card.is-halo.is-passive .sk-halo-ranks circle{fill:#c3ccd9}   /* passive: silver dots to match its moon-pale orbit (user 2026-11-18) */
+  .sk-roster-card.is-halo.is-passive:hover .sk-halo-ranks circle, .sk-roster-card.is-halo.is-passive:focus-visible .sk-halo-ranks circle{fill:#eef2f8}
   .sk-roster-card.is-halo:focus-visible .sk-halo::after{content:""; position:absolute; inset:-5px; border-radius:50%; box-shadow:0 0 0 2px var(--text)}
   @keyframes skHaloSpin{to{transform:rotate(360deg)}}
   @media (max-width: 1024px){ .sk-roster-card.is-halo .sk-roster-name{font-size:15px} }
@@ -22127,12 +22127,11 @@ function mountSkillCooldownLookup(root){
     return trees.filter(t => t.ids.length).concat(other.ids.length ? [other] : [], [soonTabs.tot, soonTabs.reborn, soonTabs.tto].filter(t => t.ids.length));
   }
   // Halo cards (user 2026-11-18, mock #5 "Halo" picked; the look is the .sk-halo CSS). Function declarations, so both builders can call them anywhere.
-  function haloStars(n){   // n gold stars hung along the bottom of the orbit (r 46.5 in the 100-unit box), 17 degrees apart (r 6.4: about 6 px on the 8-a-row ~91 px circles; 7.2 was a bit big, user 2026-11-18)
+  function haloDots(n){   // n plain dots hung along the bottom of the orbit (r 46.5 in the 100-unit box), 15 degrees apart, radius 4 (user 2026-11-18: circles, were stars)
     let out = "";
     for (let i = 0; i < n; i++){
-      const a = (90 + (i - (n - 1) / 2) * 17) * Math.PI / 180, cx = 50 + 46.5 * Math.cos(a), cy = 50 + 46.5 * Math.sin(a);
-      let d = ""; for (let k = 0; k < 10; k++){ const t = -Math.PI / 2 + k * Math.PI / 5, r = k % 2 ? 2.7 : 6.4; d += (k ? "L" : "M") + (cx + r * Math.cos(t)).toFixed(2) + " " + (cy + r * Math.sin(t)).toFixed(2); }
-      out += '<path d="' + d + 'Z"/>';
+      const a = (90 + (i - (n - 1) / 2) * 15) * Math.PI / 180;
+      out += '<circle cx="' + (50 + 46.5 * Math.cos(a)).toFixed(2) + '" cy="' + (50 + 46.5 * Math.sin(a)).toFixed(2) + '" r="4"/>';
     }
     return out;
   }
@@ -22148,7 +22147,7 @@ function mountSkillCooldownLookup(root){
     return '<button type="button" class="sk-roster-card is-halo' + (s.passive ? " is-passive" : "") + (extraClass || "") + '" data-skill-id="' + s.id + '" title="' + title + '">'
       + '<span class="sk-halo"><svg class="sk-halo-orbit" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46.5" pathLength="100"/></svg>'
       + '<span class="sk-halo-disc"><img class="sk-roster-icon" src="' + art + '" alt="' + s.name + '" loading="lazy"></span>'
-      + '<svg class="sk-halo-ranks" viewBox="0 0 100 100" aria-hidden="true">' + haloStars(Math.max(1, s.maxRank || 1)) + "</svg></span>"
+      + '<svg class="sk-halo-ranks" viewBox="0 0 100 100" aria-hidden="true">' + haloDots(Math.max(1, s.maxRank || 1)) + "</svg></span>"
       + '<span class="sk-roster-name">' + s.name + "</span></button>";   // no ติดตัว tag: the orbit style tells a passive (user 2026-11-18)
   }
   // Roster and global search grid (user 2026-11-18; replaced the tight cards and the pager of 2026-10-19, which moved the page around). Desktop (> 1024 px):
@@ -41152,6 +41151,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-18T15:25:02.489Z","feat(bible): ตัวบอกแรงค์สูงสุดใต้วงสกิลเปลี่ยนจากดาวเป็นจุดกลมเรียบๆ"],
     ["2026-11-18T15:09:18.458Z","feat(bible): รูปหน้าคลาสในกล่อง PRESET ใช้ภาพขยายและเปลี่ยนสีตามชุดที่ใช้อยู่ (ตามลำดับที่ผู้ใช้จัดเอง)"],
     ["2026-11-18T15:05:48.416Z","feat(bible): PRESET เป็นปุ่มตัวเลข 1-5 กดครั้งเดียวสลับชุดทันทีไม่มีป๊อปอัป กดเลขที่ใช้อยู่หรือรูปคลาสเพื่อตั้งค่า และเคอร์เซอร์ในช่องค้นหากลับมากะพริบ"],
     ["2026-11-18T14:58:34.400Z","feat(bible): กด Esc ในหน้าสกิลกลับไปรายชื่อสกิลของคลาส (แท็บที่มีสกิลนั้น) และ Esc ในหน้ารายชื่อกลับไปหน้าเลือกคลาส"],
