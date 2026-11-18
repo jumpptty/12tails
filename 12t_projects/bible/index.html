@@ -4293,7 +4293,10 @@
   }
   .sk-picker-classes .sg-gate-btn{grid-column:span 2}
   .sk-picker-classes .sg-gate-btn:first-child{grid-column:2 / span 2}
+  @media (min-width: 900px){ .tool-shell.is-hero-empty .sk-picker-classes .sg-gate-grid{width:126%; margin-left:-13%} }   /* rings about 146 px (7 across 860 px gave 115); fitStageToScreen counts this width */
   .sg-gate-common-art{display:grid; place-items:center; border-radius:50%; background:radial-gradient(circle at 42% 36%, #2b2119, #110c09 72%)}
+  .sk-roster-ring{flex:0 0 52px; width:52px; filter:drop-shadow(0 2px 4px rgba(0,0,0,.45))}   /* the Common roster header: the gate ring and glyph */
+  .sk-roster-ring .sg-gate-icon{position:absolute; left:14.286%; top:14.286%; width:71.429%; height:71.429%}
   .sg-gate-common-art svg{width:44%; height:44%; fill:var(--gold)}
   @media (max-width: 800px) {
     .sk-picker-classes .sg-gate-grid{grid-template-columns:repeat(4, 1fr); gap:8px}
@@ -22175,13 +22178,31 @@ function mountSkillCooldownLookup(root){
   });
   // The class gate (desktop) is as tall as the landing's reference box: its rings sit centred in the space the search row leaves, so the gate view is
   // centred like the roster and the search bar keeps one place on the gate, the rosters and the search results (user 2026-11-18).
+  // Roster tabs by keyboard (user 2026-11-18): A / ← the previous tab, D / → the next (wrapping), unless a field has the focus, a pop-up is open or a
+  // modifier is held; only while a roster is on screen (e.code, so a Thai layout works too).
+  document.addEventListener("keydown", (e) => {
+    if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || selected || pickerState !== 'roster' || !pickerClass || !pickerRootEl || pickerRootEl.hidden || !pickerRootEl.offsetParent) return;
+    const t = e.target; if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName || ""))) return;
+    if (document.querySelector('[aria-modal="true"]:not([hidden])')) return;
+    const dir = e.key === "ArrowRight" || e.code === "KeyD" ? 1 : e.key === "ArrowLeft" || e.code === "KeyA" ? -1 : 0;
+    const tabs = dir ? pickerRootEl.querySelectorAll('[data-roster-tab]') : [];
+    if (tabs.length < 2) return;
+    e.preventDefault();
+    const n = tabs.length, cur = Math.min(rosterTab[pickerClass] || 0, n - 1);
+    rosterTab[pickerClass] = (cur + dir + n) % n;
+    renderPickerView();
+  });
   function gateFill(){
     const pc = pickerRootEl && !pickerRootEl.hidden && pickerRootEl.querySelector(".sk-picker-classes"), shell = pc && pc.closest(".tool-shell");
     if (!pc) return;
     pc.style.minHeight = "";
     if (window.innerWidth < 900 || !shell || !shell.classList.contains("is-hero-empty") || typeof landingRefH !== "function") return;
-    pc.style.minHeight = Math.max(0, Math.round(landingRefH() - (shell.offsetHeight - pc.offsetHeight))) + "px";
+    const k = landingRefKey(), natural = shell.offsetHeight;   // the gate at its natural height (rings right under the search row, user 2026-11-18)
+    if (natural > 200) landingGateKnown[k] = Math.max(landingGateKnown[k] || 0, natural);
+    const ref = landingRefH();
+    if (natural < ref) pc.style.minHeight = Math.round(pc.offsetHeight + ref - natural) + "px";   // a roster taller than the gate: the rings centred in the extra space
   }
+  window.__skGateFill = gateFill;   // fitStageToScreen calls it too, once the layout has settled
   function renderPickerView(){
     if (!pickerRootEl) return;
     if (selected) {
@@ -22245,7 +22266,7 @@ function mountSkillCooldownLookup(root){
           <div class="sk-roster-header">
             <button type="button" class="sk-roster-back" data-role="roster-back" title="กลับสู่รายชื่อคลาส" aria-label="กลับสู่รายชื่อคลาส"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
             <div class="sk-roster-title-wrap">
-              ${classIcon ? `<img class="sk-roster-class-icon" src="${classIcon}" alt="${pickerClass}">` : ''}
+              ${pickerClass === 'Common' ? `<span class="sg-gate-ring sk-roster-ring" aria-hidden="true"><span class="sg-gate-icon sg-gate-common-art"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.6"/><rect x="14" y="3" width="7" height="7" rx="1.6"/><rect x="3" y="14" width="7" height="7" rx="1.6"/><rect x="14" y="14" width="7" height="7" rx="1.6"/></svg></span></span>` : classIcon ? `<img class="sk-roster-class-icon" src="${classIcon}" alt="${pickerClass}">` : ''}
               <div class="sk-roster-title"><h3 class="sk-roster-class-name">${thName}</h3><span class="sk-roster-sub">${thName !== pickerClass ? pickerClass + ' · ' : ''}${classSkills.filter(s => !s.soon).length} สกิล</span></div>
             </div>
           ${trees ? `<span class="sk-roster-sep" aria-hidden="true"></span><div class="sk-roster-tabs" role="tablist">${trees.map((t, i) => `<button type="button" class="sk-roster-tab${i === tabI ? " is-on" : ""}" data-roster-tab="${i}" title="${t.full || t.name}" role="tab" aria-selected="${i === tabI}">${t.name}${rosterTabServer(t)} <b>${t.ids.length}</b></button>`).join("")}</div>` : ""}
@@ -22284,12 +22305,7 @@ function mountSkillCooldownLookup(root){
       if (rosterPage.key !== rk) { rosterPage.key = rk; rosterPage.page = 0; }
       gridFitPaged(pickerRootEl.querySelector('.sk-roster-grid'), rosterPage);
 
-      if (browseBtn) {
-        browseBtn.hidden = false;
-        browseBtn.classList.remove('sk-browse-common');
-        browseBtn.title = 'เลือกตามสายอาชีพ (Browse by Class)';
-        browseBtn.setAttribute('aria-label', 'Browse by Class');
-      }
+      if (browseBtn) browseBtn.hidden = true;   // a roster returns to the gate by its back arrow or Esc (user 2026-11-18); the button stays on an open skill card
 
     } else {
       // 12-class gate
@@ -22326,8 +22342,7 @@ function mountSkillCooldownLookup(root){
           prevPickerState = 'roster';
           prevPickerClass = cls;
           if (searchEl) searchEl.value = '';
-          renderPickerView();
-          softFocus(searchEl);
+          renderPickerView();   // no search focus: A / D and the arrows switch the roster tabs (user 2026-11-18)
         });
       });
 
@@ -41073,6 +41088,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-18T14:54:23.636Z","feat(bible): ประตูเลือกคลาสวงใหญ่ขึ้น ช่องค้นหาใกล้วงตามความสูงจริง หัว ทั่วไป ใช้วงแหวน เอาปุ่มเล็กออกจากหน้ารายชื่อ และกด A D หรือลูกศรสลับแท็บได้"],
     ["2026-11-18T14:42:29.691Z","feat(bible): ประตูเลือกคลาสมีวง ทั่วไป (Common) เป็นวงที่ 13 แถวบน 6 แถวล่าง 7 แทนปุ่มเล็กข้างช่องค้นหา และจัดกลางจอ"],
     ["2026-11-18T14:30:06.189Z","feat(bible): เพิ่มเครื่องประดับ Bloom Pulse (TTO 1.7.0 แลกที่เปโด้) ในช่องเครื่องประดับของไกด์อาชีพ TTO"],
     ["2026-11-18T14:26:43.695Z","fix(bible): สลับแท็บรายชื่อสกิลแล้วขนาดและตำแหน่งการ์ดเปลี่ยนทันที ไม่มีแอนิเมชัน"],
@@ -42201,9 +42217,11 @@ function fitGameTipModal(){
 // The landing's fit reference height (unscaled px): fitStageToScreen centres a box this tall. It is the class roster's own height (search row, roster header,
 // a grid of two card rows plus 45 % of a third: gridFitPaged), measured and cached per window size class (the media queries that resize the search row
 // and the cards); 575 until a roster has been shown in that class (user 2026-11-18: the content fills the centred box, nothing moves between tabs).
-const landingRefKnown = {};
+// The class gate's natural height is cached the same way (landingGateKnown): the box is the taller of the two, so the gate and the rosters share one scale and
+// one search-bar position (user 2026-11-18).
+const landingRefKnown = {}, landingGateKnown = {};
 function landingRefKey(){ return ["(max-height:760px)", "(max-height:700px)", "(max-width:1024px)", "(max-height:820px)"].map(q => window.matchMedia(q).matches ? 1 : 0).join(""); }
-function landingRefH(){ return landingRefKnown[landingRefKey()] || 575; }
+function landingRefH(){ const k = landingRefKey(); return Math.max(landingRefKnown[k] || 575, landingGateKnown[k] || 0); }
 function fitStageToScreen(force){
   fitHeld = false;
   const stage = document.querySelector(".stage");
@@ -42226,6 +42244,7 @@ const hubBar = document.querySelector(".hub-bar");
 
   const isSkillLookup = document.documentElement.classList.contains("tool-wide-hero");
   if (isSkillLookup && !force && fitHoldOn()){ fitHeld = true; return; }   // scale lock (above); Stat Roll shares tool-wide-hero but has no panel
+  if (isSkillLookup && shell.classList.contains("is-hero-empty") && typeof window.__skGateFill === "function") window.__skGateFill();   // the gate's height, measured now the layout has settled
   const statsPanel = isSkillLookup ? document.querySelector(".sk-stats-panel") : null;
   const isStatsVisible = isSkillLookup && statsPanel && !statsPanel.hidden && statsPanel.offsetHeight > 0;
   const side = isSkillLookup && window.innerWidth >= 900 ? document.querySelector(".sk-side") : null;
@@ -42233,7 +42252,7 @@ const hubBar = document.querySelector(".hub-bar");
   const hasSideCompatRail = sideH > 0;
   const compW = hasSideCompatRail
     ? (isStatsVisible ? 1440 : 1220)   // stats 280 + card 860 + side panel 280, 10 px spare a side (1500, from the old related rail, shrank 1366 px windows to 0.89)
-    : (isStatsVisible ? 1420 : (shell.offsetWidth || 860));
+    : (isStatsVisible ? 1420 : Math.max(shell.offsetWidth || 860, isSkillLookup && shell.classList.contains("is-hero-empty") ? ((shell.querySelector(".sk-picker-classes .sg-gate-grid") || {}).offsetWidth || 0) : 0));   // the landing's gate runs wider than the shell
   const shellH = shell.offsetHeight || 500;
   const statsH = isStatsVisible ? statsPanel.offsetHeight : 0;
   const compH = Math.max(shellH, statsH, sideH, 460);   // desktop never scrolls: the side panel's last row must fit too
