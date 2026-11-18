@@ -4470,7 +4470,7 @@
     opacity: 0.75;
     text-align: center;
   }
-  .sk-search-bar-row.is-hero .sk-search:placeholder-shown{caret-color:transparent}   /* the centred placeholder: the caret showed through its middle (review 2026-10-30); it shows once typing starts */
+  .sk-search-bar-row.is-hero .sk-search:focus::placeholder{opacity:.4}   /* the caret blinks again when focused (user 2026-11-18; review 2026-10-30 had hidden it over the centred placeholder), so the placeholder dims behind it */
   .sk-search-hero .sk-suggestions{
     top: calc(100% + 8px);
     border-color: var(--gold);
@@ -5955,6 +5955,19 @@
     font:700 10.5px 'Prompt',sans-serif; letter-spacing:.8px; color:#141311; background:var(--gold); border:1px solid var(--gold);
     box-shadow:0 0 6px rgba(212,175,55,.35); transition:filter .15s ease, box-shadow .15s ease}
   .sk-preset-open:hover{filter:brightness(1.12); box-shadow:0 0 10px rgba(212,175,55,.55)}
+  /* one-click preset numbers (user 2026-11-18); the one in use is filled gold (aria-pressed), an empty slot dashed */
+  .sk-preset-nums{display:inline-flex; gap:3px; margin-top:4px}
+  .sk-class-badge:has(.sk-preset-nums){gap:10px}   /* five numbers fit beside the face and Revised Art in the 260 px panel (5 hid behind it, user 2026-11-18) */
+  .sk-class-badge:has(.sk-preset-nums) .sk-revisedart{padding:3px}
+  .sk-preset-num{width:19px; height:22px; padding:0; border-radius:4px; border:1px solid var(--line); background:transparent; color:var(--muted); font:700 11.5px 'JetBrains Mono','Prompt',monospace; cursor:pointer; transition:transform .12s ease, color .12s ease, border-color .12s ease}
+  .sk-preset-num:hover{color:var(--text); border-color:var(--gold); transform:translateY(-1px)}
+  .sk-preset-num[aria-pressed="true"]{background:var(--gold); border-color:var(--gold); color:#141311}
+  .sk-preset-num.is-empty:not([aria-pressed="true"]){border-style:dashed; opacity:.6}
+  .sk-preset-num:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+  .sk-class-badge-face{flex:none; padding:0; border:0; background:none; cursor:pointer; line-height:0; border-radius:50%; transition:transform .12s ease}
+  .sk-class-badge-face[hidden]{display:none}
+  .sk-class-badge-face:hover{transform:translateY(-2px)}
+  .sk-class-badge-face:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
   .sk-preset-win{position:relative; z-index:999999; width:min(1120px, calc(100vw - 32px)); max-height:calc(100vh - 40px); overflow:auto; box-sizing:border-box;
     background:rgba(20,19,17,0.98); border:1px solid var(--gold); border-top:4px solid var(--gold); border-radius:12px; padding:20px 22px 22px;
     box-shadow:0 30px 90px rgba(0,0,0,0.95), 0 0 50px rgba(212,175,55,0.32); color:#ede8df; font-family:'Prompt',sans-serif;
@@ -21210,10 +21223,10 @@ function mountSkillCooldownLookup(root){
     <div class="sk">
       <div class="sk-stats-panel" data-role="stats-panel">
         <div class="sk-class-badge" data-role="class-badge" hidden>
-          <img class="sk-class-badge-img" data-role="class-badge-img" alt="" hidden>
+          <button type="button" class="sk-class-badge-face" data-role="preset-face" title="ตั้งค่าชุดสเตตัส (PRESET)" aria-label="ตั้งค่าชุดสเตตัส" aria-haspopup="dialog" hidden><img class="sk-class-badge-img" data-role="class-badge-img" alt="" hidden></button>
           <div class="sk-class-badge-text">
             <span class="sk-class-badge-name" data-role="class-badge-name"></span>
-            <span class="sk-badge-line"><button type="button" class="sk-preset-open" data-role="preset-open" title="ชุดสเตตัส" aria-haspopup="dialog">PRESET 1</button><button type="button" class="sk-stats-collapse" data-role="stats-collapse" data-panel="player" aria-expanded="true" aria-label="ย่อ / ขยายค่าสถานะของคุณ"></button></span>
+            <span class="sk-badge-line"><span class="sk-preset-nums" data-role="preset-open" role="group" aria-label="ชุดสเตตัส PRESET"><button type="button" class="sk-preset-num" data-preset-slot="0" aria-pressed="true">1</button><button type="button" class="sk-preset-num" data-preset-slot="1" aria-pressed="false">2</button><button type="button" class="sk-preset-num" data-preset-slot="2" aria-pressed="false">3</button><button type="button" class="sk-preset-num" data-preset-slot="3" aria-pressed="false">4</button><button type="button" class="sk-preset-num" data-preset-slot="4" aria-pressed="false">5</button></span><button type="button" class="sk-stats-collapse" data-role="stats-collapse" data-panel="player" aria-expanded="true" aria-label="ย่อ / ขยายค่าสถานะของคุณ"></button></span>
           </div>
           <button type="button" class="sk-revisedart on" data-role="revisedart" title="Revised Art 5 (ลดคูลดาวน์ 12%)" aria-pressed="true"></button>
         </div>
@@ -21672,6 +21685,7 @@ function mountSkillCooldownLookup(root){
     const src = (typeof CLASS_HERO_ICONS !== "undefined") ? CLASS_HERO_ICONS[cls] : undefined;
     if (classBadgeImgEl) {
       classBadgeImgEl.hidden = !src;
+      if (classBadgeImgEl.parentElement) classBadgeImgEl.parentElement.hidden = !src;   // the face button (opens the PRESET window)
       if (src) classBadgeImgEl.src = src;
     }
     if (classBadgeNameEl) classBadgeNameEl.textContent = src ? cls : "";
@@ -22717,13 +22731,17 @@ function mountSkillCooldownLookup(root){
     const bdNow = JSON.stringify(presetBd());
     if (presetBdSeen !== null && bdNow !== presetBdSeen) presetAutosave();
     presetBdSeen = bdNow;
-    const btn = root.querySelector('[data-role="preset-open"]');
-    if (!btn) return;
+    const grp = root.querySelector('[data-role="preset-open"]');
+    if (!grp) return;
     const cls = presetClass();
     if (!cls) return;
-    const e = presetEntry(cls), act = e.active === null ? 0 : e.active, nm = e.labels[act].name;
-    btn.textContent = "PRESET " + (act + 1) + (nm ? " : " + nm : "");
-    btn.title = "ชุดสเตตัส · " + cls + (nm ? " · " + nm : "") + " (คลิกเพื่อดูและเปลี่ยนชุด)";
+    const e = presetEntry(cls), act = e.active === null ? 0 : e.active;
+    grp.querySelectorAll('[data-preset-slot]').forEach(b => {
+      const i = Number(b.dataset.presetSlot), nm = e.labels[i].name;
+      b.setAttribute("aria-pressed", String(i === act));
+      b.classList.toggle("is-empty", !e.slots[i]);
+      b.title = "PRESET " + (i + 1) + (nm ? " : " + nm : "") + (i === act ? " (ใช้อยู่ · คลิกอีกครั้งเพื่อตั้งค่า)" : e.slots[i] ? " (คลิกเพื่อใช้)" : " (ว่าง · คลิกเพื่อเริ่มชุดนี้จากค่าปัจจุบัน)");
+    });
   }
   // Selecting a skill of another class loads that class's selected preset (no pop-up: a different skill has nothing to compare).
   function presetOnSelect(){
@@ -22992,7 +23010,24 @@ function mountSkillCooldownLookup(root){
     openPresetWindow(true);
   }
   function closePresetWindow(){ const b = document.querySelector('[data-role="preset-win-backdrop"]'); if (b) b.remove(); }
-  root.addEventListener("click", (e) => { if (e.target.closest('[data-role="preset-open"]')) { presetWinEdit = false; openPresetWindow(); } });
+  // One-click presets (user 2026-11-18): another number switches at once, an empty one starts from the current stats + buffs (no "what changed" pop-up);
+  // the number in use, or the class face, opens the PRESET window. Ctrl+Z undoes a switch (presetPushUndo).
+  function presetQuickSwitch(i){
+    const cls = presetClass();
+    if (!cls) return;
+    const en = presetEntry(cls), act = en.active === null ? 0 : en.active;
+    if (i === act){ presetWinEdit = false; openPresetWindow(); return; }
+    presetPushUndo();
+    if (!en.slots[i]) en.slots[i] = presetCurrent();
+    en.active = i; presetSaveAll();
+    presetWrite(en.slots[i]);
+    renderHero(); renderPresetBar();
+  }
+  root.addEventListener("click", (e) => {
+    const slot = e.target.closest && e.target.closest('[data-preset-slot]');
+    if (slot){ presetQuickSwitch(Number(slot.dataset.presetSlot)); return; }
+    if (e.target.closest && e.target.closest('[data-role="preset-face"]')){ presetWinEdit = false; openPresetWindow(); }
+  });
   // Autosave: a real edit of a player stat input (not a preset load, undo or skill switch) updates the selected slot.
   function presetAutosave(){
     const cls = presetClass();
@@ -23029,8 +23064,8 @@ function mountSkillCooldownLookup(root){
     presetWrite(vals);
     renderHero();                       // heroDelta holds its flicker while the pop-up is open
     const after = presetReadChips();
-    // No pop-up when nothing on the open skill changed (identical preset, or only stats this skill does not use).
-    if (presetChangeRows(before, after).length) showPresetPopup(i, cls, statsBefore, vals, before, after, from);
+    // No "what changed" pop-up any more (user 2026-11-18: presets switch in one click); showPresetPopup is kept but not called.
+    void before; void after; void statsBefore; void from;
   }
   function presetNum(n){ return parseFloat(n.toFixed(2)).toString(); }
   function presetSigned(n, unit = ""){ return (n > 0 ? "+" : n < 0 ? "−" : "±") + presetNum(Math.abs(n)) + unit; }
@@ -41107,6 +41142,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-18T15:05:48.416Z","feat(bible): PRESET เป็นปุ่มตัวเลข 1-5 กดครั้งเดียวสลับชุดทันทีไม่มีป๊อปอัป กดเลขที่ใช้อยู่หรือรูปคลาสเพื่อตั้งค่า และเคอร์เซอร์ในช่องค้นหากลับมากะพริบ"],
     ["2026-11-18T14:58:34.400Z","feat(bible): กด Esc ในหน้าสกิลกลับไปรายชื่อสกิลของคลาส (แท็บที่มีสกิลนั้น) และ Esc ในหน้ารายชื่อกลับไปหน้าเลือกคลาส"],
     ["2026-11-18T14:54:23.636Z","feat(bible): ประตูเลือกคลาสวงใหญ่ขึ้น ช่องค้นหาใกล้วงตามความสูงจริง หัว ทั่วไป ใช้วงแหวน เอาปุ่มเล็กออกจากหน้ารายชื่อ และกด A D หรือลูกศรสลับแท็บได้"],
     ["2026-11-18T14:42:29.691Z","feat(bible): ประตูเลือกคลาสมีวง ทั่วไป (Common) เป็นวงที่ 13 แถวบน 6 แถวล่าง 7 แทนปุ่มเล็กข้างช่องค้นหา และจัดกลางจอ"],

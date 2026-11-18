@@ -1038,6 +1038,8 @@ let checkedPanelMarkup = 0;
   check("the enemy prev/next arrows must stay removed", count("enemy-prev") === 0 && count("enemy-next") === 0);
   // Stat presets (2026-10-05): a PRESET n button in the player badge opens the 5-card window; no slot bar, no save / clear buttons.
   check("the PRESET button must be inside the player badge", playerBadge.includes('data-role="preset-open"'));
+  // One-click presets (user 2026-11-18): the badge holds five number buttons (data-preset-slot 0-4); the number in use or the class face opens the window
+  check("the player badge must hold the 5 one-click preset numbers and the face button", (playerBadge.match(/data-preset-slot="[0-4]"/g) || []).length === 5 && playerBadge.includes('data-role="preset-face"'));
   check("the old stat preset slot bar must stay removed (presets live in the PRESET window)", count("preset-row") === 0 && count("preset-slots") === 0);
   check("stat presets autosave: no save / clear buttons", count("preset-save") === 0 && count("preset-clear") === 0);
   {
