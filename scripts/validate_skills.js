@@ -6279,6 +6279,25 @@ console.log(`Verified ${checkedUnintended} Unintended-behavior page checks.`);
   else console.log(`Verified the Halo roster: ${keys.length} numeral-free icons, both builders on skillHaloCard.`);
 }
 
+// TTO Cult coin summons (user 2026-11-18): 21 Common TTO-only cards; stats = CONTRACT_MERC_STATS, New Order x1.5, then TTO's chapter scaling
+// FloorToInt(x * ((clamp(code / 100, 1, 25) - 1) * 0.2f + 1f)) on the 8 stats only (TTO1118:CharacterControl::onSummonEvent@0x2535e60); Bat Cult's drain
+// clamp(CeilToInt(0.3f * ATK), 9, 36) gives 28 at ATK 90 (atkClampRound "ceilf"); a Cult move reads the Cult's own CHA.
+{
+  const fails = [];
+  const cults = SKILLS.filter(s => s.class === "Common" && s.onlyServer === "tto" && /^common_cult/.test(s.id));
+  if (cults.length !== 21 || cults.some(c => !c.ownStatsMerc || c.dataWarn !== false)) fails.push("21 Common TTO Cult cards with ownStatsMerc and dataWarn false (" + cults.length + ")");
+  const stats = (missionId, no) => { vm.runInContext("cultMissionId = " + missionId, sandbox); sandbox._depRanks.newOrder = no ? 1 : 0; return vm.runInContext("mercOwnStats", sandbox)({ ownStatsMerc: "batCult" }); };
+  const want = [[101, 0, 90, 135, 750], [601, 0, 180, 270, 750], [2508, 0, 522, 783, 750], [5001, 0, 522, 783, 750], [2508, 1, 783, 1171, 1125]];
+  want.forEach(([id, no, atk, cha, mhp]) => { const s = stats(id, no); if (s.atk !== atk || s.cha !== cha || s.mhp !== mhp) fails.push(`Bat Cult at mission ${id}${no ? " with New Order" : ""}: ATK ${s.atk} CHA ${s.cha} HP ${s.mhp}, want ${atk} / ${cha} / ${mhp}`); });
+  vm.runInContext("cultMissionId = 101", sandbox); sandbox._depRanks.newOrder = 0;
+  const drain = SKILLS.find(s => s.id === "common_cultBat_drainLife");
+  if (!drain || drain.atkClampRound !== "ceilf" || vm.runInContext("Math.ceil(Math.fround(Math.fround(0.3) * 90))", sandbox) !== 28) fails.push("Bat Cult drain rounds the float32 product up (28 at ATK 90)");
+  const src = fs.readFileSync(targetPath, "utf8");
+  if (!src.includes('if (isCultCard(selected)) CHA = merc.cha;') || !src.includes('data-role="cult-mission"') || !src.includes('full: "TTO Cult"')) fails.push("the Cult CHA override, the mission box and the Common TTO tab are wired");
+  if (fails.length) { errorCount++; console.error("[CULT ERROR] " + fails.join("; ")); }
+  else console.log("Verified the TTO Cult coin summons: 21 cards, chapter scaling and New Order, the drain's float32 ceil, the Cult's own CHA.");
+}
+
 // Patch history pop-up (user 2026-11-06): PATCH_HISTORY, newest first, entries { key, server, title, items: ranked [tag, text, kind?] }
 // (no sub line: the user dropped that row as wasted space; since 2026-11-09 no kicker either: the title is one big line, server name + patch, "TAILSTOPIA 1.6.2.4");
 // the newest shows once per browser per key and is closable only after 3 s, unless its server is muted (the patchMute box, 2026-11-18); the changelog header has a review button per server (no lock).
@@ -7486,6 +7505,9 @@ if (RUN_DAMAGE_CHECKS) {
   const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
   // desc-decided skill sources ("<card>:<status>@<server>") a person has read and confirmed (final review 2026-11-16, finding 2)
   const STATUS_REVIEWED_APPLY = [
+    // read 2026-11-18 (TTO Cult coin summons): Panda Cult's drunk (PandaCult.cs:2178, TTO1118:PandaCult.<RPC_drunkenFist>d__15 id 308), Rabbit Cult's maim 4
+    // (RabbitCult.cs:2055, TTO 701), Sheep Cult's lightBind 4 (SheepCult.cs:2610), Sheep Cult Support's atkUp / defUp (TTO1118:SheepCult.<RPC_supportCast>d__20@0x26d5c90)
+    "common_cultPanda_drunkenFist:drunk@tto", "common_cultRabbit_maimShot:maim@tto", "common_cultSheep_randomCast:lightbind@tto", "common_cultSheep_support:atkup@tto", "common_cultSheep_support:defup@tto",
     // read 2026-11-18 (TTO 1.7.0): Gleaming Breath gives the revived Illuminate / Bless at the Sheep's own levels (TTO1118:Sheep.<GleamingBlessings>d__N::MoveNext@0x1E8DC30)
     "sheep_gleamingBreath:illuminate@tto", "sheep_gleamingBreath:bless@tto",
     // read 2026-11-16 when the scan began turning every linked skill to its top rank (lines a learned skill reveals)
