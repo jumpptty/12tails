@@ -4408,7 +4408,7 @@
   @media (max-width: 1024px){ .sk-roster-grid:has(.is-halo){--hc:6} }
   .sk-roster-grid.is-roomy:has(.is-halo){--hc:6}   /* a tab of 12 or fewer cards (desktop): the big cards, text in proportion (user 2026-11-18) */
   .sk-roster-grid.is-roomy .sk-roster-card.is-halo .sk-roster-name{margin-top:10px; font-size:16px; line-height:1.25}
-  .sk-roster-card.is-halo{flex:0 0 var(--cw, calc((100% - (var(--hc) - 1) * var(--hgx)) / var(--hc) - 0.1px)); min-width:0}   /* --cw: pinned by gridFitPaged for balanced rows */
+  .sk-roster-card.is-halo{flex:0 0 var(--cw, calc((100% - (var(--hc) - 1) * var(--hgx)) / var(--hc) - 0.1px)); min-width:0; transition:none}   /* --cw: pinned by gridFitPaged for balanced rows; no transition: a tab switch changes size and layout at once (user 2026-11-18) */
   .sk-roster-card.is-halo .sk-roster-name{overflow-wrap:anywhere}
   .sk-roster-card.is-halo{--halo:rgba(201,162,39,.30); --orbit:var(--gold); background:none; border:0; box-shadow:none; padding:4px 0 0; min-height:0; gap:0; overflow:visible; justify-content:flex-start}
   .sk-roster-card.is-halo.is-passive{--halo:rgba(170,188,220,.17); --orbit:color-mix(in srgb, #9fb2d2 80%, var(--text))}
@@ -41056,6 +41056,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-18T14:26:43.695Z","fix(bible): สลับแท็บรายชื่อสกิลแล้วขนาดและตำแหน่งการ์ดเปลี่ยนทันที ไม่มีแอนิเมชัน"],
     ["2026-11-18T14:24:48.871Z","feat(bible): แท็บรายชื่อสกิลจัดแถวสมดุล 7-12 สกิลใช้การ์ดใหญ่ 2 แถว 13-16 สกิลใช้การ์ดเล็ก 2 แถวเท่ากัน"],
     ["2026-11-18T14:10:31.842Z","feat(bible): รายชื่อสกิลแถวละ 8 จัดกลางทุกแถว แท็บที่มี 6 สกิลหรือน้อยกว่าใช้การ์ดใหญ่ ดาวสีเงินสำหรับสกิลติดตัว ชื่อสกิล ToT EX อ่านง่าย ไอคอนมูคมขึ้น Fire Avatar - Fireball อยู่แท็บ C"],
     ["2026-11-18T13:55:06.034Z","feat(bible): รายชื่อสกิลอยู่กลางจอเสมอ แถวเกินเลื่อนดูในกรอบพร้อมจางหาย ไอคอนใช้ภาพ rank 0 เฉพาะที่เกมมี นอกนั้นใช้ rank 1 และซอมบี้ของค้างคาวใช้หน้าคลาสสีเทา"],
