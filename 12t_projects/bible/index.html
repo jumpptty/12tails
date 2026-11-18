@@ -4403,7 +4403,7 @@
   .sk-roster-empty-sub{font-size:13px; color:var(--muted)}
   /* Halo roster (user 2026-11-18: "rework these to circular icons too with good looking frames ... remove the containers and it can become much bigger
      icons"; mock #5 Halo picked: "Halo looks really good"). No tile: the skill's art in a round disc on a soft gold halo, a thin dashed orbit (dotted and
-     moon-pale for a passive; no tag, user 2026-11-18) that lights up and turns while hovered, and the max rank as gold dots on the orbit's bottom (haloDots).
+     moon-pale for a passive; no tag, user 2026-11-18) that lights up and turns while hovered, and the max rank as glowing gold pips on the orbit's bottom (haloDots).
      The art is haloArt(): SKILL_ICONS_R0 (the ranked icon with its baked numeral replaced by the game's rank-0 art) where the game has a rank-0
      picture, else the rank-1 icon, else the icon itself (C skills keep their C); all at 1.3x. */
   /* Halo grid (user 2026-11-18): a wrapping flex row of equal cards, --hc a row (8 on desktop, so the many 16-skill tabs fill two rows exactly; 6 up to
@@ -4435,14 +4435,16 @@
   .sk-halo-disc{position:absolute; inset:11%; border-radius:50%; overflow:hidden; background:#0d0907; box-shadow:0 10px 24px rgba(0,0,0,.55); transition:transform .3s ease}
   .sk-roster-grid .sk-roster-card.is-halo .sk-halo-disc > .sk-roster-icon{display:block; width:100%; height:100%; object-fit:cover; filter:none; transform:scale(1.3) translate(var(--ring-x,0%), var(--ring-y,0%)); transition:none}
   .sk-halo-disc::after{content:""; position:absolute; inset:0; border-radius:50%; box-shadow:inset 0 0 0 1px rgba(255,236,190,.26), inset 0 -12px 20px rgba(0,0,0,.32); background:radial-gradient(circle at 32% 24%, rgba(255,255,255,.13), transparent 46%)}
-  .sk-halo-ranks circle{fill:var(--gold); stroke:var(--ink); stroke-width:1.5; stroke-linejoin:round; paint-order:stroke; transition:fill .3s ease}
+  /* rank pips (mock F, user 2026-11-18): gradients and the bloom filter live in the hidden #skPipDefs svg at the end of <body> */
+  .sk-halo-ranks{transition:filter .3s ease}
+  .sk-halo-ranks circle{fill:url(#skPipGold)}
+  .sk-halo-ranks .sk-pip-bloom{opacity:.55; filter:url(#skPipBloom)}
   .sk-roster-card.is-halo .sk-roster-name{margin-top:8px; padding:0 3px; font-size:13.5px; line-height:1.22}   /* inside its own card (borrowing the gap ran names together, user 2026-11-18); a long one takes two lines */
   .sk-roster-card.is-halo:hover .sk-halo::before, .sk-roster-card.is-halo:focus-visible .sk-halo::before{opacity:1; transform:scale(1.04)}
   .sk-roster-card.is-halo:hover .sk-halo-orbit, .sk-roster-card.is-halo:focus-visible .sk-halo-orbit{opacity:1; animation-play-state:running}
   .sk-roster-card.is-halo:hover .sk-halo-disc, .sk-roster-card.is-halo:focus-visible .sk-halo-disc{transform:scale(1.035)}
-  .sk-roster-card.is-halo:hover .sk-halo-ranks circle, .sk-roster-card.is-halo:focus-visible .sk-halo-ranks circle{fill:#f0cd5a}
-  .sk-roster-card.is-halo.is-passive .sk-halo-ranks circle{fill:#c3ccd9}   /* passive: silver dots to match its moon-pale orbit (user 2026-11-18) */
-  .sk-roster-card.is-halo.is-passive:hover .sk-halo-ranks circle, .sk-roster-card.is-halo.is-passive:focus-visible .sk-halo-ranks circle{fill:#eef2f8}
+  .sk-roster-card.is-halo:hover .sk-halo-ranks, .sk-roster-card.is-halo:focus-visible .sk-halo-ranks{filter:brightness(1.18)}
+  .sk-roster-card.is-halo.is-passive .sk-halo-ranks circle{fill:url(#skPipSilver)}   /* passive: silver pips to match its moon-pale orbit (user 2026-11-18) */
   .sk-roster-card.is-halo:focus-visible .sk-halo::after{content:""; position:absolute; inset:-5px; border-radius:50%; box-shadow:0 0 0 2px var(--text)}
   @keyframes skHaloSpin{to{transform:rotate(360deg)}}
   @media (max-width: 1024px){ .sk-roster-card.is-halo .sk-roster-name{font-size:15px} }
@@ -22127,11 +22129,11 @@ function mountSkillCooldownLookup(root){
     return trees.filter(t => t.ids.length).concat(other.ids.length ? [other] : [], [soonTabs.tot, soonTabs.reborn, soonTabs.tto].filter(t => t.ids.length));
   }
   // Halo cards (user 2026-11-18, mock #5 "Halo" picked; the look is the .sk-halo CSS). Function declarations, so both builders can call them anywhere.
-  function haloDots(n){   // n plain dots hung along the bottom of the orbit (r 46.5 in the 100-unit box), 15 degrees apart, radius 4 (user 2026-11-18: circles, were stars)
+  function haloDots(n){   // n glowing pips along the bottom of the orbit (r 46.5 in the 100-unit box), 11 degrees apart: a blurred bloom (r 3.6) under a lit core (r 2.5); pip mock F (user 2026-11-18)
     let out = "";
     for (let i = 0; i < n; i++){
-      const a = (90 + (i - (n - 1) / 2) * 15) * Math.PI / 180;
-      out += '<circle cx="' + (50 + 46.5 * Math.cos(a)).toFixed(2) + '" cy="' + (50 + 46.5 * Math.sin(a)).toFixed(2) + '" r="4"/>';
+      const a = (90 + (i - (n - 1) / 2) * 11) * Math.PI / 180, c = 'cx="' + (50 + 46.5 * Math.cos(a)).toFixed(2) + '" cy="' + (50 + 46.5 * Math.sin(a)).toFixed(2) + '"';
+      out += '<circle class="sk-pip-bloom" ' + c + ' r="3.6"/><circle class="sk-pip" ' + c + ' r="2.5"/>';
     }
     return out;
   }
@@ -41151,6 +41153,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-18T15:53:28.952Z","feat(bible): จุดบอกแรงค์ใต้วงสกิลเป็นเม็ดเรืองแสงนุ่ม (แบบ F) แกนสว่างไล่สีทองตามธีมเซิร์ฟเวอร์ ติดตัวเป็นสีเงิน"],
     ["2026-11-18T15:25:02.489Z","feat(bible): ตัวบอกแรงค์สูงสุดใต้วงสกิลเปลี่ยนจากดาวเป็นจุดกลมเรียบๆ"],
     ["2026-11-18T15:09:18.458Z","feat(bible): รูปหน้าคลาสในกล่อง PRESET ใช้ภาพขยายและเปลี่ยนสีตามชุดที่ใช้อยู่ (ตามลำดับที่ผู้ใช้จัดเอง)"],
     ["2026-11-18T15:05:48.416Z","feat(bible): PRESET เป็นปุ่มตัวเลข 1-5 กดครั้งเดียวสลับชุดทันทีไม่มีป๊อปอัป กดเลขที่ใช้อยู่หรือรูปคลาสเพื่อตั้งค่า และเคอร์เซอร์ในช่องค้นหากลับมากะพริบ"],
@@ -42879,5 +42882,12 @@ if (creditsModal){
   window.addEventListener("resize", () => { if (!creditsModal.hidden) creditsFit(); });
 }
 </script>
+<!-- Halo rank pips (mock F, user 2026-11-18): the lit-core gradients (the theme's --gold, or silver on a passive) and the bloom blur, shared by every card's
+     .sk-halo-ranks; not display:none, which would drop the paint servers -->
+<svg id="skPipDefs" width="0" height="0" style="position:absolute; width:0; height:0; overflow:hidden" aria-hidden="true" focusable="false"><defs>
+  <radialGradient id="skPipGold" cx="40%" cy="38%" r="70%"><stop offset="0" style="stop-color:color-mix(in srgb, var(--gold) 22%, #fff)"/><stop offset=".5" style="stop-color:color-mix(in srgb, var(--gold) 82%, #fff)"/><stop offset="1" style="stop-color:color-mix(in srgb, var(--gold) 72%, #000)"/></radialGradient>
+  <radialGradient id="skPipSilver" cx="40%" cy="38%" r="70%"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#dfe6f2"/><stop offset="1" stop-color="#8d9ab4"/></radialGradient>
+  <filter id="skPipBloom" x="-200%" y="-200%" width="500%" height="500%"><feGaussianBlur stdDeviation="1.6"/></filter>
+</defs></svg>
 </body>
 </html>
