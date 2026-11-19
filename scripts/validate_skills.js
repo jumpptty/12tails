@@ -6274,9 +6274,30 @@ console.log(`Verified ${checkedUnintended} Unintended-behavior page checks.`);
   const data = keys.length >= 200 && keys.every((k) => icons[k] && /^data:image\/webp;base64,/.test(r0[k]) && r0[k] !== icons[k]);
   const wired = (src.match(/\$\{skillHaloCard\(s, /g) || []).length === 2 && !src.includes('<img class="sk-roster-icon" src="${SKILL_ICONS[s.icon]')
     && src.includes('".sk-roster-card:not(.is-halo)"') && src.includes(", .sk-halo-disc > img\")) centreRingImg(t);") && /\.sk-roster-card\.is-halo::before\{display:none\}/.test(src)
-    && src.includes("function haloDots(n){") && src.includes("if (typeof SKILL_ICONS_R0 !== \"undefined\" && SKILL_ICONS_R0[icon]) return SKILL_ICONS_R0[icon];") && src.includes("const art = haloArt(s.icon);");
+    && src.includes("function haloDots(n){") && src.includes("if (typeof SKILL_ICONS_R0 !== \"undefined\" && SKILL_ICONS_R0[icon]) return SKILL_ICONS_R0[icon];") && src.includes("const art = haloArt(s.icon), kind = haloKind(s);");
   if (!data || !wired) { errorCount++; console.error(`[HALO ROSTER ERROR] SKILL_ICONS_R0 needs 200+ WebP entries keyed by real SKILL_ICONS keys (${data}, ${keys.length}); both roster builders must use skillHaloCard, its art must prefer SKILL_ICONS_R0, centreRingImg must cover .sk-halo-disc > img and the theme fill must skip .is-halo (${wired})`); }
   else console.log(`Verified the Halo roster: ${keys.length} numeral-free icons, both builders on skillHaloCard.`);
+}
+
+// Halo looks (user 2026-11-19): haloKind gives a summon's own move that no skill tree holds the jade look and a mount ability the double rim; tree skills
+// (the summoning skills included) and the summon cards keep the normal look. HALO_LIST=1 prints both lists.
+{
+  const src = fs.readFileSync(targetPath, "utf8"), why = [];
+  const want = { monkey_phoenix: "", monkey_phoenix_fireBall: "move", mole_barrelBot: "", mole_barrelBot_punch: "move", mole_barrelCannon: "", mole_kingKaiser_missile: "", mole_kingKaiser_nAttack: "move",
+    common_cultBat: "", common_cultBat_drainLife: "move", common_cultBison_retaliation: "move", mole_warFactory_sawMachine: "move", monkey_runeGolem_fist: "move", monkey_fireAvatar_fireBall: "", monkey_earthForm_nAttack: "",
+    common_championMount: "mount", mole_moleTank_ram: "mount", wolf_mountDash: "mount" };
+  let kinds = {};
+  try { kinds = Object.fromEntries(vm.runInContext("SKILLS.map(s => [s.id, haloKind(s)])", sandbox)); } catch (e) { why.push(e.message); }
+  for (const [id, k] of Object.entries(want)) if (kinds[id] !== k) why.push(`${id} ${JSON.stringify(kinds[id])} (want ${JSON.stringify(k)})`);
+  const list = (k) => Object.keys(kinds).filter((id) => kinds[id] === k);
+  // Cult moves (user 2026-11-19): the hero's own skill icon recoloured red (cult_* keys); the 5 summons and Retaliation keep their coin
+  try { vm.runInContext("SKILLS.filter(s => /^common_cult/.test(s.id)).map(s => [s.id, s.icon, !!SKILL_ICONS[s.icon]])", sandbox).forEach(([id, icon, ok]) => { const coin = !id.includes("_", 7) || id === "common_cultBison_retaliation"; if (!ok || !(coin ? /^coin_cult/ : /^cult_/).test(icon)) why.push(`${id} icon ${icon}`); }); } catch (e) { why.push(e.message); }
+  const wired = src.includes('const art = haloArt(s.icon), kind = haloKind(s);') && src.includes('(kind === "move" ? " is-summon-move" : kind === "mount" ? " is-mount" : "")')
+    && src.includes(`(kind === "mount" ? '<circle cx="50" cy="50" r="49.6"/>' : "")`) && src.includes(".sk-roster-card.is-halo.is-summon-move{--halo:") && src.includes('<radialGradient id="skPipJade"')
+    && src.includes(".is-mount .sk-halo-orbit circle{stroke-width:.8; stroke-dasharray:none}");
+  if (process.env.HALO_LIST) console.log("[HALO LIST] move: " + list("move").join(", ") + "\n[HALO LIST] mount: " + list("mount").join(", "));
+  if (why.length || !wired) { errorCount++; console.error(`[HALO KIND ERROR] summon moves outside every tree = jade, mounts = double rim, tree skills and summon cards = normal: ${why.join("; ") || "ok"}; markup / CSS wired: ${wired}`); }
+  else console.log(`Verified the Halo looks: ${list("move").length} summon moves (jade), ${list("mount").length} mount abilities (double rim).`);
 }
 
 // TTO Cult coin summons (user 2026-11-18): 21 Common TTO-only cards; stats = CONTRACT_MERC_STATS, New Order x1.5, then TTO's chapter scaling
