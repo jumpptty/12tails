@@ -6302,6 +6302,29 @@ console.log(`Verified ${checkedUnintended} Unintended-behavior page checks.`);
   else console.log(`Verified the Halo looks: ${list("move").length} summon moves (jade), ${list("mount").length} mount abilities (double rim).`);
 }
 
+// Summon levels (user 2026-11-19): a summon's own move (an ownStats* flag, an "X - Y" name) with ranks has no rank of its own: its level is the summon's,
+// a side-panel toggle (card field rankDep, one of SUMMON_LV_DEPS) that stays in step with the summon card. Exempt: Barrel Bot's Mega Punch / Mega Hammer /
+// Chopper / Missile, whose rank is the hero's own skill level.
+{
+  const src = fs.readFileSync(targetPath, "utf8"), why = [];
+  const HERO_RANK = new Set(["mole_barrelBot_punch", "mole_barrelBot_hammer", "mole_barrelBot_chopper", "mole_barrelBot_missile"]);
+  let rows = [];
+  try { rows = vm.runInContext("SKILLS.map(s => ({ id: s.id, name: s.name, max: s.maxRank || 1, own: Object.keys(s).some(k => /^ownStats/.test(k) && s[k]), dep: s.rankDep ? { id: s.rankDep.id, max: s.rankDep.maxRank, of: s.rankDep.rankOf, listed: SUMMON_LV_DEPS.includes(s.rankDep) } : null }))", sandbox); } catch (e) { why.push(e.message); }
+  const byId = Object.fromEntries(rows.map((r) => [r.id, r]));
+  rows.forEach((r) => {
+    if (r.own && / - /.test(r.name) && r.max > 1 && !HERO_RANK.has(r.id) && !r.dep) why.push(r.id + " has its own ranks: give it a rankDep (the summon's level)");
+    if (r.dep && (!r.dep.listed || !byId[r.dep.of] || byId[r.dep.of].max !== r.dep.max || r.max !== r.dep.max)) why.push(r.id + " rankDep " + r.dep.id + " must be in SUMMON_LV_DEPS and match its summon card's ranks (" + r.dep.of + ")");
+  });
+  const withDep = rows.filter((r) => r.dep).length;
+  if (withDep !== 4) why.push(withDep + " cards have a rankDep (want 4: Auto Gyro Gun shot, Phoenix Fireball, Ja Detonate, Gadina Normal Attack)");
+  const wired = src.includes("if (act.rankDep) return Math.min(Math.max(getDepRank(act.rankDep), 1), max);") && src.includes("const heroIconInner = heroMax > 1 && !activeSelected.rankDep")
+    && src.includes("const heroPips = heroMax > 1 && !activeSelected.rankDep ? pipsHtml(") && src.includes('activeSelected.rankDep ? renderDmgRankToggle(activeSelected.rankDep, "STATS") : ""')
+    && src.includes("SUMMON_LV_DEPS.forEach(d => { if (d.rankOf === selected.id) depRanks[d.id] = nextRank; });") && src.includes("const lvDep = SUMMON_LV_DEPS.find(d => d.id === btn.dataset.depId); if (lvDep) skillRanks[lvDep.rankOf] = next;")
+    && src.includes("haloDots(s.rankDep ? 1 : Math.max(1, s.maxRank || 1))");
+  if (why.length || !wired) { errorCount++; console.error(`[SUMMON LEVEL ERROR] ${why.slice(0, 6).join("; ") || "ok"}; level toggle wired (rank, head, side panel, sync both ways, list pips): ${wired}`); }
+  else console.log(`Verified summon levels: ${withDep} summon moves take their level from the summon (side-panel toggle, no own rank).`);
+}
+
 // Sub-move symbol icons (user 2026-11-19, scripts/build_move_icons.py): no card borrows another card's picture any more, except the 8 that use a real
 // hero skill's icon (Barrel Bot's Mega Punch ... Barrel Cannon (Auto), Kaiser Arsenal, Fire Avatar - Fireball); every mv_ card that shows its parent's
 // in-game tooltip keeps the old picture in tipIcon (the paper draws it), and every mv_ card that sat in its parent's tree tab keeps it with rosterParent.
@@ -6322,7 +6345,8 @@ console.log(`Verified ${checkedUnintended} Unintended-behavior page checks.`);
     if (!r.alone && r.cls !== "Common" && (!r.parent || !ids.has(r.parent))) why.push(r.id + " needs a rosterParent naming a card (it would leave its parent's tab)");
   });
   const wired = (src.match(/i: SKILL_ICONS\[activeSelected\.tipIcon \|\| heroIconKey\] \|\| ""/g) || []).length === 2 && !src.includes('i: SKILL_ICONS[heroIconKey] || ""')
-    && src.includes("filter(k => k && SKILL_ICONS[k] && !/^(mv_|bat_zombie)/.test(k))");   // the main menu's skill icon collage leaves the symbols and the zombies out
+    && src.includes("filter(k => k && SKILL_ICONS[k] && !/^(mv_|bat_zombie)/.test(k))")
+    && src.includes('class="sk-hero-icon${/^mv_/.test(heroIconKey) ? " is-sym" : ""}"') && src.includes(".sk-hero-icon.is-sym{border-radius:50%;");   // the card header frames a symbol in a bronze ring   // the main menu's skill icon collage leaves the symbols and the zombies out
   if (why.length || !wired) { errorCount++; console.error(`[MOVE ICON ERROR] sub-move symbol icons: ${why.slice(0, 8).join("; ") || "ok"}; tooltip paper draws tipIcon: ${wired}`); }
   else console.log(`Verified the sub-move symbol icons: ${mv.length} mv_ cards, ${mv.filter((r) => r.tip).length} keep the parent's picture on the game tooltip, no other shared icons.`);
 }
