@@ -6294,7 +6294,8 @@ console.log(`Verified ${checkedUnintended} Unintended-behavior page checks.`);
   try { vm.runInContext("SKILLS.filter(s => /^common_cult/.test(s.id)).map(s => [s.id, s.icon, !!SKILL_ICONS[s.icon]])", sandbox).forEach(([id, icon, ok]) => { const coin = !id.includes("_", 7); if (!ok || !(coin ? /^coin_cult/ : /^cult_/).test(icon)) why.push(`${id} icon ${icon}`); }); } catch (e) { why.push(e.message); }
   const wired = src.includes('const art = haloArt(s.icon), kind = haloKind(s);') && src.includes('(kind === "move" ? " is-summon-move" : kind === "mount" ? " is-mount" : "")')
     && src.includes(`(kind === "mount" ? '<circle cx="50" cy="50" r="49.6"/>' : "")`) && src.includes(".sk-roster-card.is-halo.is-summon-move{--halo:") && src.includes('<radialGradient id="skPipJade"')
-    && src.includes(".is-mount .sk-halo-orbit circle{stroke-width:.8; stroke-dasharray:none}");
+    && src.includes(".is-mount .sk-halo-orbit circle{stroke-width:.8; stroke-dasharray:none}")
+    && src.includes("'<span class=\"sk-roster-name\">' + haloName(s.name)") && src.includes(".sk-roster-sub{display:block; font-size:.82em");   // "X - Y" names: Y on its own smaller line (user 2026-11-19)
   if (process.env.HALO_LIST) console.log("[HALO LIST] move: " + list("move").join(", ") + "\n[HALO LIST] mount: " + list("mount").join(", "));
   if (why.length || !wired) { errorCount++; console.error(`[HALO KIND ERROR] summon moves outside every tree = jade, mounts = double rim, tree skills and summon cards = normal: ${why.join("; ") || "ok"}; markup / CSS wired: ${wired}`); }
   else console.log(`Verified the Halo looks: ${list("move").length} summon moves (jade), ${list("mount").length} mount abilities (double rim).`);

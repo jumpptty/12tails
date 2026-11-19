@@ -4420,6 +4420,8 @@
   .sk-roster-grid.is-roomy .sk-roster-card.is-halo .sk-roster-name{margin-top:10px; font-size:16px; line-height:1.25}
   .sk-roster-card.is-halo{flex:0 0 var(--cw, calc((100% - (var(--hc) - 1) * var(--hgx)) / var(--hc) - 0.1px)); min-width:0; transition:none}   /* --cw: pinned by gridFitPaged for balanced rows; no transition: a tab switch changes size and layout at once (user 2026-11-18) */
   .sk-roster-card.is-halo .sk-roster-name{overflow-wrap:anywhere}
+  .sk-roster-card.is-halo .sk-roster-name:has(.sk-roster-sub){-webkit-line-clamp:3}   /* "X - Y": X, then Y on its own smaller line (haloName, user 2026-11-19) */
+  .sk-roster-sub{display:block; font-size:.82em; line-height:1.2}
   .sk-roster-card.is-halo{--halo:rgba(201,162,39,.30); --orbit:var(--gold); background:none; border:0; box-shadow:none; padding:4px 0 0; min-height:0; gap:0; overflow:visible; justify-content:flex-start}
   .sk-roster-card.is-halo.is-passive{--halo:rgba(170,188,220,.17); --orbit:color-mix(in srgb, #9fb2d2 80%, var(--text))}
   .sk-roster-card.is-halo.sk-roster-card--stub{--orbit:var(--seal)}
@@ -22230,13 +22232,15 @@ function mountSkillCooldownLookup(root){
     const m = /^(.*?)(\d+)$/.exec(icon || ""), r1 = m && m[2] !== "1" ? SKILL_ICONS[m[1] + "1"] : "";
     return r1 || SKILL_ICONS[icon] || "";
   }
+  // A sub-move name "Bat Cult - Random Curse" (summons and heroes alike) drops the dash: the move starts its own smaller line (user 2026-11-19)
+  function haloName(name){ const i = name.indexOf(" - "); return i < 0 ? name : name.slice(0, i) + '<span class="sk-roster-sub">' + name.slice(i + 3) + "</span>"; }
   function skillHaloCard(s, extraClass, title){   // one roster / search card (art: haloArt; look: haloKind)
     const art = haloArt(s.icon), kind = haloKind(s);
     return '<button type="button" class="sk-roster-card is-halo' + (s.passive ? " is-passive" : "") + (kind === "move" ? " is-summon-move" : kind === "mount" ? " is-mount" : "") + (extraClass || "") + '" data-skill-id="' + s.id + '" title="' + title + '">'
       + '<span class="sk-halo"><svg class="sk-halo-orbit" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="46.5" pathLength="100"/>' + (kind === "mount" ? '<circle cx="50" cy="50" r="49.6"/>' : "") + '</svg>'
       + '<span class="sk-halo-disc"><img class="sk-roster-icon" src="' + art + '" alt="' + s.name + '" loading="lazy"></span>'
       + '<svg class="sk-halo-ranks" viewBox="0 0 100 100" aria-hidden="true">' + haloDots(Math.max(1, s.maxRank || 1)) + "</svg></span>"
-      + '<span class="sk-roster-name">' + s.name + "</span></button>";   // no ติดตัว tag: the orbit style tells a passive (user 2026-11-18)
+      + '<span class="sk-roster-name">' + haloName(s.name) + "</span></button>";   // no ติดตัว tag: the orbit style tells a passive (user 2026-11-18)
   }
   // Roster and global search grid (user 2026-11-18; replaced the tight cards and the pager of 2026-10-19, which moved the page around). Desktop (> 1024 px):
   // 1-6 cards: the big 6-a-row cards in one row; 7-12: big cards in two balanced rows (ceil(n / 2) a row: 8 = 4 + 4, 11 = 6 + 5); 13-16: the small 8-a-row
@@ -41262,6 +41266,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-19T03:06:47.423Z","feat(bible): ชื่อท่าย่อยในรายการสกิล (ซัมมอนและอาชีพ) ตัดขีดออก ขึ้นบรรทัดใหม่ด้วยตัวอักษรเล็กลง"],
     ["2026-11-19T02:59:21.780Z","fix(bible): ช่องรหัสภารกิจของลัทธิไม่เลือกตัวเลขทั้งหมดระหว่างพิมพ์อีกต่อไป ตัวเลขถัดไปจึงไม่ทับค่าที่พิมพ์ไว้"],
     ["2026-11-19T02:44:52.533Z","fix(bible): Bison Cult - Retaliation ใช้ไอคอน Colossal Armor แทน Iron Skin (ตรงกับท่ามากกว่า)"],
     ["2026-11-19T02:43:13.795Z","feat(bible): Bison Cult - Retaliation ใช้ไอคอน Iron Skin ย้อมโทนเทาแดงแบบเดียวกับท่าอื่นของลัทธิ"],
