@@ -6258,8 +6258,10 @@ console.log(`Verified ${checkedUnintended} Unintended-behavior page checks.`);
     const count = vm.runInContext("countSkillView", sandbox), badge = vm.runInContext("skillViewsBadge", sandbox);
     count("zz_viewTestA", "A"); count("zz_viewTestA", "A"); count("zz_viewTestB", "B");
     const html = badge({ id: "zz_viewTestC", name: "C" }); badge({ id: "zz_viewTestC", name: "C" });
-    ok = calls.length === 3 && calls[0].path === "/bible/#skill-details/zz_viewTestA" && calls[0].event === false && calls[1].path === "/bible/#skill-details/zz_viewTestB"
-      && calls[2].path === "/bible/#skill-details/zz_viewTestC" && /^<span class="sk-views" data-views-id="zz_viewTestC"[^>]* hidden>/.test(html);
+    vm.runInContext("skillViewKnown.zz_viewTestD = 100", sandbox); const est = vm.runInContext("estimatedReaders", sandbox)("zz_viewTestD", 100), shown = badge({ id: "zz_viewTestD", name: "D" });   // a known count shows as estimated readers, like the guides (user 2026-11-19)
+    ok = calls.length === 4 && calls[0].path === "/bible/#skill-details/zz_viewTestA" && calls[0].event === false && calls[1].path === "/bible/#skill-details/zz_viewTestB"
+      && calls[2].path === "/bible/#skill-details/zz_viewTestC" && /^<span class="sk-views" data-views-id="zz_viewTestC"[^>]* hidden>/.test(html)
+      && est >= 500 && est <= 700 && shown.includes("<b>" + est.toLocaleString("th-TH") + "</b>") && !/ hidden>/.test(shown) && (src.match(/function estimatedReaders\(/g) || []).length === 1 && !src.includes("const estimatedReaders");
     if (!ok) why = JSON.stringify(calls.map((c) => c.path)) + " " + html.slice(0, 80);
   } catch (e) { why = e.message; } finally { sandbox.goatcounter = keepGc; sandbox.sessionStorage = keepSs; }
   const wired = src.includes("${skillViewsBadge(selected)}") && src.includes("goatCounterCount(guideViewPath(id))") && src.includes("const countGuideView = (id, title) => goatCount(guideViewPath(id), title);")
@@ -6320,7 +6322,8 @@ console.log(`Verified ${checkedUnintended} Unintended-behavior page checks.`);
   const wired = src.includes("if (act.rankDep) return Math.min(Math.max(getDepRank(act.rankDep), 1), max);") && src.includes("const heroIconInner = heroMax > 1 && !activeSelected.rankDep")
     && src.includes("const heroPips = heroMax > 1 && !activeSelected.rankDep ? pipsHtml(") && src.includes('activeSelected.rankDep ? renderDmgRankToggle(activeSelected.rankDep, "STATS") : ""')
     && src.includes("SUMMON_LV_DEPS.forEach(d => { if (d.rankOf === selected.id) depRanks[d.id] = nextRank; });") && src.includes("const lvDep = SUMMON_LV_DEPS.find(d => d.id === btn.dataset.depId); if (lvDep) skillRanks[lvDep.rankOf] = next;")
-    && src.includes("haloDots(s.rankDep ? 1 : Math.max(1, s.maxRank || 1))");
+    && src.includes("haloDots(s.rankDep ? 1 : Math.max(1, s.maxRank || 1))")
+    && src.includes('(lv => btn("rank", lv ? lv.label + " Lv " + rank : "Rank " + rank, lv ? lv.icon : skill.icon, true, maxRank, rank))(base.rankDep || skill.rankDep)');   // the range pop-up previews the summon's level
   if (why.length || !wired) { errorCount++; console.error(`[SUMMON LEVEL ERROR] ${why.slice(0, 6).join("; ") || "ok"}; level toggle wired (rank, head, side panel, sync both ways, list pips): ${wired}`); }
   else console.log(`Verified summon levels: ${withDep} summon moves take their level from the summon (side-panel toggle, no own rank).`);
 }

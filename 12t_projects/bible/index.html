@@ -9931,16 +9931,20 @@ function countSkillView(id, name){
   sent.push(id); try { sessionStorage.setItem(SKILL_VIEW_SENT_KEY, JSON.stringify(sent)); } catch (e) {}
 }
 const SKILL_VIEW_EYE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="2.8"/></svg>';
-const skillViewLabel = n => n.toLocaleString("th-TH") + " คนเปิดดูสกิลนี้";
-function skillViewsBadge(skill){   // the header's eye + count; a count still on its way fills every badge of that skill when it lands
-  const id = skill.id, n = skillViewKnown[id];
+const skillViewLabel = n => n.toLocaleString("th-TH") + " ผู้อ่านสกิลนี้";
+// Estimated readers (user 2026-10-17 for the class guides, 2026-11-19 for skills, the same reason): a guide or a skill card is often read by a whole
+// team of 5-7 round one screen, so the unique-visitor count is multiplied by a fixed per-id factor between 5.0 and 7.0 (about 6 on average; from the
+// id, so it never changes between loads). 0 stays 0.
+function estimatedReaders(id, visitors){ let h = 0; for (const ch of String(id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; h = Math.imul(h ^ (h >>> 15), 2246822507) >>> 0; return Math.round(visitors * (5 + (h % 201) / 100)); }
+function skillViewsBadge(skill){   // the header's eye + count (estimated readers); a count still on its way fills every badge of that skill when it lands
+  const id = skill.id, v0 = skillViewKnown[id], n = v0 ? estimatedReaders(id, v0) : v0;
   countSkillView(id, skill.name);
   if (n === undefined && !skillViewAsked[id]){
     skillViewAsked[id] = true;
     goatCounterCount(skillViewPath(id)).then(v => { skillViewKnown[id] = v; if (!v || typeof document === "undefined" || !document.querySelectorAll) return;
-      document.querySelectorAll(".sk-views").forEach(el => { if (el.dataset.viewsId !== id) return; el.querySelector("b").textContent = v.toLocaleString("th-TH"); el.setAttribute("aria-label", skillViewLabel(v)); el.hidden = false; }); });
+      const r = estimatedReaders(id, v); document.querySelectorAll(".sk-views").forEach(el => { if (el.dataset.viewsId !== id) return; el.querySelector("b").textContent = r.toLocaleString("th-TH"); el.setAttribute("aria-label", skillViewLabel(r)); el.hidden = false; }); });
   }
-  return '<span class="sk-views" data-views-id="' + String(id).replace(/&/g, "&amp;").replace(/"/g, "&quot;") + '" title="จำนวนคนที่เปิดดูสกิลนี้ นับตั้งแต่ 18 พ.ย. 2026 (อัปเดตทุก 10 นาที)"'
+  return '<span class="sk-views" data-views-id="' + String(id).replace(/&/g, "&amp;").replace(/"/g, "&quot;") + '" title="จำนวนผู้อ่านสกิลนี้ นับตั้งแต่ 18 พ.ย. 2026 (อัปเดตทุก 10 นาที)"'
     + (n ? ' aria-label="' + skillViewLabel(n) + '"' : " hidden") + ">" + SKILL_VIEW_EYE + "<b>" + (n ? n.toLocaleString("th-TH") : "") + "</b></span>";
 }
 const SERVER_INFO = {
@@ -12599,7 +12603,7 @@ function openReachPopup(base, rank, srv0){
   const btn = (key, label, icon, on, nPips, filled) => `<div class="sk-reach-dep${on ? " on" : ""}" data-key="${key}" role="button" tabindex="0" title="${label}"><span class="sk-dep-btncol"><span class="sk-dep-toggle${on ? " on" : ""}"><img src="${SKILL_ICONS[nPips > 1 ? lvlIcon(icon, filled) : icon] || ""}" alt=""></span>${pipRow(nPips, filled)}</span><span class="sk-reach-dep-name">${label}</span></div>`;
   const SRV_NAME = SERVER_SHORT;
   const depsHtml = () => (srvList.length > 1 ? srvList.map(sv => { const on = sv === srv || (sv === "og" && !srvList.includes(srv)); return btn("srv:" + sv, SRV_NAME[sv], "server_" + sv, on, 1, on ? 1 : 0); }) : [])
-    .concat(rankMatters ? [btn("rank", "Rank " + rank, skill.icon, true, maxRank, rank)] : [])   // a rank has no off state: always lit, pips = rank
+    .concat(rankMatters ? [(lv => btn("rank", lv ? lv.label + " Lv " + rank : "Rank " + rank, lv ? lv.icon : skill.icon, true, maxRank, rank))(base.rankDep || skill.rankDep)] : [])   // a rank has no off state: always lit, pips = rank; a rankDep card previews the summon's level, not a rank of its own (user 2026-11-19)
     .concat(toggles.map((e, k) => { if (e.cycle){ const lv = (over[e.dep.id] || 0) - (e.off || 0), n = e.on - (e.off || 0); return btn("t" + k, `${e.label || e.dep.label}${lv > 0 ? " " + over[e.dep.id] : ""}`, e.icon || e.dep.icon, lv > 0, n, lv); } const on = over[e.dep.id] === e.on; return btn("t" + k, e.label || e.dep.label, e.icon || e.dep.icon, on, 1, on ? 1 : 0); }))
     .concat(rankToggles.map(d => btn(d.id, `${d.label}${over[d.id] && d.maxRank > 1 ? " " + over[d.id] : ""}`, d.icon, over[d.id] > 0, d.maxRank, over[d.id]))).join("");
   pop.innerHTML = `<div class="sk-reach-panel" role="dialog" aria-label="ระยะโจมตี">
@@ -38581,9 +38585,7 @@ function mountClassGuide(root){
   const countGuideView = (id, title) => goatCount(guideViewPath(id), title);
   const guideViews = id => guideViewCache[id] || (guideViewCache[id] = goatCounterCount(guideViewPath(id))   // the shared counter (goatCounterCount: 10-minute fresh, all time)
     .then(n => { const snap = CLASS_GUIDE_VIEWS.counts[id]; return n == null ? (snap != null ? snap : null) : Math.max(n, snap || 0); }));   // blocked (ad / tracker blocker): the count saved at the last push (user 2026-10-17); counts only grow, so the snapshot also wins over a live answer GoatCounter cached before the push (it caches each counter up to 4 hours)
-  // Shown as ESTIMATED READERS (user 2026-10-17): a guide is often read by a whole team of 5-7 around one screen, so the unique-visitor count is
-  // multiplied by a fixed per-guide factor between 5.0 and 7.0 (about 6 on average; from the guide id, so it never changes between loads). 0 stays 0.
-  const estimatedReaders = (id, visitors) => { let h = 0; for (const ch of String(id)) h = (h * 31 + ch.charCodeAt(0)) >>> 0; h = Math.imul(h ^ (h >>> 15), 2246822507) >>> 0; return Math.round(visitors * (5 + (h % 201) / 100)); };
+  // Shown as ESTIMATED READERS (user 2026-10-17): estimatedReaders (global, beside skillViewsBadge, which uses it too) multiplies the unique visitors by a fixed per-guide 5.0-7.0.
   let galleryRefit = () => {}; const guideViewKnown = {};   // the gallery's refit (set below); the reader counts already in, by guide id
   const viewBadge = id => {
     const known = guideViewKnown[id] != null;   // a count already in shows at once, so the gallery's fit sees it; one still on its way makes the card grow when it lands, so the gallery refits then (review 2026-10-30: the page scrolled 13 px)
@@ -41273,6 +41275,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-19T08:40:35.511Z","fix(bible): หน้าต่างระยะโจมตีของ Ja Detonate, Auto Gyro Gun และ Gadina แสดงปุ่มเลเวลซัมมอน (เช่น Ja Lv 4) แทน Rank ของการ์ด"],
     ["2026-11-19T08:17:42.353Z","feat(bible): ท่าของซัมมอนที่แรงตามเลเวลซัมมอน (Ja Detonate, Auto Gyro Gun, Phoenix Fireball, Gadina) ไม่มีเลเวลของตัวเอง ใช้ปุ่มเลเวลซัมมอนที่แผงขวาแทน และไอคอนสัญลักษณ์ที่หัวการ์ดมีกรอบวงกลมสีบรอนซ์"],
     ["2026-11-19T08:03:29.325Z","feat(bible): ท่าย่อยของซัมมอน พาหนะ และร่างแปลง 67 ท่า มีไอคอนสัญลักษณ์ของตัวเองตามรูปแบบการโจมตีจริง สีแยกตามซัมมอน และไม่แสดงในภาพรวมไอคอนหน้าเมนู"],
     ["2026-11-19T03:06:47.423Z","feat(bible): ชื่อท่าย่อยในรายการสกิล (ซัมมอนและอาชีพ) ตัดขีดออก ขึ้นบรรทัดใหม่ด้วยตัวอักษรเล็กลง"],
