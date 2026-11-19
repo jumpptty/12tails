@@ -6290,8 +6290,8 @@ console.log(`Verified ${checkedUnintended} Unintended-behavior page checks.`);
   try { kinds = Object.fromEntries(vm.runInContext("SKILLS.map(s => [s.id, haloKind(s)])", sandbox)); } catch (e) { why.push(e.message); }
   for (const [id, k] of Object.entries(want)) if (kinds[id] !== k) why.push(`${id} ${JSON.stringify(kinds[id])} (want ${JSON.stringify(k)})`);
   const list = (k) => Object.keys(kinds).filter((id) => kinds[id] === k);
-  // Cult moves (user 2026-11-19): the hero's own skill icon recoloured red (cult_* keys); the 5 summons and Retaliation keep their coin
-  try { vm.runInContext("SKILLS.filter(s => /^common_cult/.test(s.id)).map(s => [s.id, s.icon, !!SKILL_ICONS[s.icon]])", sandbox).forEach(([id, icon, ok]) => { const coin = !id.includes("_", 7) || id === "common_cultBison_retaliation"; if (!ok || !(coin ? /^coin_cult/ : /^cult_/).test(icon)) why.push(`${id} icon ${icon}`); }); } catch (e) { why.push(e.message); }
+  // Cult moves (user 2026-11-19): the hero's own skill icon recoloured red (cult_* keys); the 5 summons keep their coin
+  try { vm.runInContext("SKILLS.filter(s => /^common_cult/.test(s.id)).map(s => [s.id, s.icon, !!SKILL_ICONS[s.icon]])", sandbox).forEach(([id, icon, ok]) => { const coin = !id.includes("_", 7); if (!ok || !(coin ? /^coin_cult/ : /^cult_/).test(icon)) why.push(`${id} icon ${icon}`); }); } catch (e) { why.push(e.message); }
   const wired = src.includes('const art = haloArt(s.icon), kind = haloKind(s);') && src.includes('(kind === "move" ? " is-summon-move" : kind === "mount" ? " is-mount" : "")')
     && src.includes(`(kind === "mount" ? '<circle cx="50" cy="50" r="49.6"/>' : "")`) && src.includes(".sk-roster-card.is-halo.is-summon-move{--halo:") && src.includes('<radialGradient id="skPipJade"')
     && src.includes(".is-mount .sk-halo-orbit circle{stroke-width:.8; stroke-dasharray:none}");
