@@ -950,6 +950,7 @@ let checkedBenediction = 0;
 let checkedRankIcons = 0;
 SKILLS.forEach(sk => {
   if (!(sk.maxRank > 1) || !sk.icon) return;
+  if (/^mv_/.test(sk.icon) && !(sk.icon + "1" in SKILL_ICONS)) return;   // a sub-move symbol (scripts/build_move_icons.py) has no game rank art: the header keeps the one picture unless the script drew rank variants (Gadina)
   const base = sk.icon.replace(/\d+$/, "");
   const absent = [];
   for (let r = 1; r <= sk.maxRank; r++) { checkedRankIcons++; if (!(base + r in SKILL_ICONS)) absent.push(r); }
@@ -6299,6 +6300,31 @@ console.log(`Verified ${checkedUnintended} Unintended-behavior page checks.`);
   if (process.env.HALO_LIST) console.log("[HALO LIST] move: " + list("move").join(", ") + "\n[HALO LIST] mount: " + list("mount").join(", "));
   if (why.length || !wired) { errorCount++; console.error(`[HALO KIND ERROR] summon moves outside every tree = jade, mounts = double rim, tree skills and summon cards = normal: ${why.join("; ") || "ok"}; markup / CSS wired: ${wired}`); }
   else console.log(`Verified the Halo looks: ${list("move").length} summon moves (jade), ${list("mount").length} mount abilities (double rim).`);
+}
+
+// Sub-move symbol icons (user 2026-11-19, scripts/build_move_icons.py): no card borrows another card's picture any more, except the 8 that use a real
+// hero skill's icon (Barrel Bot's Mega Punch ... Barrel Cannon (Auto), Kaiser Arsenal, Fire Avatar - Fireball); every mv_ card that shows its parent's
+// in-game tooltip keeps the old picture in tipIcon (the paper draws it), and every mv_ card that sat in its parent's tree tab keeps it with rosterParent.
+{
+  const src = fs.readFileSync(targetPath, "utf8"), why = [];
+  const BORROW = new Set(["mole_barrelBot_punch", "mole_barrelBot_hammer", "mole_barrelBot_chopper", "mole_barrelBot_missile", "mole_barrelBot_drill", "mole_barrelBot_cannon", "mole_kingKaiser_arsenal", "monkey_fireAvatar_fireBall"]);
+  let rows = [];
+  try { rows = vm.runInContext("SKILLS.map(s => ({ id: s.id, icon: s.icon, cls: s.class, tip: s.tipIcon || '', parent: s.rosterParent || '', alone: !!(s.mount || s.onlyServer || s.soon), gt: !!(GAME_TOOLTIP_TH[s.id] || GAME_TOOLTIP_TH_RB[s.id]), has: !!SKILL_ICONS[s.icon], tipOk: !s.tipIcon || !!SKILL_ICONS[s.tipIcon] }))", sandbox); } catch (e) { why.push(e.message); }
+  const ids = new Set(rows.map((r) => r.id)), byIcon = {};
+  rows.forEach((r) => (byIcon[r.icon] = byIcon[r.icon] || []).push(r));
+  for (const [icon, list] of Object.entries(byIcon)) if (list.filter((r) => !BORROW.has(r.id)).length > 1) why.push(`${icon} is shared by ${list.map((r) => r.id).join(", ")}`);
+  const mv = rows.filter((r) => /^mv_/.test(r.icon));
+  if (mv.length !== 67) why.push(`${mv.length} cards use an mv_ icon (want 67)`);
+  mv.forEach((r) => {
+    if (!r.has) why.push(r.id + " icon " + r.icon + " is missing");
+    if (r.gt && !r.tip) why.push(r.id + " shows a game tooltip but has no tipIcon");
+    if (!r.tipOk) why.push(r.id + " tipIcon is not in SKILL_ICONS");
+    if (!r.alone && r.cls !== "Common" && (!r.parent || !ids.has(r.parent))) why.push(r.id + " needs a rosterParent naming a card (it would leave its parent's tab)");
+  });
+  const wired = (src.match(/i: SKILL_ICONS\[activeSelected\.tipIcon \|\| heroIconKey\] \|\| ""/g) || []).length === 2 && !src.includes('i: SKILL_ICONS[heroIconKey] || ""')
+    && src.includes("filter(k => k && SKILL_ICONS[k] && !/^(mv_|bat_zombie)/.test(k))");   // the main menu's skill icon collage leaves the symbols and the zombies out
+  if (why.length || !wired) { errorCount++; console.error(`[MOVE ICON ERROR] sub-move symbol icons: ${why.slice(0, 8).join("; ") || "ok"}; tooltip paper draws tipIcon: ${wired}`); }
+  else console.log(`Verified the sub-move symbol icons: ${mv.length} mv_ cards, ${mv.filter((r) => r.tip).length} keep the parent's picture on the game tooltip, no other shared icons.`);
 }
 
 // TTO Cult coin summons (user 2026-11-18): 21 Common TTO-only cards; stats = CONTRACT_MERC_STATS, New Order x1.5, then TTO's chapter scaling
