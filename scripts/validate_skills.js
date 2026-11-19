@@ -6315,6 +6315,7 @@ console.log(`Verified ${checkedUnintended} Unintended-behavior page checks.`);
   if (!drain || drain.atkClampRound !== "ceilf" || vm.runInContext("Math.ceil(Math.fround(Math.fround(0.3) * 90))", sandbox) !== 28) fails.push("Bat Cult drain rounds the float32 product up (28 at ATK 90)");
   const src = fs.readFileSync(targetPath, "utf8");
   if (!src.includes('if (isCultCard(selected)) CHA = merc.cha;') || !src.includes('data-role="cult-mission"') || !src.includes('full: "TTO Cult"')) fails.push("the Cult CHA override, the mission box and the Common TTO tab are wired");
+  if (!src.includes('again.value = cleaned; again.dataset.keepCaret = ""; again.focus(')) fails.push("the mission box refocuses with keepCaret after a chapter redraw (else the focusin select-all makes the next digit replace the number, user 2026-11-19)");
   if (fails.length) { errorCount++; console.error("[CULT ERROR] " + fails.join("; ")); }
   else console.log("Verified the TTO Cult coin summons: 21 cards, chapter scaling and New Order, the drain's float32 ceil, the Cult's own CHA.");
 }
