@@ -8704,17 +8704,77 @@
     font:700 14.5px/1.2 'Prompt',sans-serif; text-decoration:none; white-space:nowrap; transition:translate .15s, filter .15s}
   .news-go:hover{translate:0 -1px; filter:brightness(1.06)}
   .news-go:focus-visible, .news-later:focus-visible{outline:2px solid var(--gold); outline-offset:2px}
+  /* what's new (user 2026-11-19): night-violet band, the wardrobe mirror with pets floating round it; tiles = halo discs and the five preset faces */
+  .news-hero.is-wn{height:250px; background:radial-gradient(120% 150% at 80% 28%, #3b2b52 0%, #1b1426 46%, #0e0a13 100%)}
+  .news-hero.is-wn::after{background:linear-gradient(90deg, rgba(14,10,19,.97) 0%, rgba(14,10,19,.86) 40%, rgba(14,10,19,.12) 66%, rgba(14,10,19,.3) 100%), linear-gradient(0deg, rgba(14,10,19,.8), transparent 46%)}
+  .news-hero.is-wn .news-hero-tx, .news-hero.is-cult .news-hero-tx{max-width:50%}
+  .news-hero.is-wn .news-name{font-size:28px}
+  .nw-glow{position:absolute; right:58px; top:16px; width:230px; height:230px; border-radius:50%; background:radial-gradient(closest-side, rgba(255,214,150,.26), rgba(196,140,255,.1) 60%, transparent); z-index:2}
+  .nw-mirror{position:absolute; right:92px; top:-6px; height:296px; aspect-ratio:613 / 1000; z-index:2; filter:drop-shadow(0 18px 28px rgba(0,0,0,.6))}
+  .nw-mirror img{display:block; width:100%; height:100%}
+  .nw-pets{position:absolute; right:14px; top:8px; width:330px; height:230px; z-index:3}
+  .nw-pet{position:absolute; width:52px; height:52px; scale:var(--s, 1); animation:newsBob 3.4s ease-in-out infinite alternate}
+  .nw-pet img{display:block; width:100%; height:100%; filter:drop-shadow(0 6px 10px rgba(0,0,0,.6))}
+  .nw-orbit{display:grid; place-items:center; width:50px; height:50px; border-radius:50%; border:1.5px dashed #d0913e}
+  .nw-orbit.is-jade{border-color:#6fd6b4; border-style:dotted; border-width:2px}
+  .nw-orbit.is-bronze{border:2px solid #c0803f; box-shadow:0 0 0 2px #2a1608, 0 0 0 3.5px #c0803f}
+  .nw-disc{display:block; width:40px; height:40px; border-radius:50%; overflow:hidden; background:#0d0907}
+  .nw-disc img{display:block; width:100%; height:100%; transform:scale(1.3)}
+  .nw-preset{display:flex; gap:6px}
+  .nw-pv{display:flex; flex-direction:column; align-items:center; gap:4px}
+  .nw-face{width:34px; height:34px; object-fit:contain; filter:drop-shadow(0 3px 5px rgba(0,0,0,.5))}
+  .nw-pv .news-pill{width:24px; height:22px; font-size:12px}
+  .nw-link{align-self:flex-start; margin-top:6px; font:600 13px/1.3 'Prompt',sans-serif; color:var(--gold); text-decoration:none}
+  .nw-link:hover{filter:brightness(1.12)}
+  /* TTO Cult Coins (user 2026-11-19): a crimson band, the Cult move icons falling behind, the five coins on a curve, the TTO mark */
+  .news-hero.is-cult{height:250px; background:radial-gradient(110% 140% at 78% 40%, #611620 0%, #2b0b11 48%, #12070a 100%)}
+  .news-hero.is-cult::after{background:linear-gradient(90deg, rgba(18,7,10,.97) 0%, rgba(18,7,10,.86) 40%, rgba(18,7,10,.2) 70%, rgba(18,7,10,.45) 100%), linear-gradient(0deg, rgba(18,7,10,.85), transparent 50%)}
+  .nc-rain{position:absolute; inset:0; --srain-ic:15cqh; --srain-gap:7cqh; opacity:.6}
+  .nc-tto{position:absolute; left:26px; top:20px; width:44px; height:44px; object-fit:contain; z-index:3; filter:drop-shadow(0 4px 8px rgba(0,0,0,.6))}
+  .nc-coins{position:absolute; right:30px; top:50%; translate:0 -50%; width:300px; height:196px; z-index:2}
+  .nc-coin{position:absolute; width:78px; height:78px; filter:drop-shadow(0 12px 14px rgba(0,0,0,.6)); animation:newsBob 3.8s ease-in-out infinite alternate}
+  .nc-coin img{display:block; width:100%; height:100%; transform:scale(1.3)}   /* the coin fills about 70% of its picture */
+  .nc-coin.is-0{left:0; top:14px; animation-delay:-.6s}
+  .nc-coin.is-1{left:34px; bottom:0; animation-delay:-1.8s}
+  .nc-coin.is-2{left:50%; top:50%; translate:-50% -50%; width:112px; height:112px; z-index:1}
+  .nc-coin.is-3{right:0; top:14px; animation-delay:-2.4s}
+  .nc-coin.is-4{right:34px; bottom:0; animation-delay:-1.2s}
+  .news-feats.is-3{grid-template-columns:repeat(3, 1fr)}
+  .nc-box{display:inline-flex; align-items:baseline; gap:8px; padding:6px 10px; border:1px solid var(--line); border-radius:7px; background:var(--panel); font:500 12px/1 'Prompt',sans-serif; color:var(--muted)}
+  .nc-box b{font:700 15px/1 'JetBrains Mono','Prompt',monospace; color:var(--text)}
+  .nc-box i{font:700 12px/1 'JetBrains Mono','Prompt',monospace; font-style:normal; color:var(--gold)}
+  .nc-no{display:block; width:34px; height:34px}
+.nc-disc{display:block; width:40px; height:40px}
+  .nc-disc img{display:block; width:100%; height:100%}
+  .nc-steps{display:flex; align-items:center; gap:6px}
+  .nc-steps b{display:grid; place-items:center; width:30px; height:30px; border-radius:50%; border:1.5px solid var(--gold); font:700 13px/1 'JetBrains Mono','Prompt',monospace; color:var(--gold)}
+  .nc-steps i{font-style:normal; color:var(--muted)}
   @media (max-width:640px){
     .news-backdrop{padding:12px}
-    .news-hero{height:206px}
+    .news-hero{height:226px}
+    .news-hero.is-cult{height:256px}   /* phones: the art tucked top-right, the text below it (checked 360-430 px, 2026-11-19) */
+    .news-hero.is-wn .news-hero-tx, .news-hero.is-cult .news-hero-tx{max-width:none}
+    .news-hero.is-wn .news-name{font-size:24px}
+    .news-hero.is-wn{height:268px}   /* phones: mirror and pets tucked top-right, the text below them */
+    .nw-glow{right:-30px; top:-40px; scale:.55}
+    .nw-mirror{right:30px; top:-4px; height:130px}
+    .nw-pets{right:-4px; top:0; scale:.5; transform-origin:top right}
+    .nc-coins{right:6px; top:12px; translate:none; scale:.55; transform-origin:top right}
+    .news-feats.is-3{grid-template-columns:1fr}
     .news-hero-tx{left:18px; right:18px; bottom:18px; max-width:none}
     .news-name{font-size:25px}
-    .news-rings{right:6px; top:10px; translate:none; scale:.62; transform-origin:top right}
+    .news-rings{right:6px; top:10px; translate:none; scale:.56; transform-origin:top right}
     .news-feats{grid-template-columns:1fr; padding:14px 14px 2px; gap:10px}
     .news-feat{padding:12px 14px}
     .news-acts{flex-direction:column-reverse; align-items:stretch; gap:2px; padding:12px 14px 10px}   /* the open button full width on top, ไว้ทีหลัง under it */
     .news-go{justify-content:center; padding:11px 14px}
     .news-later{padding:8px}
+  }
+  @media (max-width:400px){   /* narrow phones (375 / 360 px): a smaller mirror and title, so the text stays below the art */
+    .news-hero.is-wn{height:288px}
+    .nw-mirror{height:112px}
+    .nw-pets{scale:.44}
+    .news-hero.is-wn .news-name{font-size:22px}
   }
 /* </NEWS:css> */
   /* ===== Special Pet Info (tool "pet-info", user 2026-10-18: layout A "Codex" of 4 mocks). Roster left, the chosen pet right.
@@ -15199,7 +15259,7 @@ function statusRainDealer(n, r){
   };
 }
 function statusRainHtml(o){
-  const pick = statusRainPick(o.seed, o.icons), r = statusRnd(o.seed + 101), deal = statusRainDealer(pick.length, r);
+  const pick = o.srcs || statusRainPick(o.seed, o.icons), r = statusRnd(o.seed + 101), deal = statusRainDealer(pick.length, r);   // o.srcs: any picture list (the Cult news rains its move icons)
   const vars = pick.map((s, i) => `--si${i}:url('${s}')`).join(";");
   const cols = Array.from({ length: o.cols }, (_, c) => {
     const used = new Set();
@@ -42185,7 +42245,7 @@ const PATCH_MUTED_KEY = "12t-bible-patch-muted";   // JSON list of the servers w
 function patchMuted(){ try { const m = JSON.parse(localStorage.getItem(PATCH_MUTED_KEY) || "[]"); return Array.isArray(m) ? m : []; } catch (e) { return []; } }
 function mountPatchPopup(){
   const modal = document.getElementById("patchModal"), ok = document.getElementById("btnPatchOk"), list = document.getElementById("patchList"), btns = document.getElementById("patchHistoryBtns");
-  if (!modal || !ok || !list || !PATCH_HISTORY.length) return;
+  if (!modal || !ok || !list || !PATCH_HISTORY.length) return null;
   const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   const rich = (t) => esc(t).replace(/\*\*(.+?)\*\*/g, '<b class="sk-val">$1</b>');
   const KIND = { bug: ['is-bug', "แก้บัค", "การแก้บัค"], "sneak-nerf": ['is-sneak-nerf', "แอบ Nerf", "แย่ลงจาก BB และไม่อยู่ในแพตช์โน้ตของเซิร์ฟ"], sneak: ['is-sneak', "แอบเปลี่ยน", "ไม่อยู่ในแพตช์โน้ตของเซิร์ฟ"], fix: ['is-claim', "บอกว่าแก้แต่", "แพตช์โน้ตบอกว่าแก้ แต่ไม่ได้แก้ตามนั้น"],
@@ -42243,24 +42303,40 @@ function mountPatchPopup(){
         + (logo ? '<img src="' + logo + '" alt="">' : "") + "<span>แพตช์โน้ต " + name + "</span></button>"; }).join("");
     btns.addEventListener("click", (event) => { const b = event.target.closest("[data-patch-server]"); if (b) show(PATCH_HISTORY.filter((e) => e.server === b.dataset.patchServer), false); });
   }
-  let seen = null;
-  try { seen = localStorage.getItem(PATCH_SEEN_KEY); } catch (e) {}
-  if (seen !== PATCH_HISTORY[0].key && !newsTakesPatchSlot() && !patchMuted().includes(PATCH_HISTORY[0].server)){ forced = PATCH_HISTORY[0].key; show(PATCH_HISTORY.filter((e) => e.server === PATCH_HISTORY[0].server), true); }
+  // the page-load showing is chosen by mountAutoPopups (one pop-up per visit, user 2026-11-19); preview = ?popup=patch (no lock, records nothing)
+  const top = () => PATCH_HISTORY.filter((e) => e.server === PATCH_HISTORY[0].server);
+  return { auto: () => { forced = PATCH_HISTORY[0].key; show(top(), true); }, preview: () => show(top(), false) };
 }
 
 // <NEWS:popup>
-// One-time news pop-up (user 2026-11-16: header "ของเล่นใหม่ สารานุกรมสถานะในเกม", a composed pop-up). It takes the page-load slot of the patch notes
-// it replaces (user: "this ของเล่นใหม่ replace the TTO patch note"): while NEWS_POPUP.replaces is the newest patch, mountPatchPopup does not force
-// those notes, and closing the news remembers both. A newer patch still shows first and the news waits for it. Not shown on the glossary's own page
-// (the visitor is there already: it counts as seen) or without storage (it could not be shown only once). The ☕ note waits while it is open.
-const NEWS_POPUP = { key: "status-glossary-2026-11-16", replaces: "tto-1.6.2.4", tool: "status-glossary", kicker: "ของเล่นใหม่", title: "สารานุกรมสถานะในเกม" };
-const NEWS_SEEN_KEY = "12t-bible-news-seen";
+// Automatic pop-ups (user 2026-11-19: "don't show all pop-ups consecutively in one visit, space them out"): at most ONE per visit, and the next
+// one waits for a page load at least POPUP_GAP_MS after it. Order: the newest patch notes when unseen (and their server not muted), then the
+// news in NEWS_ITEMS order (newest first). A "general" news is for everyone and only the NEWS_GENERAL_ACTIVE newest general ones are active (a 4th
+// drops the oldest, even unseen); a "server" news is skipped where that server's patch notes are muted. Without storage nothing opens by itself
+// (it could not be shown only once). A news with seenOn counts as seen when the visit lands on that tool. The ☕ note stays away in a visit that
+// showed one (popupVisitBusy). ?popup=<news key> or ?popup=patch shows that pop-up at once and records nothing, to review a new one.
+// The glossary news (user 2026-11-16: "ของเล่นใหม่ สารานุกรมสถานะในเกม", a composed pop-up) keeps its data here.
+const NEWS_POPUP = { key: "status-glossary-2026-11-16", tool: "status-glossary", kicker: "ของเล่นใหม่", title: "สารานุกรมสถานะในเกม" };
+const NEWS_SEEN_KEY = "12t-bible-news-seen";   // a JSON list of the news keys closed on this device (the 2026-11-16 build stored one key as a plain string)
 const NEWS_RINGS = { hero: ["poison", "iceShield", "burn"], kinds: ["bless", "poison", "cut"] };   // real glossary rings: Physical, Shield, Magical / Buff, Debuff, State
-function newsTakesPatchSlot(){ return NEWS_POPUP.replaces === PATCH_HISTORY[0].key; }
-function newsPopupDue(seen, hash, readable){
-  if (!readable || seen === NEWS_POPUP.key) return false;
-  const h = String(hash || ""), t = "#" + NEWS_POPUP.tool;
-  return !(h === t || h.startsWith(t + "/") || h.startsWith(t + "?"));
+const NEWS_GENERAL_ACTIVE = 3, POPUP_GAP_MS = 3 * 3600000, POPUP_LAST_KEY = "12t-bible-popup-last";   // 3 general news at once; 3 hours = the next visit
+function newsSeenList(raw){
+  if (raw == null || raw === "") return [];
+  try { const v = JSON.parse(raw); if (Array.isArray(v)) return v.filter((k) => typeof k === "string"); } catch (e) {}
+  return [String(raw)];
+}
+function newsRemember(key){ try { const l = newsSeenList(localStorage.getItem(NEWS_SEEN_KEY)); if (!l.includes(key)) l.push(key); localStorage.setItem(NEWS_SEEN_KEY, JSON.stringify(l)); } catch (e) {} }
+function newsOnOwnPage(item, hash){ if (!item.seenOn) return false; const h = String(hash || ""), t = "#" + item.seenOn; return h === t || h.startsWith(t + "/") || h.startsWith(t + "?"); }
+function popupVisitBusy(now){ try { const last = +localStorage.getItem(POPUP_LAST_KEY) || 0; return !!last && (now || Date.now()) - last < POPUP_GAP_MS; } catch (e) { return false; } }
+// st = { readable, now, last, patchSeen, muted: [server], newsSeen: [key] } -> { type: "patch" } | { type: "news", item } | null
+function autoPopupPick(st, items = NEWS_ITEMS, patches = PATCH_HISTORY){
+  if (!st || !st.readable) return null;
+  if (st.last && st.now - st.last < POPUP_GAP_MS) return null;
+  const top = patches[0];
+  if (top && st.patchSeen !== top.key && !st.muted.includes(top.server)) return { type: "patch" };
+  const active = items.filter((n) => n.kind === "general").slice(0, NEWS_GENERAL_ACTIVE);
+  const item = items.find((n) => !st.newsSeen.includes(n.key) && (n.kind === "general" ? active.includes(n) : !st.muted.includes(n.server)));
+  return item ? { type: "news", item } : null;
 }
 function newsPopupHtml(){
   const n = statusAllKeys().length;
@@ -42281,32 +42357,83 @@ function newsPopupHtml(){
     + `</ul><div class="news-acts"><button type="button" class="news-later" data-news-close>ไว้ทีหลัง</button>`
     + `<a class="news-go" href="#${NEWS_POPUP.tool}" data-news-close>เปิดสารานุกรมสถานะ <span aria-hidden="true">→</span></a></div>`;
 }
+// What's new (user 2026-11-19, general: every visitor): the online wardrobe's pets lead (the mirror art of the menu tile with real pet icons round it),
+// then two tiles: the skill details overhaul (class rings, round skill list, symbols for summon / mount moves) and one-click presets 1-5.
+const NEWS_WN_PETS = ["p_srp", "p_skm", "p_lmc", "p_sob", "p_tto_shark_o", "p_sdm", "p_lms", "p_slb"];   // 7 BB pets + TTO's shark
+const NEWS_WN_SPOTS = [[18, 4, .85], [16, 42, .9], [20, 80, .8], [86, 2, .95], [92, 40, 1.05], [84, 76, .9], [46, 90, .7], [62, -2, .7]];   // left %, top %, scale (round the mirror, clear of the text)
+function newsWhatsNewHtml(){
+  const wardrobe = (TOOLS.find((t) => t.id === "wardrobe") || {}).href || "";
+  const img = (src, cls) => src ? `<img class="${cls}" src="${src}" alt="" loading="lazy">` : "";
+  const pets = NEWS_WN_PETS.map((k, i) => { const [x, y, s] = NEWS_WN_SPOTS[i]; return `<span class="nw-pet" style="left:${x}%;top:${y}%;--s:${s};animation-delay:-${(i * .7).toFixed(1)}s">${img(GEAR_ICONS[k], "")}</span>`; }).join("");
+  const disc = (icon, ring) => `<span class="nw-orbit is-${ring}"><span class="nw-disc">${img(SKILL_ICONS[icon], "")}</span></span>`;
+  const faces = (CLASS_HERO_COLORS.Rabbit || []).slice(0, 5).map((src, i) => `<span class="nw-pv">${img(src, "nw-face")}<span class="news-pill${i === 0 ? " is-on" : ""}">${i + 1}</span></span>`).join("");
+  const feat = (art, h, p, link) => `<li class="news-feat"><span class="news-feat-art" aria-hidden="true">${art}</span><b>${h}</b><span class="news-feat-p">${p}</span>${link || ""}</li>`;
+  return `<div class="news-hero is-wn"><span class="nw-glow" aria-hidden="true"></span><span class="nw-mirror" aria-hidden="true">${img(TOOL_ART.WardrobeMirrorThumb, "")}</span><span class="nw-pets" aria-hidden="true">${pets}</span>`
+    + `<div class="news-hero-tx"><h2 id="newsTitle"><span class="news-kicker">มีอะไรใหม่</span> <span class="news-name">The Pet in the Wardrobe</span></h2>`
+    + `<p class="news-count">ตู้เสื้อผ้ามีสัตว์เลี้ยงแล้ว BB <b>64</b> ตัว และ TTO <b>20</b> ตัว ขยับได้เหมือนในเกม ใส่คู่กับชุดหรือแยกดูทีละตัวก็ได้</p></div></div>`
+    + `<ul class="news-feats">`
+    + feat(disc("bat_curse4", "gold") + disc("mv_monkey_gaos_tailSpin", "jade") + disc("mv_wolf_mountDash", "bronze"), "หน้ารายละเอียดสกิล โฉมใหม่",
+      "เลือกคลาสจากวงแหวนแบบในเกม สกิลเรียงเป็นวงกลมแยกตามสาย และท่าของซัมมอนกับพาหนะมีไอคอนของตัวเอง", `<a class="nw-link" href="#skill-details" data-news-close>ลองเลย <span aria-hidden="true">→</span></a>`)
+    + feat(`<span class="nw-preset">${faces}</span>`, "PRESET 1-5 กดครั้งเดียว", "สลับชุดค่าสถานะพร้อมบัฟและดีบัฟได้ในคลิกเดียว หน้าคลาสเปลี่ยนสีตามชุดที่ใช้อยู่")
+    + `</ul><div class="news-acts"><button type="button" class="news-later" data-news-close>ไว้ทีหลัง</button>`
+    + `<a class="news-go" href="${wardrobe}" target="_blank" rel="noopener" data-news-close data-news-count="/bible/#wardrobe" data-news-title="12 Tails Wardrobe">เปิดตู้เสื้อผ้า <span aria-hidden="true">→</span></a></div>`;
+}
+// TTO Cult Coins (user 2026-11-19, server news: TTO visitors): the five coin portraits over a rain of the Cult move icons, three tiles.
+const NEWS_CULT_COINS = ["coin_cultBat", "coin_cultRabbit", "coin_cultBison", "coin_cultPanda", "coin_cultSheep"];
+const NEWS_CULT_MOVES = ["cult_batCurse", "cult_batDrainLife", "cult_bisonNAttack", "cult_bisonCAttack", "cult_bisonSlam", "cult_bisonRetaliation", "cult_pandaNAttack", "cult_pandaDrunkenFist",
+  "cult_pandaQiStrike", "cult_pandaRoll", "cult_rabbitNAttack", "cult_rabbitMaimShot", "cult_sheepNAttack", "cult_sheepCAttack", "cult_sheepRandomCast", "cult_sheepSupport"];
+function newsCultHtml(){
+  const img = (src) => src ? `<img src="${src}" alt="" loading="lazy">` : "";
+  const srcs = NEWS_CULT_MOVES.map((k) => SKILL_ICONS[k]).filter(Boolean);
+  const coins = NEWS_CULT_COINS.map((k, i) => `<span class="nc-coin is-${i}">${img(SKILL_ICONS[k])}</span>`).join("");
+  const disc = (k) => `<span class="nc-disc">${img(SKILL_ICONS[k])}</span>`;
+  const feat = (art, h, p) => `<li class="news-feat"><span class="news-feat-art" aria-hidden="true">${art}</span><b>${h}</b><span class="news-feat-p">${p}</span></li>`;
+  return `<div class="news-hero is-cult">${srcs.length ? statusRainHtml({ cls: "nc-rain", seed: 11, cols: 14, perCol: 7, speed: [2.2, 1.4], srcs }) : ""}`
+    + `${img(SKILL_ICONS.server_tto).replace("<img ", '<img class="nc-tto" ')}<span class="nc-coins" aria-hidden="true">${coins}</span>`
+    + `<div class="news-hero-tx"><h2 id="newsTitle"><span class="news-kicker">ใหม่ใน TTO</span> <span class="news-name">เหรียญลัทธิ</span></h2>`
+    + `<p class="news-count">ซัมมอนลัทธิ <b>5</b> ตัวจากเหรียญ ครบทุกท่ารวม <b>16</b> ท่า</p></div></div>`
+    + `<ul class="news-feats is-3">`
+    + feat(`<span class="nc-box"><span>ภารกิจ</span><b>2499</b><i>×5.6</i></span>${SKILL_ICONS.rabbit_newOrder5 ? `<img class="nc-no" src="${SKILL_ICONS.rabbit_newOrder5}" alt="New Order" title="New Order" loading="lazy">` : ""}`, "ค่าสถานะตามบทภารกิจ",
+      "ใส่รหัสภารกิจแล้วค่าสถานะคิดตามบทให้เอง พร้อม New Order บท 25 ขึ้นไปและดันเจี้ยนได้ ×5.8")
+    + feat(["cult_bisonNAttack", "cult_pandaDrunkenFist", "cult_sheepSupport"].map(disc).join(""), "การ์ดแยกทุกท่า",
+      "ทุกท่ามีดาเมจ ระยะ และไอคอนสกิลจริงของอาชีพนั้น ย้อมโทนลัทธิ")
+    + feat(`<span class="nc-steps"><b>1</b><i>›</i><b>2</b><i>›</i><b>3</b></span>`, "AI เลือกท่าอย่างไร", "บอกลำดับที่ AI ตัดสินใจ ว่าใช้ท่าไหนตามระยะและคูลดาวน์")
+    + `</ul><div class="news-acts"><button type="button" class="news-later" data-news-close>ไว้ทีหลัง</button>`
+    + `<a class="news-go" href="#skill-details/common_cultBat" data-news-close>ดูเหรียญลัทธิ <span aria-hidden="true">→</span></a></div>`;
+}
+// newest first; the glossary news is the oldest general entry
+const NEWS_ITEMS = [
+  { key: "whats-new-2026-11-19", kind: "general", theme: "wn", html: () => newsWhatsNewHtml() },
+  { key: "tto-cult-coins-2026-11-19", kind: "server", server: "tto", theme: "cult", html: () => newsCultHtml() },
+  { key: NEWS_POPUP.key, kind: "general", seenOn: NEWS_POPUP.tool, html: () => newsPopupHtml() },
+];
 function mountNewsPopup(){
   const modal = document.getElementById("newsModal"), card = modal && modal.querySelector(".news-pop");
-  if (!modal || !card) return;
-  let seen = null, readable = true;
-  try { seen = localStorage.getItem(NEWS_SEEN_KEY); } catch (e) { readable = false; }
-  const remember = () => { try { localStorage.setItem(NEWS_SEEN_KEY, NEWS_POPUP.key); if (newsTakesPatchSlot()) localStorage.setItem(PATCH_SEEN_KEY, NEWS_POPUP.replaces); } catch (e) {} };
-  if (!readable || seen === NEWS_POPUP.key) return;
-  if (!newsPopupDue(seen, location.hash, readable)) { remember(); return; }   // opened on the glossary itself: counts as seen
+  if (!modal || !card) return null;
+  let open = null;   // { item, preview }
   const onKey = (e) => { if (e.key === "Escape" && !modal.hidden){ e.stopPropagation(); hide(); } };
-  const hide = () => { if (modal.hidden) return; modal.hidden = true; remember(); document.removeEventListener("keydown", onKey, true); };
-  const show = () => { card.innerHTML = newsPopupHtml(); modal.hidden = false; card.focus(); document.addEventListener("keydown", onKey, true); };
-  card.addEventListener("click", (e) => { if (e.target.closest && e.target.closest("[data-news-close]")) hide(); });   // the link still opens the glossary
+  const hide = () => { if (modal.hidden) return; modal.hidden = true; if (open && !open.preview) newsRemember(open.item.key); open = null; document.removeEventListener("keydown", onKey, true); };
+  card.addEventListener("click", (e) => { const a = e.target.closest && e.target.closest("[data-news-close]"); if (!a) return; if (a.dataset.newsCount && typeof goatCount === "function") goatCount(a.dataset.newsCount, a.dataset.newsTitle || ""); hide(); });   // a link still opens its page
   modal.addEventListener("click", (e) => { if (e.target === modal) hide(); });
-  // a newer patch showing on load goes first; the news follows when it closes
-  const patch = document.getElementById("patchModal");
-  if (patch && !patch.hidden && typeof MutationObserver === "function") {
-    const mo = new MutationObserver(() => { if (patch.hidden){ mo.disconnect(); show(); } });
-    mo.observe(patch, { attributes: true, attributeFilter: ["hidden"] });
-  } else show();
+  return { show(item, preview){ open = { item, preview: !!preview }; card.className = "changelog-popup news-pop" + (item.theme ? " is-" + item.theme : ""); card.innerHTML = item.html(); modal.hidden = false; card.scrollTop = 0; card.focus(); document.addEventListener("keydown", onKey, true); } };
+}
+function mountAutoPopups(patch, news){
+  let preview = null; try { preview = new URLSearchParams(location.search).get("popup"); } catch (e) {}
+  if (preview){ if (preview === "patch"){ if (patch) patch.preview(); } else { const it = NEWS_ITEMS.find((n) => n.key === preview); if (it && news) news.show(it, true); } return; }
+  let st;
+  try { st = { readable: true, now: Date.now(), last: +localStorage.getItem(POPUP_LAST_KEY) || 0, patchSeen: localStorage.getItem(PATCH_SEEN_KEY), muted: patchMuted(), newsSeen: newsSeenList(localStorage.getItem(NEWS_SEEN_KEY)) }; }
+  catch (e) { return; }
+  NEWS_ITEMS.forEach((n) => { if (!st.newsSeen.includes(n.key) && newsOnOwnPage(n, location.hash)){ newsRemember(n.key); st.newsSeen.push(n.key); } });   // landed on its own tool: counts as seen
+  const pick = autoPopupPick(st);
+  if (!pick || (pick.type === "patch" ? !patch : !news)) return;
+  try { localStorage.setItem(POPUP_LAST_KEY, String(st.now)); } catch (e) {}
+  if (pick.type === "patch") patch.auto(); else news.show(pick.item, false);
 }
 // </NEWS:popup>
 
 mountChangelog();
 mountMechanicGlossary();
-mountPatchPopup();
-mountNewsPopup();
+mountAutoPopups(mountPatchPopup(), mountNewsPopup());
 
 
 // Tool zoom (user 2026-10-27): fitStageToScreen cancels browser zoom exactly (a zoomed window reports fewer CSS px, so the fit
@@ -42806,6 +42933,7 @@ function donateNudgeLoad(){
 function donateNudgeSave(s){ try { localStorage.setItem(DONATE_NUDGE_KEY, JSON.stringify(s)); return true; } catch (e) { return false; } }
 function donateNudgeMark(n){ const s = donateNudgeLoad(); if (s) donateNudgeSave(donateNudgeRest(s, donateNudgeDay(), n)); }
 function donateNudgeBlocked(){   // another pop-up is up: the ☕ pop-up, any aria-modal (the patch notes on load), the class gates, a dialog, a full-screen layer
+  if (popupVisitBusy()) return true;   // a visit that showed an automatic pop-up gets no ☕ note (user 2026-11-19: one thing per visit)
   if ((donateModal && !donateModal.hidden) || document.querySelector('[aria-modal="true"]:not([hidden]), .sg-gate.open, dialog[open]')) return true;
   const w = innerWidth, h = innerHeight;
   for (const el of document.elementsFromPoint(w / 2, h / 2)) {

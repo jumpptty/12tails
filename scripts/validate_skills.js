@@ -6388,10 +6388,10 @@ console.log(`Verified ${checkedUnintended} Unintended-behavior page checks.`);
       && e.items.every((it) => Array.isArray(it) && typeof it[0] === "string" && typeof it[1] === "string" && it[1].length > 0 && (it.length < 3 || [].concat(it[2]).every((k) => ["bug", "sneak", "sneak-nerf", "fix", "change"].includes(k)))
         && !/เซิร์ฟเวอร์|server.?side|โค้ด/i.test(it[1])))
     && src.includes('fix: [\'is-claim\', "บอกว่าแก้แต่"') && src.includes('change: [\'is-claim\', "บอกว่าเปลี่ยนแต่"') && src.includes('bug: [\'is-bug\', "แก้บัค"');
-  const wired = src.includes('<div class="changelog-backdrop patch-backdrop" id="patchModal" hidden') && src.includes("mountPatchPopup();") && !src.includes('id="patchSub"') && !src.includes('id="patchKicker"') && src.includes('<select class="patch-pick" aria-label="เลือกแพตช์">') && src.includes("list.innerHTML = lines(entries[at]);")
+  const wired = src.includes('<div class="changelog-backdrop patch-backdrop" id="patchModal" hidden') && src.includes("mountAutoPopups(mountPatchPopup(), mountNewsPopup());") && !src.includes('id="patchSub"') && !src.includes('id="patchKicker"') && src.includes('<select class="patch-pick" aria-label="เลือกแพตช์">') && src.includes("list.innerHTML = lines(entries[at]);")
     && src.includes('<div class="changelog-patch-btns" id="patchHistoryBtns"></div>')
     && src.includes("let left = 3;") && src.includes("if (ok.disabled) return;") && src.includes("localStorage.setItem(PATCH_SEEN_KEY, forced)")
-    && src.includes("if (seen !== PATCH_HISTORY[0].key && !newsTakesPatchSlot() && !patchMuted().includes(PATCH_HISTORY[0].server)){ forced = PATCH_HISTORY[0].key; show(PATCH_HISTORY.filter((e) => e.server === PATCH_HISTORY[0].server), true); }")
+    && src.includes("return { auto: () => { forced = PATCH_HISTORY[0].key; show(top(), true); }, preview: () => show(top(), false) };")   // mountAutoPopups opens it (one pop-up per visit, user 2026-11-19)
     // the mute box (user 2026-11-18: "not all players play TTO"): saves the shown server on change, ticked when that server is muted
     && src.includes('<label class="patch-mute"><input type="checkbox" id="patchMute"><span id="patchMuteText"></span></label>') && src.includes('const PATCH_MUTED_KEY = "12t-bible-patch-muted";')
     && src.includes("mute.checked = patchMuted().includes(srv);") && src.includes("localStorage.setItem(PATCH_MUTED_KEY, JSON.stringify(m))")
@@ -7931,29 +7931,59 @@ if (RUN_DAMAGE_CHECKS) {
         if (!/box-shadow:inset 0 0 0 1px #000/.test(ra) || !/z-index:1/.test(ra)) sg(".stg-ring-in::after: a 1 px black line round the icon, above it");
         if (px(big, "ro") < 7 || px(big, "ri") < 5) sg(".stg-ring.is-big: bands ≥ 7px / 5px");
         if (!/\.news-ring \.stg-ring\{box-shadow:0 0 0 1px #000,/.test(html)) sg("the news rings keep the black outer edge under their drop shadow"); }
-      // one-time "ของเล่นใหม่" pop-up (user 2026-11-16), shown on load instead of the TTO patch notes it replaces
-      { const NP = has("NEWS_POPUP") ? run("NEWS_POPUP") : null, PH = run("PATCH_HISTORY");
-        if (!NP) sg("missing NEWS_POPUP");
+      // automatic pop-ups (user 2026-11-19): one per visit (3 h apart): the newest patch notes when unseen, then NEWS_ITEMS newest first; the 3 newest
+      // general news are active (a 4th drops the oldest, even unseen); a server news is skipped where that server's patch notes are muted. The glossary
+      // news (user 2026-11-16) keeps its content; What's new (wardrobe pets, skill details overhaul, presets) and the TTO Cult Coins news joined it.
+      { const NP = has("NEWS_POPUP") ? run("NEWS_POPUP") : null, NI = has("NEWS_ITEMS") ? run("NEWS_ITEMS") : null;
+        if (!NP || !NI) sg("missing NEWS_POPUP / NEWS_ITEMS");
         else {
-          if (NP.tool !== "status-glossary" || NP.kicker !== "ของเล่นใหม่" || NP.title !== "สารานุกรมสถานะในเกม" || !NP.key) sg("NEWS_POPUP: tool / kicker / title / key");
-          if (!PH.some(e => e.key === NP.replaces)) sg(`NEWS_POPUP.replaces ${NP.replaces} is not a PATCH_HISTORY key`);
-          const due = run("newsPopupDue");
-          if (!due(null, "", true) || due(NP.key, "", true) || due(null, "#status-glossary", true) || due(null, "#status-glossary/ice", true) || due(null, "", false)) sg("newsPopupDue: unseen = due; seen, on the tool itself, or no storage = not due");
-          if (run("newsTakesPatchSlot")() !== (NP.replaces === PH[0].key)) sg("newsTakesPatchSlot must be true only while the news replaces the newest patch");
+          if (NP.tool !== "status-glossary" || NP.kicker !== "ของเล่นใหม่" || NP.title !== "สารานุกรมสถานะในเกม" || !NP.key || NP.replaces !== undefined) sg("NEWS_POPUP: tool / kicker / title / key, and no replaces any more");
+          if (new Set(NI.map(n => n.key)).size !== NI.length || NI.some(n => !n.key || !["general", "server"].includes(n.kind) || typeof n.html !== "function" || (n.kind === "server" && !["og", "tot", "tto", "reborn"].includes(n.server)))) sg("NEWS_ITEMS: unique keys, kind general / server (with its server), an html builder");
+          if (!NI.some(n => n.key === NP.key && n.kind === "general" && n.seenOn === "status-glossary")) sg("the glossary news stays a general NEWS_ITEMS entry that counts as seen on its own page");
+          const icons = run("SKILL_ICONS"), unknown = run("STATUS_ICONS")._unknown;
+          for (const n of NI) { const t = n.html();
+            if (!/<h2 id="newsTitle"[^>]*>[\s\S]*news-kicker[\s\S]*news-name[\s\S]*<\/h2>/.test(t)) sg(n.key + ": a header with its kicker and title");
+            if (!/class="news-go"/.test(t) || !/data-news-close/.test(t)) sg(n.key + ": an action that closes it");
+            if (/src=""/.test(t) || (unknown && t.includes(unknown))) sg(n.key + ": a missing picture or the ? icon"); }
           const h = run("newsPopupHtml")(), plain = h.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ");
-          if (!/<h2 id="newsTitle"[^>]*>[\s\S]*ของเล่นใหม่[\s\S]*สารานุกรมสถานะในเกม[\s\S]*<\/h2>/.test(h)) sg("the pop-up header must read ของเล่นใหม่ สารานุกรมสถานะในเกม");
-          if (!plain.includes(String(run("statusAllKeys")().length))) sg("the pop-up must show the live status count");
-          if (!/href="#status-glossary"/.test(h)) sg("the pop-up needs a link that opens #status-glossary");
-          if (h.includes(run("STATUS_ICONS")._unknown)) sg('the pop-up shows the "?" icon');
-          if (["og", "tot", "tto", "reborn"].some(s => !h.includes(run("SKILL_ICONS")["server_" + s]))) sg("the pop-up shows the four server logos");
+          if (!/<h2 id="newsTitle"[^>]*>[\s\S]*ของเล่นใหม่[\s\S]*สารานุกรมสถานะในเกม[\s\S]*<\/h2>/.test(h)) sg("the glossary pop-up header must read ของเล่นใหม่ สารานุกรมสถานะในเกม");
+          if (!plain.includes(String(run("statusAllKeys")().length))) sg("the glossary pop-up must show the live status count");
+          if (!/href="#status-glossary"/.test(h)) sg("the glossary pop-up needs a link that opens #status-glossary");
+          if (["og", "tot", "tto", "reborn"].some(s => !h.includes(icons["server_" + s]))) sg("the glossary pop-up shows the four server logos");
+          const wn = NI.find(n => n.key === "whats-new-2026-11-19"), cu = NI.find(n => n.key === "tto-cult-coins-2026-11-19");
+          if (!wn || wn.kind !== "general") sg("the What's new news (general) is missing");
+          else { const t = wn.html(), wardrobe = (run("TOOLS").find(x => x.id === "wardrobe") || {}).href;
+            if (!wardrobe || !t.includes('href="' + wardrobe + '"') || !/target="_blank" rel="noopener"/.test(t)) sg("What's new opens the wardrobe in a new tab");
+            if (!t.includes('href="#skill-details"')) sg("What's new links the skill details");
+            const faces = (run("CLASS_HERO_COLORS").Rabbit || []).slice(0, 5); if (faces.length < 5 || faces.some(x => !t.includes(x))) sg("What's new shows the five preset faces");
+            if ((t.match(/class="nw-pet"/g) || []).length < 6 || !t.includes(run("TOOL_ART").WardrobeMirrorThumb)) sg("What's new: the wardrobe mirror with pets round it"); }
+          if (!cu || cu.kind !== "server" || cu.server !== "tto") sg("the Cult Coins news (server tto) is missing");
+          else { const t = cu.html();
+            if (!t.includes('href="#skill-details/common_cultBat"')) sg("the Cult news opens Bat Cult");
+            if (["coin_cultBat", "coin_cultBison", "coin_cultPanda", "coin_cultRabbit", "coin_cultSheep"].some(k => !icons[k] || !t.includes(icons[k]))) sg("the Cult news shows the five coins");
+            if (!icons.rabbit_newOrder5 || !t.includes(icons.rabbit_newOrder5) || /news-chip">New Order/.test(t)) sg("the Cult news shows New Order as its skill icon, not a text chip");
+            if (!icons.server_tto || !t.includes(icons.server_tto) || !/class="ln-srain nc-rain"/.test(t)) sg("the Cult news shows the TTO logo and the rain of move icons"); }
+          const pick = run("autoPopupPick"), gap = run("POPUP_GAP_MS"), seenList = run("newsSeenList");
+          const P = [{ key: "p2", server: "tto" }], G = (k) => ({ key: k, kind: "general" }), S = { key: "s1", kind: "server", server: "tto" };
+          const base = { readable: true, now: 10 * gap, last: 0, patchSeen: "p2", muted: [], newsSeen: [] }, at = (o, items) => pick(Object.assign({}, base, o), items, P);
+          const r1 = at({ patchSeen: null }, [G("a")]), r2 = at({ patchSeen: null, muted: ["tto"] }, [G("a")]), r3 = at({ last: 9 * gap + 1 }, [G("a")]), r4 = at({}, [G("a"), G("b"), G("c"), G("d")]);
+          const r5 = at({ newsSeen: ["a", "b", "c"] }, [G("a"), G("b"), G("c"), G("d")]), r6 = at({ muted: ["tto"] }, [S, G("a")]), r7 = at({}, [S, G("a")]), r8 = pick(Object.assign({}, base, { readable: false }), [G("a")], P), r9 = at({ last: 9 * gap }, [G("a")]);
+          if (!r1 || r1.type !== "patch") sg("autoPopupPick: unseen patch notes come first");
+          if (!r2 || r2.type !== "news" || r2.item.key !== "a") sg("autoPopupPick: a muted server's patch notes are skipped");
+          if (r3 !== null || !r9) sg("autoPopupPick: nothing within POPUP_GAP_MS of the last pop-up, the next one once it has passed");
+          if (!r4 || r4.item.key !== "a") sg("autoPopupPick: the newest unseen news first");
+          if (r5 !== null) sg("autoPopupPick: only the 3 newest general news are active (the 4th is dropped even unseen)");
+          if (!r6 || r6.item.key !== "a" || !r7 || r7.item.key !== "s1") sg("autoPopupPick: a server news is skipped where that server is muted");
+          if (r8 !== null) sg("autoPopupPick: nothing without storage");
+          if (gap !== 3 * 3600000 || run("NEWS_GENERAL_ACTIVE") !== 3) sg("3 hours between automatic pop-ups, 3 general news active");
+          if (JSON.stringify(seenList(null)) !== "[]" || JSON.stringify(seenList("status-glossary-2026-11-16")) !== '["status-glossary-2026-11-16"]' || JSON.stringify(seenList('["a","b"]')) !== '["a","b"]') sg("newsSeenList reads the old single key and the new list");
           if (!/<div class="changelog-backdrop news-backdrop" id="newsModal" hidden aria-modal="true" role="dialog" aria-labelledby="newsTitle">/.test(html)) sg("#newsModal: aria-modal dialog toggled by hidden (the donate nudge waits for it)");
           if (!/class="changelog-popup news-pop"/.test(html)) sg("the news card must carry changelog-popup (theme surfaces)");
-          const mp = (html.match(/function mountPatchPopup\(\)\{[\s\S]*?\n\}/) || [""])[0];
-          if (!/seen !== PATCH_HISTORY\[0\]\.key && !newsTakesPatchSlot\(\)/.test(mp)) sg("mountPatchPopup must not force the patch notes the news replaces");
-          if (!/mountPatchPopup\(\);\r?\nmountNewsPopup\(\);/.test(html)) sg("mountNewsPopup() must run right after mountPatchPopup()");
-          const mn = (html.match(/function mountNewsPopup\(\)\{[\s\S]*?\n\}/) || [""])[0];
-          if (!/NEWS_SEEN_KEY, NEWS_POPUP\.key/.test(mn) || !/PATCH_SEEN_KEY, NEWS_POPUP\.replaces/.test(mn)) sg("closing the news must remember it and the patch it replaces");
-          if (!/patchModal/.test(mn)) sg("the news must wait while the patch notes are open");
+          if (!/mountAutoPopups\(mountPatchPopup\(\), mountNewsPopup\(\)\);/.test(html)) sg("mountAutoPopups(mountPatchPopup(), mountNewsPopup()) must choose the visit's one pop-up");
+          if (/newsTakesPatchSlot|newsPopupDue|attributeFilter: \["hidden"\]/.test(html)) sg("the old replace-a-patch rule and the news-after-patch chain must stay gone");
+          if (!html.includes("if (popupVisitBusy()) return true;")) sg("the ☕ note stays away in a visit that showed a pop-up");
+          if (!html.includes('new URLSearchParams(location.search).get("popup")')) sg("?popup=<key> previews a pop-up without recording it");
+          if (!html.includes("const pick = o.srcs || statusRainPick(o.seed, o.icons)")) sg("statusRainHtml takes a picture list (o.srcs)");
         } }
       for (const sel of [".stg-panel", ".stg-desc", ".stg-tile:not(.is-on)", ".stg-close", ".stg-search"]) if (!html.includes(`"${sel}"`)) sg(`THEME_SURFACES lacks ${sel}`);
       // phone sheet: a deep link opens it and updates the address; it stays solid on the glass looks (ToT / Reborn --th-solid 0%)
