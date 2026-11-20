@@ -2948,6 +2948,7 @@
   .cg-page .cg-guide > strong{order:1}
   .cg-page .cg-guide .cg-guide-chips{order:2}   /* the title first (user 2026-11-20): its fixed box (desktop) or the row-tallest height (compact) keeps this row at one height */
   .cg-page .cg-guide .cg-guide-meta{order:3;margin-top:4px;padding:9px 2px 11px;border-top:1px solid rgba(255,255,255,.07)}
+  @media(min-width:761px){.cg-page .cg-guide .cg-guide-chips{gap:6px 10px}.cg-page .cg-guide .cg-chip img{width:32px;height:32px}.cg-page .cg-guide .cg-chip.is-mode{font-size:15px;line-height:26px;padding:2px 13px}.cg-page .cg-guide .cg-guide-meta{margin-top:0}.cg-page .cg-gallery.is-compact .cg-guide .cg-chip img{width:28px;height:28px}.cg-page .cg-gallery.is-compact .cg-guide .cg-chip.is-mode{font-size:13px;line-height:22px;padding:2px 11px}}   /* bigger chips (user 2026-11-20: fill the row); 32 px keeps a PVE + PVP card on one line at 1920; the gap above and below the row is even (9 px) */
   .cg-guide .cg-title-in{display:block;max-width:100%;font-size:inherit;color:inherit}
   .cg-guide > strong.is-fitting .cg-word{max-width:none;overflow-wrap:normal}   /* while classGuideFitTitles measures: a wide word overflows, so it is seen */
   .cg-page .cg-guide > strong.is-long > .cg-title-in{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}   /* too long even at 13 px: 3 lines, the full title on hover */   /* the title's words: not the card's 12 px grey ".cg-guide span" */
@@ -41387,6 +41388,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-20T04:17:39.167Z","feat(bible): ไกด์อาชีพ ไอคอนอาชีพ เซิร์ฟ และป้าย PVE PVP บนการ์ดจอคอมใหญ่ขึ้น (32px จอเตี้ย 28px) ระยะบนล่างเท่ากัน"],
     ["2026-11-20T04:11:29.112Z","feat(bible): ไกด์อาชีพ บนจอคอมและจอเตี้ย ชื่อไกด์ขึ้นก่อนไอคอนอาชีพ เซิร์ฟ และ PVE"],
     ["2026-11-20T04:00:46.645Z","feat(bible): ไกด์อาชีพ มือถือได้ 6 ไกด์ต่อหน้าเท่าเดิม (แถวกระชับ แถบชวนเขียนไกด์บรรทัดเดียว) ผู้อ่านก่อนดาว และจอเตี้ยจัดชื่อไกด์บรรทัดเดียวให้อยู่กลางแถว"],
     ["2026-11-20T03:35:32.132Z","feat(bible): ไกด์อาชีพ รูปปกการ์ดบนจอคอมกางเต็มความกว้างแบบซิกแซก ไอคอนใหญ่ขึ้น มือถือเป็นแถวรายการ ชื่อไกด์พอดีกรอบสองบรรทัด ดาวกับผู้อ่านมุมขวาบน และขั้น 5 ดูการ์ดได้ทั้งมือถือ จอเตี้ย จอคอม"],
