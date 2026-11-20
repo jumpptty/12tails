@@ -2371,6 +2371,7 @@
   .cg-note-item.is-waiting{opacity:0;pointer-events:none}
   /* cover icons (user 2026-10-16): the note-chip ring; 1 big, 2 in a row, 3 in a triangle */
   .cg-cover{position:relative;display:inline-block;flex:none;width:var(--cg-cover,88px);height:var(--cg-cover,88px)}
+  .cg-cover.is-multi .cg-cover-ring{box-shadow:0 0 0 1.5px var(--gold),0 2px 6px rgba(0,0,0,.6)}   /* 2-5 icons (user 2026-11-20, C+D): one thin gold line, so the small icons keep their art */
   .cg-cover-ring{position:absolute;border-radius:50%;overflow:hidden;transform:translateZ(0);background:var(--ink);box-shadow:0 0 0 2px var(--gold),0 0 0 4px var(--ink),0 0 0 5px rgba(201,162,39,.6),0 0 12px rgba(212,175,55,.45)}
   .cg-cover-ring > span{position:absolute;inset:0;background:center / 100% 100% no-repeat;transform:scale(1.8);filter:blur(10px) saturate(1.2)}
   .cg-cover-ring > img{position:absolute;inset:0;width:100%;height:100%;display:block;transform:scale(1.3) translate(var(--ring-x,0%),var(--ring-y,0%));-webkit-mask-image:radial-gradient(circle closest-side,#000 62%,transparent 92%);mask-image:radial-gradient(circle closest-side,#000 62%,transparent 92%)}
@@ -2946,10 +2947,12 @@
   .cg-page .cg-guide .cg-guide-chips{order:1}
   .cg-page .cg-guide > strong{order:2}
   .cg-page .cg-guide .cg-guide-meta{order:3;margin-top:4px;padding:9px 2px 11px;border-top:1px solid rgba(255,255,255,.07)}
-  .cg-guide .cg-title-in{display:block;max-width:100%;font-size:inherit;color:inherit}   /* the title's words: not the card's 12 px grey ".cg-guide span" */
+  .cg-guide .cg-title-in{display:block;max-width:100%;font-size:inherit;color:inherit}
+  .cg-guide > strong.is-fitting .cg-word{max-width:none;overflow-wrap:normal}   /* while classGuideFitTitles measures: a wide word overflows, so it is seen */
+  .cg-page .cg-guide > strong.is-long > .cg-title-in{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}   /* too long even at 13 px: 3 lines, the full title on hover */   /* the title's words: not the card's 12 px grey ".cg-guide span" */
   @media(min-width:761px){
     .cg-page .cg-guide:not(.cg-gap){gap:9px;padding:16px 14px 0}
-    .cg-page .cg-guide > strong{height:calc(3 * 1.3 * 13px);width:100%;display:flex;align-items:safe center;justify-content:center;line-height:1.3}   /* the title box, 3 lines of 13 px (the longest live title, 87 characters, fits at the floor): classGuideFitTitles sizes each title to it; safe: a longer one spills down, not over the icons */
+    .cg-page .cg-guide > strong{height:calc(3 * 1.3 * 13px);width:100%;min-width:0;display:flex;align-items:safe center;justify-content:center;line-height:1.3}   /* the title box, 3 lines of 13 px (the longest live title, 87 characters, fits at the floor): classGuideFitTitles sizes each title to it; safe: a longer one spills down, not over the icons */
   }
   @media(max-width:760px){.cg-page .cg-guide .cg-guide-meta{margin-top:2px;padding:6px 0 0}}
   .cg-card-preview{width:min(240px,100%)}
@@ -2973,6 +2976,8 @@
   @media(min-width:761px){
     .cg-page .cg-gallery.is-compact{gap:10px}
     .cg-page .cg-gallery.is-compact .cg-guide{gap:4px;padding:8px 10px 7px}
+    .cg-page .cg-gallery.is-compact .cg-guide .cg-guide-meta{margin-top:0;padding:4px 2px 0}   /* the Soft tile foot, compact (review 2026-11-20: a short window fell back to one row of 4) */
+    .cg-page .cg-gallery.is-compact .cg-guide > strong{height:auto;display:block}   /* compact: no title box (renderGallery skips the fit), so a short window keeps today's card height and zoom (review 2026-11-20, measured against the old page at 1280 x 600 to 1366 x 657) */
     .cg-page .cg-gallery.is-compact .cg-guide > .cg-cover{--cg-cover:64px !important}
     .cg-page .cg-gallery.is-compact .cg-gap .cg-gap-rot{gap:5px}
     .cg-page .cg-gallery.is-compact .cg-gap .cg-gap-face{width:56px;height:56px;font-size:22px}
@@ -34869,10 +34874,11 @@ function classGuideCoverClean(raw, cells, draft){
   if (out.length > 5){ if (draft) out.length = 5; else throw new Error("ไอคอนหน้าปกเลือกได้ไม่เกิน 5 สกิล"); }   // up to 5 since user 2026-10-17 (was 3)
   return out;
 }
-const CLASS_GUIDE_COVER_SPOTS = { 1: [[0.12, 0.12, 0.76]], 2: [[0.02, 0.265, 0.47], [0.51, 0.265, 0.47]], 3: [[0.27, 0.03, 0.46], [0.03, 0.51, 0.46], [0.51, 0.51, 0.46]],
-  // 4 and 5 (user 2026-10-17, picked from mocked options): 4 = a 2 x 2 grid, 5 = a pyramid of 2 over 3; all icons the same size, in pick order
-  4: [[0.02, 0.02, 0.47], [0.51, 0.02, 0.47], [0.02, 0.51, 0.47], [0.51, 0.51, 0.47]],
-  5: [[0.15, 0.08, 0.36], [0.49, 0.08, 0.36], [0.00, 0.52, 0.34], [0.33, 0.52, 0.34], [0.66, 0.52, 0.34]] };   // [left, top, size] as parts of the box: one big, two in a row, three in a triangle (user 2026-10-16)
+const CLASS_GUIDE_COVER_SPOTS = { 1: [[0.12, 0.12, 0.76]], 2: [[0.005, 0.255, 0.49], [0.505, 0.255, 0.49]], 3: [[0.255, 0.0, 0.49], [0.0, 0.51, 0.49], [0.51, 0.51, 0.49]],
+  // 4 and 5 (user 2026-10-17, picked from mocked options): 4 = a 2 x 2 grid, 5 = a pyramid of 2 over 3, in pick order. 2-5 grew and packed tighter on
+  // 2026-11-20 (user, C+D of 4 mocks): their rings became one thin gold line (.cg-cover.is-multi, drawRing thin), which freed the room
+  4: [[0.005, 0.005, 0.49], [0.505, 0.005, 0.49], [0.005, 0.505, 0.49], [0.505, 0.505, 0.49]],
+  5: [[0.09, 0.04, 0.41], [0.50, 0.04, 0.41], [0.0, 0.50, 0.355], [0.3225, 0.50, 0.355], [0.645, 0.50, 0.355]] };   // [left, top, size] as parts of the box: one big, two in a row, three in a triangle (user 2026-10-16)
 // Gold ring icons (user 2026-10-17, option D of a mock): the art is zoomed to 130% (was 124%, which left the icon's own square edge inside the
 // ring) and centred on its visible pixels: the skill art sits on average 0.7 px left of centre in its 64 px image, 267 of 1249 icons by 1.5 px or
 // more. The shift is measured once per picture from its alpha box and cached; the page reads it as --ring-x / --ring-y, the PNG export directly.
@@ -34901,7 +34907,7 @@ function classGuideCoverIcons(g){
 }
 function classGuideCoverEl(g, px){   // the cover arrangement as round framed icons (the note-chip ring), or null when the guide has none
   const keys = classGuideCoverIcons(g); if (!keys.length) return null;
-  const box = document.createElement("span"); box.className = "cg-cover"; box.style.setProperty("--cg-cover", px + "px"); box.setAttribute("aria-hidden", "true");
+  const box = document.createElement("span"); box.className = keys.length > 1 ? "cg-cover is-multi" : "cg-cover"; box.style.setProperty("--cg-cover", px + "px"); box.setAttribute("aria-hidden", "true");
   CLASS_GUIDE_COVER_SPOTS[keys.length].forEach(([x, y, d], i) => {
     const ring = document.createElement("span"); ring.className = "cg-cover-ring"; ring.style.cssText = "left:" + x * 100 + "%;top:" + y * 100 + "%;width:" + d * 100 + "%;height:" + d * 100 + "%;z-index:" + (5 - i);
     const bg = document.createElement("span"); bg.style.backgroundImage = 'url("' + SKILL_ICONS[keys[i]] + '")';
@@ -36663,15 +36669,23 @@ function classGuideTitleInto(el, text){
   for (const part of String(text).split(/(\s+)/)){ if (!part) continue; if (/^\s+$/.test(part)){ el.append(" "); continue; } const w = document.createElement("span"); w.className = "cg-word"; w.textContent = part; el.appendChild(w); }
 }
 // Gallery title box (user 2026-11-20, "standardizing and getting rid of the negative space"): on the desktop every card title gets the same box, 3 lines
-// of 13 px tall (CSS), and the biggest size from lo to hi px, in half-px steps, at which its .cg-title-in fits; a title too long even at lo
-// keeps lo and overflows. All boxes bisect together (write every size, then read every box), so a page of cards costs about 5 layouts.
+// of 13 px tall (CSS), and the biggest size from lo to hi px, in half-px steps, at which its .cg-title-in fits. It measures with is-fitting on the
+// box, which lifts the .cg-word line cap (review 2026-11-20): a word wider than the line then shows in scrollWidth, so the title shrinks instead
+// of breaking mid-word (user 2026-10-17: a title breaks only at the author's spaces). A title too long even at lo gets is-long (CSS clamps it to
+// 3 lines, so it never covers the author line) and its full text as the box's tooltip. All boxes bisect together (write every size, then read
+// every box), so a page of cards costs about 5 layouts.
 function classGuideFitTitles(boxes, lo = 13, hi = 22){
   const rows = boxes.map((box) => ({ box, inner: box.querySelector(".cg-title-in"), lo: lo * 2, hi: hi * 2 })).filter((r) => r.inner);
+  const fits = (r) => r.inner.offsetHeight <= r.box.clientHeight + 0.5 && r.inner.scrollWidth <= r.box.clientWidth + 0.5;
+  for (const r of rows){ r.box.classList.remove("is-long"); r.box.classList.add("is-fitting"); r.box.title = ""; }
   for (let open = rows; (open = open.filter((r) => r.lo < r.hi)).length; ){
     for (const r of open) r.box.style.fontSize = (r.mid = Math.ceil((r.lo + r.hi) / 2)) / 2 + "px";
-    for (const r of open) if (r.inner.offsetHeight <= r.box.clientHeight + 0.5 && r.inner.scrollWidth <= r.box.clientWidth + 0.5) r.lo = r.mid; else r.hi = r.mid - 1;
+    for (const r of open) if (fits(r)) r.lo = r.mid; else r.hi = r.mid - 1;
   }
   for (const r of rows) r.box.style.fontSize = r.lo / 2 + "px";
+  const long = rows.filter((r) => r.lo === lo * 2 && !fits(r));
+  for (const r of rows) r.box.classList.remove("is-fitting");
+  for (const r of long){ r.box.classList.add("is-long"); r.box.title = r.inner.textContent; }
 }
 function classGuideButtonIcon(act){ return '<svg viewBox="0 0 24 24" aria-hidden="true">' + CLASS_GUIDE_BUTTON_ICONS[act] + '</svg>'; }
 // Editor row of the 8 recommended stats (blank = not recommended, not stored).
@@ -37065,10 +37079,11 @@ async function classGuideRenderImage(guide, simRoot){
   const gridFull = P.w - P.margin * 2 - infoW - G - (notesW ? notesW + G : 0), gridCap = model.length * (58 * 4 + P.pad * 2) + (model.length - 1) * P.treeGap;
   const gridX = P.margin + infoW + G, gridW = Math.min(gridFull, gridCap), notesX = gridX + gridW + G, dx = Math.round((gridFull - gridW) / 2);
   // one round framed icon, the note-chip look (double gold ring, glow, a blurred 180% copy behind, the picture at 124% fading at its edge)
-  const drawRing = (img, cx, cy, S) => {
+  const drawRing = (img, cx, cy, S, thin = 0) => {   // thin: a cover of 2-5 icons, one gold line that wide (user 2026-11-20, .cg-cover.is-multi)
     const u = S / 60, R = S / 2, disc = (r, fill) => { ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.fillStyle = fill; ctx.fill(); };
-    ctx.save(); ctx.shadowColor = "rgba(212,175,55,.45)"; ctx.shadowBlur = 14 * u * P.scale; disc(R + 5 * u, "rgba(201,162,39,.6)"); ctx.restore();
-    disc(R + 4 * u, ink); disc(R + 2 * u, gold); disc(R, ink);
+    if (thin){ ctx.save(); ctx.shadowColor = "rgba(0,0,0,.6)"; ctx.shadowBlur = 4 * thin * P.scale; ctx.shadowOffsetY = 1.3 * thin * P.scale; disc(R + thin, gold); ctx.restore(); disc(R, ink); }
+    else { ctx.save(); ctx.shadowColor = "rgba(212,175,55,.45)"; ctx.shadowBlur = 14 * u * P.scale; disc(R + 5 * u, "rgba(201,162,39,.6)"); ctx.restore();
+      disc(R + 4 * u, ink); disc(R + 2 * u, gold); disc(R, ink); }
     if (!img) return;
     ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.clip();
     if ("filter" in ctx) ctx.filter = "blur(" + (10 * u * P.scale).toFixed(1) + "px) saturate(1.2)";
@@ -37099,7 +37114,7 @@ async function classGuideRenderImage(guide, simRoot){
   const modesW = modeWs.reduce((sum, w) => sum + 10 + w, 0), modesOn = modesW > 0 && rowW + modesW <= lw; if (modesOn) rowW += modesW;
   const badgeOn = bw > 0 && rowW + 14 + bw <= lw; if (badgeOn) rowW += 14 + bw;
   let tx = lx + Math.max(0, (lw - rowW) / 2);
-  if (coverKeys.length){ const cx0 = tx; CLASS_GUIDE_COVER_SPOTS[coverKeys.length].forEach(([cx, cy, d], i) => drawRing(icons[coverKeys[i]], cx0 + (cx + d / 2) * rowH, y + (cy + d / 2) * rowH, d * rowH)); tx += rowH + 14; }
+  if (coverKeys.length){ const cx0 = tx; CLASS_GUIDE_COVER_SPOTS[coverKeys.length].forEach(([cx, cy, d], i) => drawRing(icons[coverKeys[i]], cx0 + (cx + d / 2) * rowH, y + (cy + d / 2) * rowH, d * rowH, coverKeys.length > 1 ? 1.5 * rowH / 100 : 0)); tx += rowH + 14; }
   if (serverIcon){ ctx.drawImage(serverIcon, tx, y + (rowH - 38) / 2, 38, 38); tx += 48; }
   ctx.font = font(600, 24); ctx.fillStyle = muted; ctx.fillText(lvText, tx, y + rowH / 2 + 9);
   let afterLv = tx + lvW;
@@ -38740,7 +38755,7 @@ function mountClassGuide(root){
     // spare height under the two rows (compacted or not): they grow into it, up to 1.1 (review 2026-10-30: a 100 px empty band under the pager)
     if (desk && list.offsetParent && !list.style.zoom) for (let z = 1.02; z < 1.101; z += 0.02){ list.style.zoom = z.toFixed(2); if (tooTall()){ list.style.zoom = z > 1.03 ? (z - 0.02).toFixed(2) : ""; break; } }
     if (wantPage){ galleryPage = wantPage; draw(); }
-    if (desk && list.offsetParent) classGuideFitTitles([...list.querySelectorAll(".cg-guide > strong")]);   // the title box (user 2026-11-20): last, after the zoom; the box has a fixed height, so the rows-per-page fit above does not depend on it
+    if (desk && list.offsetParent && !list.classList.contains("is-compact")) classGuideFitTitles([...list.querySelectorAll(".cg-guide > strong")]);   // the title box (user 2026-11-20): last, after the zoom; the box has a fixed height, so the rows-per-page fit above does not depend on it; compact (a short window) keeps natural titles
     function drawPager(){
       const go = (n, text, label, current) => { const b = document.createElement("button"); b.type = "button"; b.className = "cg-page-btn"; b.textContent = text; b.setAttribute("aria-label", label); if (current) b.setAttribute("aria-current", "page"); b.disabled = n < 0 || n >= pages; b.addEventListener("click", () => { galleryPage = n; renderGallery(true); }); pager.appendChild(b); };
       go(galleryPage - 1, "‹", "หน้าก่อน");
@@ -41297,6 +41312,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-20T03:05:00.892Z","fix(bible): ไกด์อาชีพ การ์ดหน้ารวมไกด์ จอเตี้ยกลับมาได้ 8 ใบต่อหน้าในขนาดเดิม ชื่อไกด์ไม่ตัดกลางคำ ชื่อยาวเกินตัดเหลือ 3 บรรทัด และรูปปกหลายไอคอนใช้เส้นทองบางกับไอคอนใหญ่ขึ้น"],
     ["2026-11-20T02:30:48.497Z","feat(bible): ไกด์อาชีพ การ์ดหน้ารวมไกด์โฉมใหม่ เป็นการ์ดกระจกบาง ไอคอนอาชีพ เซิร์ฟ และ PVE อยู่ใต้รูปปกสูงเท่ากันทุกใบ ชื่อไกด์ขยายหรือย่อให้พอดีกรอบเดียวกัน"],
     ["2026-11-20T01:38:32.197Z","fix(bible): ไกด์ #5 #29 #59 กลับไปใช้วันที่เดิม (แค่แก้สัตว์เลี้ยงเป็น Mother Flower Bug ไม่ใช่การอัปเดตไกด์)"],
     ["2026-11-20T01:34:13.315Z","fix(bible): class guide #59 is updated: TTO Panda แพนด้าคนนี้จะตามจีบจนกว่าคุณจะหยุดรัก by 1Hert.z"],
