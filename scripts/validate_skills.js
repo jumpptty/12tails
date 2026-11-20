@@ -1984,7 +1984,7 @@ if (RUN_DAMAGE_CHECKS) {
   const saved = { atk: inputs.atk.value, lck: inputs.lck.value };
   const setDeps = (o) => IDS.forEach(id => { deps[id] = o[id] || 0; });
   const select = (r) => { sandbox._skillRanks[sk.id] = r; sandbox._calcRangeFor = undefined; sandbox._finalRangeForRange = undefined; sandbox._selectSkill(sk); };
-  check("Combo card has critProc, effectDamageDep and dmgControls", !!(sk && sk.critProc && sk.effectDamageDep && sk.dmgControls && sk.dmgControls.length === 5));
+  check("Combo card has critProc, effectDamageDep and dmgControls", !!(sk && sk.critProc && sk.effectDamageDep && sk.dmgControls && sk.dmgControls.length === 6 && sk.dmgControls[5].id === "wolfBraveSpirit"));   // + Brave Spirit (WOLF_VALOR_CARDS, 2026-11-20)
   // Coefficients: one 0-5 toggle, rank 5 = Feral 4 + Wild Heart = level 5 -> 0.75 / 0.6 / 0.9 (Wolf.cs:15144, :17386, :17717).
   setDeps({ wolfFeralInstinct: 5 }); select(3);
   const coeffs = sk.dmgGroups.map(g => Math.round(sandbox._resolveGroupAtkCoeff(sk, g) * 1000) / 1000).join(",");
@@ -7114,6 +7114,29 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
   let bad = 0;
   for (const [what, re] of need) if (!re.test(html)) { console.error(`[SHORT DESC ERROR] missing ${what} (see bible-skill-page-ui "Short desc").`); errorCount++; bad++; }
   if (!bad) console.log("Verified the desc frame and the short desc look.");
+}
+// Brave Spirit toggle (user 2026-11-20): on every Wolf card whose damage takes valor's damageMod (and every server tab with its own list),
+// never on the Hate or Effect Damage cards, and mirrored with the Buff / Debuff popup's Valor row (bible-skill-page-ui, "Shared Debuff State").
+{
+  const want = ["wolf_nAttack", "wolf_cAttack", "wolf_skySlasher", "wolf_crusader", "wolf_lawBringer", "wolf_powerBreak", "wolf_armorBreak", "wolf_crossBreak", "wolf_grandCross", "wolf_bladeFang", "wolf_feralStrike", "wolf_bladeSong", "wolf_thirdRend", "wolf_feralAssault", "wolf_dualBrand", "wolf_twinResonance", "wolf_alphaHowl", "wolf_bladeSurge", "wolf_resonanceClaw"];
+  const never = ["wolf_provoke", "wolf_counter", "wolf_impulse", "wolf_mirrorBlade", "wolf_braveSpirit"];
+  const has = (o) => Array.isArray(o && o.dmgControls) && o.dmgControls.some(d => d && d.id === "wolfBraveSpirit");
+  let bad = 0;
+  const fail = (m) => { console.error(`[VALOR TOGGLE ERROR] ${m}`); errorCount++; bad++; };
+  for (const id of want) {
+    const sk = skillById.get(id);
+    if (!sk) { fail(`no card ${id}`); continue; }
+    if (!has(sk)) fail(`${id} has no Brave Spirit toggle`);
+    for (const [srv, o] of Object.entries(sk.servers || {})) if (o && Array.isArray(o.dmgControls) && !has(o)) fail(`${id} on ${srv}: its own dmgControls lack the Brave Spirit toggle`);
+  }
+  for (const id of never) { const sk = skillById.get(id); if (sk && (has(sk) || Object.values(sk.servers || {}).some(has))) fail(`${id} must not have the Brave Spirit toggle`); }
+  const sync = [
+    ["getDepRank reading the popup's Valor", /if \(dep\.id === WOLF_BRAVESPIRIT_DEP\.id\) \{[^\n]*\r?\n\s*const r = wolfValorRank\(activePlayerMods/],
+    ["the card click writing the popup's Valor", /activePlayerMods\.set\("valor", WOLF_VALOR_OF_RANK\[next\]\)/],
+    ["rank 5 = Valor 6", /const WOLF_VALOR_OF_RANK = \[0, 1, 2, 3, 4, 6\];/],
+  ];
+  for (const [what, re] of sync) if (!re.test(html)) fail(`missing ${what}`);
+  if (!bad) console.log(`Verified the Brave Spirit toggle on ${want.length} Wolf damage cards, mirrored with the popup's Valor.`);
 }
 // Font ban (user 2026-10-18: "Prompt looks better in all places"): the angular Chakra Petch was replaced by Prompt everywhere and must not come back.
 // Old changelog entries ("[<ISO date>", ...) may still name it; they are history.

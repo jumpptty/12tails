@@ -11505,6 +11505,14 @@ const WOLF_TARGET_ARMOR_BREAK_DEP = { id:"targetArmorBreak", label:"Armor Break 
 const WOLF_WILDHEART_DEP = { id: "wildHeart", label: "Wild Heart", icon: "wolf_wildHeart5", minRank: 0, maxRank: 1 };
 // Feral Instinct 1-4; rank 5 = Feral Instinct 4 + Wild Heart (+1 level), one toggle (user 2026-10-08). Rank 5 uses the Wild Heart art.
 const WOLF_FERALINSTINCT_DEP = { id: "wolfFeralInstinct", label: "Feral Instinct / Wild Heart", icon: "wolf_feralInstinct4", minRank: 0, maxRank: 5, iconFor: (r) => r >= 5 ? "wolf_wildHeart5" : "wolf_feralInstinct" + Math.max(r, 1), labelFor: (r) => r >= 5 ? "Wild Heart (+ Feral Instinct 4)" : "Feral Instinct" };
+// Brave Spirit's valor on the Wolf damage cards (user 2026-11-20): valor adds damageMod 0.02 + 0.02 x level (CharacterControl.cs:33969-33996),
+// which hit() multiplies into every hit through dmgAdjust (CharacterControl.cs:3546). Ranks 1-4 = Brave Spirit 1-4 (valor 1-4), rank 5 =
+// Glorious Spirit on Brave Spirit 4 (valor 6, Wolf.cs:20489), the merged "rank 5" pattern. The Buff / Debuff popup's Valor row is the one
+// source: getDepRank reads it and a click writes it (no double count). Cards: WOLF_VALOR_CARDS after the ToT C6 table; which damage takes
+// it: wolf-skill-reference.md, Brave Spirit, "Which damage takes valor".
+const WOLF_BRAVESPIRIT_DEP = { id: "wolfBraveSpirit", label: "Brave Spirit / Glorious Spirit", icon: "wolf_braveSpirit4", minRank: 0, maxRank: 5, defaultRank: 0, iconFor: (r) => r >= 5 ? "wolf_gloriousSpirit5" : "wolf_braveSpirit" + Math.max(r, 1), labelFor: (r) => r >= 5 ? "Glorious Spirit (+ Brave Spirit 4)" : "Brave Spirit" };
+const WOLF_VALOR_OF_RANK = [0, 1, 2, 3, 4, 6];
+const wolfValorRank = (lv) => lv >= 5 ? 5 : Math.max(0, lv | 0);   // the popup's Valor 5 and 7 (no single Wolf casts them) show as rank 5
 // Dark Edge status on: every Combo swing is RPC_AddEffectDamage (Wolf.cs:15267, :16098, :16801, :17517, :17835).
 const WOLF_DARKEDGE_DEP = { id: "wolfDarkEdgeOn", label: "Dark Edge", icon: "wolf_darkEdge4", minRank: 0, maxRank: 1, defaultRank: 0 };
 // getCritPlus (Wolf.cs:14044-14188): full set crit chance lckAdjust(12) Marshal (items 43/44) or lckAdjust(18) Champion (58), x1.8.
@@ -22904,6 +22912,7 @@ function mountSkillCooldownLookup(root){
     activePlayerMods.load(bd.pmod, MOD_DEFS);
     activeEnemyMods.load(bd.emod, MOD_DEFS);
     depRanks["amplifyDamage"] = activeEnemyMods.get("amplifyDamage") || 0;
+    depRanks[WOLF_BRAVESPIRIT_DEP.id] = wolfValorRank(activePlayerMods.get("valor") || 0);
     fill(activeFinalMultMods, bd.fmult, id => FINAL_MULT_MOD_IDS.includes(id));
     presetBdSeen = JSON.stringify(presetBd());
     updateBdButtons();
@@ -25405,6 +25414,11 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       }
       const r = activeEnemyMods ? (activeEnemyMods.get("amplifyDamage") || 0) : 0;
       if (typeof depRanks !== "undefined") depRanks["amplifyDamage"] = r;
+      return r;
+    }
+    if (dep.id === WOLF_BRAVESPIRIT_DEP.id) {   // the Buff / Debuff popup's Valor row is the one source (no double count)
+      const r = wolfValorRank(activePlayerMods ? (activePlayerMods.get("valor") || 0) : 0);
+      if (typeof depRanks !== "undefined") depRanks[dep.id] = r;
       return r;
     }
     if (!(dep.id in depRanks)) depRanks[dep.id] = (dep.defaultRank !== undefined) ? dep.defaultRank : dep.minRank;   // every skill dependency starts off (its minimum rank)
@@ -28594,6 +28608,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
         const min = Number(btn.dataset.depMinRank), max = Number(btn.dataset.depMaxRank);
         const cur = (btn.dataset.depId === "amplifyDamage")
           ? (activeEnemyMods.get("amplifyDamage") || 0)
+          : btn.dataset.depId === WOLF_BRAVESPIRIT_DEP.id ? wolfValorRank(activePlayerMods.get("valor") || 0)
           : depRanks[btn.dataset.depId];
         const next = cur >= max ? min : cur + 1;
         depRanks[btn.dataset.depId] = next;
@@ -28604,6 +28619,11 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
         const lvDep = SUMMON_LV_DEPS.find(d => d.id === btn.dataset.depId); if (lvDep) skillRanks[lvDep.rankOf] = next;   // and the summon card follows the toggle
         if (btn.dataset.depId === "amplifyDamage") {
           activeEnemyMods.set("amplifyDamage", next);
+          updateBdButtons();
+          if (bdOpen) renderBdPopup();
+        }
+        if (btn.dataset.depId === WOLF_BRAVESPIRIT_DEP.id) {   // the popup's Valor row follows (rank 5 = Valor 6)
+          activePlayerMods.set("valor", WOLF_VALOR_OF_RANK[next]);
           updateBdButtons();
           if (bdOpen) renderBdPopup();
         }
@@ -29443,6 +29463,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     } else {
       map.set(id, lv);
       if (id === "amplifyDamage") depRanks["amplifyDamage"] = lv;
+      if (id === "valor") depRanks[WOLF_BRAVESPIRIT_DEP.id] = wolfValorRank(lv);
     }
     renderBdPopup(); updateBdButtons(); renderHero();
   });
@@ -34199,6 +34220,20 @@ totC6Toggle("rabbit_contract", TTO_BOUNTYHUNT_DEP, "**Bounty Hunt:** ตอน�
 // (int)(ATK x coeff + talAdjust(...)) (TTO1118:Rabbit::GildedArray@0x1E31F50, called on every hit by Rabbit.<RPC_shootingArray>d__229::MoveNext@0x1E68EE0; GildedArrayBonus 0.35).
 const TTO_GILDED_DEP = ttoC6Dep("gildedTarget", "Coin Ricochet (เป้าติด Gilded)", "rabbit_coinRicochet5");
 totC6Toggle("rabbit_shootingArray", TTO_GILDED_DEP, "**Coin Ricochet:** ทุกนัดแรงขึ้น **×1.35** (ปัดลง) กับเป้าที่ติด [gilded] (ของกระต่ายตัวไหนก็ได้)", { dmgPostScale: () => getDepRank(TTO_GILDED_DEP) > 0 ? Math.fround(1.35) : 1, dmgPostScaleRound: "floor", dmgPostScaleLabel: () => "Gilded" }, "dmgControls", "tto");
+// Brave Spirit toggle (user 2026-11-20): every Wolf card whose shown damage goes through hit(), so valor's damageMod multiplies it (BB call
+// sites and the TTO1118 check: wolf-skill-reference.md, Brave Spirit, "Which damage takes valor"). Added to the base dmgControls and to every
+// server tab that has its own list. Left out: Provoke (its number is Hate), Counter / Impulse / Mirror Blade (Effect Damage, no damageMod;
+// their cards show none), Art Cancel / Art Breaker / Last Blade / Final Eclipse (no damage row), the mount attacks (the mount's own hit(), not traced).
+// On TTO the Combo's Dark Edge swings take it too since 1.7.0 (effectDmgAdjust on wolf_nAttack's TTO tab).
+const WOLF_VALOR_CARDS = ["wolf_nAttack", "wolf_cAttack", "wolf_skySlasher", "wolf_crusader", "wolf_lawBringer", "wolf_powerBreak", "wolf_armorBreak", "wolf_crossBreak", "wolf_grandCross", "wolf_bladeFang", "wolf_feralStrike", "wolf_bladeSong", "wolf_thirdRend", "wolf_feralAssault", "wolf_dualBrand", "wolf_twinResonance", "wolf_alphaHowl", "wolf_bladeSurge", "wolf_resonanceClaw"];
+for (const id of WOLF_VALOR_CARDS) {
+  const card = SKILLS.find(s => s.id === id);
+  if (!card) throw new Error("WOLF_VALOR_CARDS: no card " + id);
+  const add = (o) => { if (!o.dmgControls.includes(WOLF_BRAVESPIRIT_DEP)) o.dmgControls = [...o.dmgControls, WOLF_BRAVESPIRIT_DEP]; };
+  card.dmgControls = card.dmgControls || [];
+  add(card);
+  for (const o of Object.values(card.servers || {})) if (o && Array.isArray(o.dmgControls)) add(o);
+}
 // Links with no toggle: each Rabbit C6 card lists them, and the TTO tab of each original lists it back. Medic Turret applies the medical shots' statuses and
 // ignores Medical Enhancement (TTO1102:Rabbit::MedicTurretShotHit@0x1E092D0); Coin Ricochet and Bounty Hunt hit with the live ATK, so Extravagance counts.
 { const ttoLinkBack = (c6Id) => { const c6 = SKILLS.find(s => s.id === c6Id); for (const id of c6.compatSkills || []) { const card = SKILLS.find(s => s.id === id), servers = card.servers = card.servers || {}, tto = servers.tto = servers.tto || {}, list = tto.compatSkills || card.compatSkills || []; if (!list.includes(c6Id)) tto.compatSkills = [...list, c6Id]; if (tto.changeNote === undefined) tto.changeNote = ""; } };
@@ -41471,6 +41506,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-20T14:06:54.635Z","feat(bible): ปุ่ม Brave Spirit / Glorious Spirit บนการ์ดหมาป่า 19 ใบที่ได้ผลจาก dmgMod ของ valor (ผูกกับแถว Valor ในหน้าต่าง Buff / Debuff) และบันทึกว่าบน TTO 1.7.0 มีแค่ Dark Edge ที่ดาเมจม่วงได้ dmgMod"],
     ["2026-11-20T12:56:49.182Z","feat(bible): คำอธิบายสั้นที่มีบรรทัดไอคอนต่อท้าย (เช่น Phantasm Blast) ได้หน้าตาคำอธิบายสั้นด้วย บรรทัดหลักอยู่ตรงกลาง ตัวใหญ่ขึ้น และคำไทยอย่าง ตัวเอง ได้รับ เป้าหมาย ไม่ถูกตัดกลางคำตอนขึ้นบรรทัดใหม่"],
     ["2026-11-20T11:36:32.127Z","feat(bible): คำอธิบายสกิลเลิกใช้กล่องและแถบทองซ้าย ใช้เส้นทองบางบนล่างแทน และคำอธิบายสั้น (ไม่เกิน 2 บรรทัด ไม่มีบรรทัดไอคอน) แสดงตรงกลาง ตัวใหญ่ขึ้น 16px (แบบ C จาก 6 แบบ)"],
     ["2026-11-20T09:44:31.734Z","fix(bible): สูตรฮีล Medic Turret (TTO) รวมค่าคงที่เป็นตัวเดียวไว้หน้าส่วน TAL (40 + 0.2TAL, แคปซูล 65 + 0.3TAL) เหมือนสูตรการ์ดอื่น"],
