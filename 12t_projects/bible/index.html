@@ -29,9 +29,9 @@
     // clickable tiles whose own hover fill must keep winning
     tile: [".ln-thb"],
     // clickable and raised (the --panel-2 level); popup and field (below) keep their own solid fill
-    raised: [".stg-tile:not(.is-on)", ".stg-close", ".stg-pill:not(.is-on)", ".news-feat", ".tt-btn:not(.is-on):not(.tt-play)", ".donate-tab:not([aria-selected=\"true\"])", ".pi-it:not(.is-on)", ".pi-var:not(.is-on)", ".pi-lv button:not(.is-on)", ".pi-res:not(.is-on)", ".sk-roster-card:not(.is-halo)", ".sk-roster-pager button", ".sg-gate-btn:not(.is-hero)", ".cls-picker-btn", ".cg-page .cg-btn-secondary", ".cg-guide", ".cg-format-btn:not(.is-on)",
-      // the guide gallery controls (user 2026-10-17: they stayed plain dark brown on every server)
-      ".cg-mode-btn:not([aria-pressed=\"true\"])", ".cg-sort", ".cg-page-btn",   // .cg-icon-pick.is-all left 2026-10-20: the text filters have no box now
+    raised: [".stg-tile:not(.is-on)", ".stg-close", ".stg-pill:not(.is-on)", ".news-feat", ".tt-btn:not(.is-on):not(.tt-play)", ".donate-tab:not([aria-selected=\"true\"])", ".pi-it:not(.is-on)", ".pi-var:not(.is-on)", ".pi-lv button:not(.is-on)", ".pi-res:not(.is-on)", ".sk-roster-card:not(.is-halo)", ".sk-roster-pager button", ".sg-gate-btn:not(.is-hero)", ".cls-picker-btn", ".cg-page .cg-btn-secondary", ".cg-format-btn:not(.is-on)",
+      // the guide gallery controls (user 2026-10-17: they stayed plain dark brown on every server; the cards .cg-guide and the page buttons .cg-page-btn left 2026-11-20: the Soft tile glass is neutral and reads on every look)
+      ".cg-mode-btn:not([aria-pressed=\"true\"])", ".cg-sort",   // .cg-icon-pick.is-all left 2026-10-20: the text filters have no box now
       ".sr-lang-toggle", ".sr-rec-toggle", ".sr-preset-btn", ".credits-arrow", ".cg-set-rep.is-add", ".cg-set-ed .cg-gear-x", ".cg-start-opt", ".cg-cover-pick-btn", ".cg-desc-pager button", ".rsim-btn:not(.cg-btn-primary)", ".cao-toggle", ".cao-reset", ".cao-custom-icon", ".sk-ps-toggle", ".mon-races button", ".bg-tab", ".nl-kinds button", ".sk-browse-btn", ".sk-crit-btn", ".sk-enemy-info-btn", ".sk-stats-collapse", ".sk-enemy-pick", ".sk-enemy-result", ".sk-mods-btn", ".sk-enemy-imm-chip", ".sk-server-badge", ".chm-seg", ".chm-rbtn"],
     // menus, tooltips, pickers and toasts: the look's texture and edge, but their own SOLID fill, so text over the page stays readable (user 2026-10-17;
     // the enemy picker sat in "panel" and was see-through glass over the stat dials in ToT, user 2026-10-18)
@@ -2243,7 +2243,7 @@
   .cg-page-count{align-self:center;margin-left:8px;color:var(--muted);font-variant-numeric:tabular-nums}
   /* ‹ › beside the cards (user 2026-10-21): outside the grid when the window has room, over its edges when it does not; phones keep the pager only */
   .cg-gallery-wrap{position:relative}
-  .cg-gallery-edge{position:absolute;top:50%;transform:translateY(-50%);z-index:1;width:44px;height:44px;padding:0;border:1px solid var(--line);border-radius:50%;background:var(--panel-2);color:var(--gold);font:inherit;font-size:28px;line-height:1;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.5)}
+  .cg-gallery-edge{position:absolute;top:50%;transform:translateY(-50%);z-index:1;width:44px;height:44px;padding:0;border:1px solid rgba(255,255,255,.12);border-radius:50%;background:rgba(255,255,255,.04);-webkit-backdrop-filter:var(--th-blur,none);backdrop-filter:var(--th-blur,none);color:var(--gold);font:inherit;font-size:28px;line-height:1;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.5)}
   .cg-gallery-edge.is-prev{right:calc(100% + min(12px, (100vw - 100%) / 2 - 50px))}
   .cg-gallery-edge.is-next{left:calc(100% + min(12px, (100vw - 100%) / 2 - 50px))}
   .cg-gallery-edge:hover:not(:disabled),.cg-gallery-edge:focus-visible{border-color:var(--gold)}
@@ -2251,14 +2251,14 @@
   .cg-gallery-edge[hidden]{display:none}
   @media(max-width:760px){.cg-gallery-edge{display:none}}
   .cg-pager[hidden]{display:none}
-  .cg-page-btn{min-width:36px;height:36px;padding:0 10px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--text);font:inherit;cursor:pointer}
+  .cg-page-btn{min-width:36px;height:36px;padding:0 10px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:rgba(255,255,255,.03);-webkit-backdrop-filter:var(--th-blur,none);backdrop-filter:var(--th-blur,none);color:var(--text);font:inherit;cursor:pointer}
   .cg-page-btn:hover:not(:disabled){border-color:var(--gold)}
   .cg-page-btn[aria-current="page"]{background:var(--gold) !important;border-color:var(--gold);color:#000;font-weight:700}
   .cg-page-btn:disabled{opacity:.35;cursor:default}
   .cg-page-btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
   .cg-page-gap{display:inline-flex;align-items:center;padding:0 2px;color:var(--muted)}   /* the pager's "…" (user 2026-10-20: one button per page would be 1,250 at 10,000 guides) */
-  .cg-guide{position:relative;text-align:left;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--text);min-height:104px;box-sizing:border-box;padding:20px 20px 20px 120px;font:inherit;cursor:pointer}
-  .cg-guide:hover,.cg-guide:focus-visible{border-color:var(--gold)}
+  .cg-guide{position:relative;text-align:left;border:1px solid rgba(255,255,255,.09);border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.015));-webkit-backdrop-filter:var(--th-blur,none);backdrop-filter:var(--th-blur,none);box-shadow:0 14px 30px -20px #000;transition:transform .18s ease,border-color .18s ease;color:var(--text);min-height:104px;box-sizing:border-box;padding:20px 20px 20px 120px;font:inherit;cursor:pointer}
+  .cg-guide:hover,.cg-guide:focus-visible{transform:translateY(-3px);border-color:color-mix(in srgb,var(--gold) 50%,transparent)}   /* Soft tile (user 2026-11-20): a lift and a half-gold hairline, no glow */
   .cg-guide img{position:absolute;left:8px;top:0;width:100px;height:100%;object-fit:contain}
   .cg-guide>strong{font-family:inherit;display:block;font-size:19px;color:var(--gold);margin-bottom:6px}
   .cg-guide span{font-size:12px;color:var(--muted)}
@@ -2378,7 +2378,7 @@
   .cg-card-preview{display:grid;gap:4px;width:min(460px,100%);margin-right:auto}
   .cg-card-preview[hidden]{display:none}
   .cg-card-preview > small,.cg-card-preview > figcaption{font-size:12px;color:var(--muted)}
-  .cg-card-preview .cg-guide{cursor:default;border-color:var(--line)}   /* the gallery card as is, not clickable */
+  .cg-card-preview .cg-guide{cursor:default;transform:none;border-color:rgba(255,255,255,.09)}   /* the gallery card as is, not clickable */
   /* editor steps (user 2026-10-16) */
   .cg-author .is-off-step{display:none !important}
   .cg-page[data-mode="author"] .cg-author:not([data-step="1"]):not([data-step="4"]) .cg-fields{display:none}   /* nothing of step 1 left in it: it must not take the column height */
@@ -2916,14 +2916,12 @@
   /* Gilded Frame (user 2026-10-17): every class guide container wears a double gold line with gold L corners, like an in-game window. It is a border-image
      (an inline SVG), so it stays put on the scrolling reader panels, is never clipped by their overflow, and leaves the server themes' backgrounds alone. */
   :root{--cg-gild:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3E%3Crect x='3.5' y='3.5' width='23' height='23' fill='none' stroke='%23c9a227' stroke-opacity='.6'/%3E%3Crect x='6.5' y='6.5' width='17' height='17' fill='none' stroke='%23c9a227' stroke-opacity='.22'/%3E%3Cpath d='M2 12V2h10M18 2h10v10M28 18v10H18M12 28H2V18' fill='none' stroke='%23e8c35a' stroke-width='2'/%3E%3C/svg%3E");--cg-gild-hi:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3E%3Crect x='3.5' y='3.5' width='23' height='23' fill='none' stroke='%23c9a227' stroke-opacity='.95'/%3E%3Crect x='6.5' y='6.5' width='17' height='17' fill='none' stroke='%23c9a227' stroke-opacity='.22'/%3E%3Cpath d='M2 12V2h10M18 2h10v10M28 18v10H18M12 28H2V18' fill='none' stroke='%23ffe08a' stroke-width='2'/%3E%3C/svg%3E")}
-  .rsim-tree-body,.cg-guide{border-style:solid !important;border-width:1px !important;border-color:transparent !important;border-image:var(--cg-gild) 14 / 14px / 3px stretch;border-radius:3px;background-color:#1b130d;background-image:linear-gradient(180deg,#261b12,#140f0b);box-shadow:0 12px 24px -12px #000}
-  .cg-guide:hover,.cg-guide:focus-visible{border-image-source:var(--cg-gild-hi)}
+  .rsim-tree-body{border-style:solid !important;border-width:1px !important;border-color:transparent !important;border-image:var(--cg-gild) 14 / 14px / 3px stretch;border-radius:3px;background-color:#1b130d;background-image:linear-gradient(180deg,#261b12,#140f0b);box-shadow:0 12px 24px -12px #000}
   /* Open layout (user 2026-10-17, variant 15 of a 15-way comparison): the guide view has no containers at all; text carries a soft dark shadow and a
      soft dark glow sits behind the middle of the page so it reads on every wallpaper. The columns, fill and description placement work as before. */
   .cg-page[data-mode="reader"] .cg-reader > .cg-reader-box,.cg-page[data-mode="reader"] .cg-reader > .cg-prose,.cg-page[data-mode="reader"] > .cg-prose,.cg-page[data-mode="reader"] .rsim-tree-body{border-image:none !important;border-color:transparent !important;background:none !important;box-shadow:none !important;text-shadow:0 1px 3px #000,0 0 8px rgba(0,0,0,.75)}
   .cg-page[data-mode="reader"] .cg-reader > .cg-prose{border-style:solid !important;border-width:0 0 0 3px !important;border-color:var(--gold) !important;background:linear-gradient(90deg,rgba(212,175,55,.08),transparent 60%) !important}   /* the description as a pull quote (user 2026-10-17, from variant 14) */
   .cg-page[data-mode="reader"]{background:radial-gradient(ellipse at 50% 45%,rgba(0,0,0,.55),transparent 75%)}
-  .cg-card-preview .cg-guide{border-image-source:var(--cg-gild)}
   /* Medallion Grid (user 2026-10-17): 4 columns (3 under 1100 px, 2 under 760 px), the round cover centred, title, chips, author and readers */
   .cg-page .cg-gallery{grid-template-columns:repeat(4,minmax(0,1fr))}
   @media(max-width:1100px){.cg-page .cg-gallery{grid-template-columns:repeat(3,minmax(0,1fr))}}
@@ -2942,6 +2940,18 @@
   .cg-page .cg-guide .cg-guide-name{min-width:0;overflow:hidden;text-overflow:ellipsis}
   .cg-page .cg-guide .cg-guide-date{flex:none}
   .cg-page .cg-guide .cg-guide-stats{display:flex;align-items:center;justify-content:center;gap:10px;min-height:18px}
+  /* Soft tile (user 2026-11-20, design 4 of 5 mock-ups; docs/superpowers/specs/2026-11-20-guide-gallery-soft-tile-design.md): the class / server / PVE row sits
+     under the cover, so it is at the same height on every card whatever the title; then the title; then the foot behind a hairline */
+  .cg-page .cg-guide > .cg-cover{order:0}
+  .cg-page .cg-guide .cg-guide-chips{order:1}
+  .cg-page .cg-guide > strong{order:2}
+  .cg-page .cg-guide .cg-guide-meta{order:3;margin-top:4px;padding:9px 2px 11px;border-top:1px solid rgba(255,255,255,.07)}
+  .cg-guide .cg-title-in{display:block;max-width:100%;font-size:inherit;color:inherit}   /* the title's words: not the card's 12 px grey ".cg-guide span" */
+  @media(min-width:761px){
+    .cg-page .cg-guide:not(.cg-gap){gap:9px;padding:16px 14px 0}
+    .cg-page .cg-guide > strong{height:calc(3 * 1.3 * 13px);width:100%;display:flex;align-items:safe center;justify-content:center;line-height:1.3}   /* the title box, 3 lines of 13 px (the longest live title, 87 characters, fits at the floor): classGuideFitTitles sizes each title to it; safe: a longer one spills down, not over the icons */
+  }
+  @media(max-width:760px){.cg-page .cg-guide .cg-guide-meta{margin-top:2px;padding:6px 0 0}}
   .cg-card-preview{width:min(240px,100%)}
   /* estimated readers: gold, the icon and the number centred on one line (user 2026-10-17) */
   .cg-page .cg-views{display:inline-flex;align-items:center;gap:5px;line-height:1;color:var(--gold);font-size:12.5px;vertical-align:-0.25em}   /* centred on the text beside it in an inline line (measured 2026-10-17: it floated 3.6 px high); the gallery's flex row ignores this */
@@ -2950,7 +2960,7 @@
   .cg-page .cg-views b{display:block;font-weight:700;line-height:1}
   .cg-page .cg-guide .cg-guide-date{margin-left:4px}
   /* the dashed gap card (user 2026-10-29): where a missing guide would go; dashed gold instead of the gilded frame, the class face in a dashed ring */
-  .cg-page .cg-guide.cg-gap{border:2px dashed color-mix(in srgb,var(--gold) 55%,transparent) !important;border-image:none !important;border-radius:6px;background:color-mix(in srgb,var(--gold) 5%,transparent);box-shadow:none;align-content:center}
+  .cg-page .cg-guide.cg-gap{border:1px dashed color-mix(in srgb,var(--gold) 45%,transparent) !important;border-image:none !important;border-radius:14px;background:color-mix(in srgb,var(--gold) 4%,transparent);box-shadow:none;align-content:center}
   .cg-page .cg-guide.cg-gap:hover,.cg-page .cg-guide.cg-gap:focus-visible{border-color:var(--gold) !important;background:color-mix(in srgb,var(--gold) 10%,transparent)}
   .cg-page .cg-gap .cg-gap-rot{display:grid;justify-items:center;gap:7px}
   .cg-page .cg-gap .cg-gap-face{display:grid;place-items:center;width:72px;height:72px;border-radius:50%;border:2px dashed color-mix(in srgb,var(--gold) 55%,transparent);background:center / 80% no-repeat;opacity:.85;font-size:28px;color:var(--gold)}
@@ -36652,6 +36662,17 @@ function classGuideTitleInto(el, text){
   el.textContent = "";
   for (const part of String(text).split(/(\s+)/)){ if (!part) continue; if (/^\s+$/.test(part)){ el.append(" "); continue; } const w = document.createElement("span"); w.className = "cg-word"; w.textContent = part; el.appendChild(w); }
 }
+// Gallery title box (user 2026-11-20, "standardizing and getting rid of the negative space"): on the desktop every card title gets the same box, 3 lines
+// of 13 px tall (CSS), and the biggest size from lo to hi px, in half-px steps, at which its .cg-title-in fits; a title too long even at lo
+// keeps lo and overflows. All boxes bisect together (write every size, then read every box), so a page of cards costs about 5 layouts.
+function classGuideFitTitles(boxes, lo = 13, hi = 22){
+  const rows = boxes.map((box) => ({ box, inner: box.querySelector(".cg-title-in"), lo: lo * 2, hi: hi * 2 })).filter((r) => r.inner);
+  for (let open = rows; (open = open.filter((r) => r.lo < r.hi)).length; ){
+    for (const r of open) r.box.style.fontSize = (r.mid = Math.ceil((r.lo + r.hi) / 2)) / 2 + "px";
+    for (const r of open) if (r.inner.offsetHeight <= r.box.clientHeight + 0.5 && r.inner.scrollWidth <= r.box.clientWidth + 0.5) r.lo = r.mid; else r.hi = r.mid - 1;
+  }
+  for (const r of rows) r.box.style.fontSize = r.lo / 2 + "px";
+}
 function classGuideButtonIcon(act){ return '<svg viewBox="0 0 24 24" aria-hidden="true">' + CLASS_GUIDE_BUTTON_ICONS[act] + '</svg>'; }
 // Editor row of the 8 recommended stats (blank = not recommended, not stored).
 function classGuideStatsEditorHtml(){   // filled from the draft by renderStatEditor (user 2026-10-18: one stat at a time, no row of 8 boxes)
@@ -38103,7 +38124,7 @@ function mountClassGuide(root){
   function fillCoverCard(){
     const box = el("cardPreview"); box.textContent = "";
     let g = null; try { g = draft && classGuideNormalize(draft, { draft: true }); } catch (e) { g = null; }
-    if (g) box.appendChild(guideCard(g, "div"));
+    if (g){ const card = guideCard(g, "div"); box.appendChild(card); if (window.innerWidth > 760 && card.offsetParent) classGuideFitTitles([card.querySelector(":scope > strong")]); }
   }
   // Step 6's size slider (user 2026-10-21): รูป PNG, then the guide page at common desktop window sizes. The page itself runs in a frame at that size
   // (#class-guide/preview, made on first use), scaled to the box; the draft goes in by postMessage (works from a file:// page too), and GoatCounter
@@ -38600,7 +38621,7 @@ function mountClassGuide(root){
   function guideCard(guide, tag = "button", id = null){
     const b = document.createElement(tag); if (tag === "button") b.type = "button"; b.className = "cg-guide";
     const portrait = classGuideCoverEl(guide, 110) || document.createElement("span");   // the author's cover icons (required; the class portrait is no longer used, user 2026-10-16)
-    const title = document.createElement("strong"); classGuideTitleInto(title, guide.title || "ตัวอย่างไกด์");
+    const title = document.createElement("strong"), titleIn = document.createElement("span"); titleIn.className = "cg-title-in"; classGuideTitleInto(titleIn, guide.title || "ตัวอย่างไกด์"); title.appendChild(titleIn);   // the wrapper classGuideFitTitles measures
     // Medallion Grid (user 2026-10-17): class and server chips under the title, then the author, the date and the estimated readers
     const chip = (src, text) => { const c = document.createElement("span"); c.className = "cg-chip"; if (src){ const i = document.createElement("img"); i.src = src; i.alt = text; c.title = text; c.appendChild(i); } else c.append(text); return c; };   // class and server: the icon alone, its name on hover (user 2026-10-21)
     const chips = document.createElement("span"); chips.className = "cg-guide-chips";
@@ -38719,6 +38740,7 @@ function mountClassGuide(root){
     // spare height under the two rows (compacted or not): they grow into it, up to 1.1 (review 2026-10-30: a 100 px empty band under the pager)
     if (desk && list.offsetParent && !list.style.zoom) for (let z = 1.02; z < 1.101; z += 0.02){ list.style.zoom = z.toFixed(2); if (tooTall()){ list.style.zoom = z > 1.03 ? (z - 0.02).toFixed(2) : ""; break; } }
     if (wantPage){ galleryPage = wantPage; draw(); }
+    if (desk && list.offsetParent) classGuideFitTitles([...list.querySelectorAll(".cg-guide > strong")]);   // the title box (user 2026-11-20): last, after the zoom; the box has a fixed height, so the rows-per-page fit above does not depend on it
     function drawPager(){
       const go = (n, text, label, current) => { const b = document.createElement("button"); b.type = "button"; b.className = "cg-page-btn"; b.textContent = text; b.setAttribute("aria-label", label); if (current) b.setAttribute("aria-current", "page"); b.disabled = n < 0 || n >= pages; b.addEventListener("click", () => { galleryPage = n; renderGallery(true); }); pager.appendChild(b); };
       go(galleryPage - 1, "‹", "หน้าก่อน");
@@ -41275,6 +41297,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-20T02:30:48.497Z","feat(bible): ไกด์อาชีพ การ์ดหน้ารวมไกด์โฉมใหม่ เป็นการ์ดกระจกบาง ไอคอนอาชีพ เซิร์ฟ และ PVE อยู่ใต้รูปปกสูงเท่ากันทุกใบ ชื่อไกด์ขยายหรือย่อให้พอดีกรอบเดียวกัน"],
     ["2026-11-20T01:38:32.197Z","fix(bible): ไกด์ #5 #29 #59 กลับไปใช้วันที่เดิม (แค่แก้สัตว์เลี้ยงเป็น Mother Flower Bug ไม่ใช่การอัปเดตไกด์)"],
     ["2026-11-20T01:34:13.315Z","fix(bible): class guide #59 is updated: TTO Panda แพนด้าคนนี้จะตามจีบจนกว่าคุณจะหยุดรัก by 1Hert.z"],
     ["2026-11-20T01:33:44.998Z","fix(bible): class guide #5 is updated: TTO Panda ด้า Sage Solo ทุกดัน by NNK"],

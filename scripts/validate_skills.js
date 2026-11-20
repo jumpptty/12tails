@@ -4405,6 +4405,16 @@ let checkedRsim = 0;
     for (const bad of [{foo:1},{agi:513},{agi:-1},{agi:1.5},{agi:"10"},{agi:null}]) rejects(()=>norm(change({stats:bad})),"reject stats " + JSON.stringify(bad));
     rejects(()=>norm(change({stats:[120]})),"reject stats as an array"); rejects(()=>norm(change({stats:null})),"reject null stats");
     ok(norm(change({title:"",author:"",date:"",stats:{cha:5}}),{draft:true}).stats.cha === 5, "drafts keep recommended stats");
+    // gallery title box (user 2026-11-20): every title gets the biggest size from 13 to 22 px that fits a box 3 lines of 13 px tall (the CSS height); fake boxes
+    // wrap the text by a width model (300 px wide, a character 0.55 em) so the fit can be checked without a layout engine
+    { const fitTitles = vm.runInContext("typeof classGuideFitTitles === \"function\" ? classGuideFitTitles : null", sandbox), H = 3 * 1.3 * 13;
+      const box = (chars) => { const b = { style: { fontSize: "" }, clientHeight: H, clientWidth: 300 }, px = () => parseFloat(b.style.fontSize) || 17;
+        b.inner = { get offsetHeight(){ return Math.ceil(chars * px() * 0.55 / 300) * px() * 1.3; }, scrollWidth: 0 }; b.querySelector = () => b.inner; return b; };
+      const bs = [5, 40, 70, 300].map(box); if (fitTitles) fitTitles(bs);
+      const sz = bs.map((b) => parseFloat(b.style.fontSize));
+      ok(!!fitTitles && sz[0] === 22 && sz[1] >= 18 && sz[1] <= 20 && sz[2] >= 13 && sz[2] <= 15.5 && bs[2].inner.offsetHeight <= H + 0.5 && sz[3] === 13 && bs.every((b) => /^\d+(\.5)?px$/.test(b.style.fontSize)), "classGuideFitTitles must size a guide title to its box (13-22 px), got " + JSON.stringify(sz));
+      ok(html.includes(".cg-page .cg-guide > strong{height:calc(3 * 1.3 * 13px);") && html.includes("align-items:safe center"), "the gallery title box must be 3 lines of 13 px tall (the longest live title, 87 characters, fits at the 13 px floor) and centre safely (a title too long even then spills down, not over the icons)"); }
+    ok(/.cg-guide .cg-title-in{[^}]*font-size:inherit;color:inherit/.test(html), "the title wrapper .cg-title-in must outrank the card's 12 px grey \".cg-guide span\" rule (selector .cg-guide .cg-title-in), or titles render and fit at 12 px");
   }
   // Recommended gear (user 2026-10-16): up to 3 ranked picks per slot, a game item the class can use or a typed name; Replica + one upgrade stat only on weapon / armor / hat.
   { const GD = vm.runInContext("GEAR_DATA", sandbox), GI = vm.runInContext("GEAR_ICONS", sandbox), gc = require(path.join(__dirname, "guide_code.js"));
