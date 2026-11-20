@@ -156,6 +156,7 @@ The numbers of the ดาเมจดิบ and ดาเมจจริง chip
 
 ### Formula term captions and accents (2026-10-08, user)
 
+* **Constant first, merged (user 2026-11-20):** the generic renderer draws a `talAdjust(N)` base plus any flat constant as one `dmg-num` term captioned `N + flat`, then the TAL part (Support Fire: `250 (50 + 200) + 128 (1TAL)`); a custom `formulaItems` does the same (Medic Turret: `40 (10 + 30) + 0.2TAL`), never a constant after the TAL term or two constants beside it. The validator checks every custom `formulaItems` on every server tab and group.
 * Every formula term that is not a `talAdjust()` constant carries a caption (`flatTermInfo` in `renderOneDmgFormulaBase`): `dmgSub` wins, else a lone number is `ค่าคงที่`, an expression shows itself with the rank filled in (`22×4 + 22`), a `dmgInputs` number shows that box's label. A `dmgDep` / `shieldDep` needs a `term` caption on the dep itself.
 * An ATK-driven term keeps `.dmg-atk` (red) on Effect Damage cards too (Drain Life, Wolf Combo with Dark Edge); only the fixed numbers of a purple card are purple.
 * Damage driven by Hate (Onslaught `hateOns`, Pride Crusher `hateCrush`) wears `.dmg-hate` (`--stat-hate`) with `0.1Hate` / `0.2Hate`. `.dmg-shield` (`--stat-shield`) is for a term driven by a shield's remaining pool: Bubble Burst (`dmgInputs` box `burstShieldHp`, effect damage = `(int)sValue`, `Whale.cs:35863-35932`), whose formula term is shield coloured while the box itself is not.
