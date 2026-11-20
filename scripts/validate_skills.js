@@ -7097,6 +7097,21 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
   }
   if (!blurHits) console.log("Verified no popup backdrop-filter blur.");
 }
+// Description frame and short desc look (user 2026-11-20, variant C): hairlines instead of the pull quote, and the short desc marker,
+// its call before the fit, the resize hook and the centred CSS stay together (bible-skill-page-ui "Description = gold hairlines" / "Short desc").
+{
+  const need = [
+    ["the desc frame without bar or wash", /\.sk-hero > \.sk-hero-head > \.sk-hero-desc\{position:relative; border-left:0; background:none;/],
+    ["the two hairlines", /\.sk-hero > \.sk-hero-head > \.sk-hero-desc::before,\s*\.sk-hero > \.sk-hero-head > \.sk-hero-desc::after\{content:""; position:absolute;[^}]*height:1px/],
+    ["markHeroShortDesc()", /function markHeroShortDesc\(\)\{[\s\S]{0,900}?\.sk-desc-mods, \.sk-desc-topics[\s\S]{0,500}?lines <= 2/],
+    ["the call before renderHeroNow's fit", /markHeroShortDesc\(\);[^\n]*\r?\n\s*const skillSwitched = idSeen/],
+    ["the resize hook", /window\.addEventListener\("resize", markHeroShortDesc\)/],
+    ["the centred .is-short CSS", /\.sk-hero > \.sk-hero-head > \.sk-hero-desc\.is-short\{text-align:center;[^}]*font-size:16px/],
+  ];
+  let bad = 0;
+  for (const [what, re] of need) if (!re.test(html)) { console.error(`[SHORT DESC ERROR] missing ${what} (see bible-skill-page-ui "Short desc").`); errorCount++; bad++; }
+  if (!bad) console.log("Verified the desc frame and the short desc look.");
+}
 // Font ban (user 2026-10-18: "Prompt looks better in all places"): the angular Chakra Petch was replaced by Prompt everywhere and must not come back.
 // Old changelog entries ("[<ISO date>", ...) may still name it; they are history.
 {

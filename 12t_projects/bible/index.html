@@ -7089,6 +7089,24 @@
     .sk-hero > .sk-hero-head > .sk-hero-desc{flex-basis:100%; margin-left:0}
     .sk-hero > .sk-hero-head:has(.sk-hero-pips):has(.sk-hero-desc){row-gap:20px; margin-bottom:12px}
   }
+  /* Description frame (user 2026-11-20): no box, no wash and no left bar (the pull quote is gone); a 1 px gold hairline above and
+     below that fades at both ends. Long descs stay left-aligned at 12 px with their icon columns and topics, the lines full width.
+     Short desc (variant C of 6 mocks): no icon lines, no topic groups, no • bullet and at most 2 lines at 12 px (markHeroShortDesc:
+     .is-short, .is-short-2 for two lines) = centred and bigger, its hairlines 12 % in from each side. */
+  .sk-hero > .sk-hero-head > .sk-hero-desc{position:relative; border-left:0; background:none; padding:9px 2px 8px}
+  .sk-hero > .sk-hero-head > .sk-hero-desc::before,
+  .sk-hero > .sk-hero-head > .sk-hero-desc::after{content:""; position:absolute; left:0; right:0; height:1px; pointer-events:none; background:linear-gradient(90deg, transparent, color-mix(in srgb, var(--gold) 55%, transparent), transparent)}
+  .sk-hero > .sk-hero-head > .sk-hero-desc::before{top:0}
+  .sk-hero > .sk-hero-head > .sk-hero-desc::after{bottom:0}
+  .sk-hero > .sk-hero-head > .sk-hero-desc.is-short{text-align:center; text-wrap:balance; font-size:16px; line-height:1.45; padding:11px 40px}
+  .sk-hero > .sk-hero-head > .sk-hero-desc.is-short.is-short-2{font-size:15px}
+  .sk-hero > .sk-hero-head > .sk-hero-desc.is-short::before,
+  .sk-hero > .sk-hero-head > .sk-hero-desc.is-short::after{left:12%; right:12%}
+  @media (max-width:620px){
+    .sk-hero > .sk-hero-head > .sk-hero-desc.is-short{font-size:15px; padding:10px 14px; margin-top:10px}
+    .sk-hero > .sk-hero-head > .sk-hero-desc.is-short::before,
+    .sk-hero > .sk-hero-head > .sk-hero-desc.is-short::after{left:4%; right:4%}
+  }
   /* Effect-line list (renderDescWithMods, user 2026-10-26): every run of "**Name:** effect" lines, each line led by its skill's or gear's
      icon. Two or more lines = two columns (.sk-desc-col), each its own stack, so a tall line never leaves a hole beside it (user
      2026-10-28: with every toggle on, the old shared-row grid left gaps); the left column takes the first half and balanceDescCols
@@ -21827,6 +21845,22 @@ function mountSkillCooldownLookup(root){
   function balanceHeroDesc(){ balanceDescCols(displayEl.querySelector(".sk-hero-desc")); }
   window.addEventListener("resize", balanceHeroDesc);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(balanceHeroDesc);
+  // Short desc (user 2026-11-20, variant C): no icon lines, no topic groups, no • bullet and at most 2 lines at the normal 12 px =
+  // .is-short (+ .is-short-2 for two lines), drawn centred at 16 / 15 px between the desc's gold hairlines (CSS after the head strip block).
+  // Measured with the classes off, so the bigger look never feeds back into the count; again on resize and when the fonts arrive,
+  // since the line count follows the width. renderHeroNow runs it before its fit measures the card.
+  function markHeroShortDesc(){
+    const d = displayEl.querySelector(".sk-hero > .sk-hero-head > .sk-hero-desc");
+    if (!d || typeof getComputedStyle !== "function") return;
+    d.classList.remove("is-short", "is-short-2");
+    if (d.classList.contains("sk-soon") || d.querySelector(".sk-desc-mods, .sk-desc-topics") || /(^|\n)\s*•/.test(d.innerText || "")) return;
+    const cs = getComputedStyle(d), lh = parseFloat(cs.lineHeight), pad = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+    if (!(lh > 0) || !(d.clientHeight > 0)) return;
+    const lines = Math.round((d.clientHeight - pad) / lh);
+    if (lines >= 1 && lines <= 2){ d.classList.add("is-short"); if (lines === 2) d.classList.add("is-short-2"); }
+  }
+  window.addEventListener("resize", markHeroShortDesc);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { markHeroShortDesc(); if (typeof fitStageToScreen === "function") fitStageToScreen(); });
   // Skill number boxes select their number on focus like the stat inputs, so a click is ready to type over (delegated: the boxes are re-rendered with the card).
   // Not a box the code focuses itself to keep the typing going (a dmgModes card redraws from its own box per digit, user 2026-11-09: selecting it made each digit replace the last).
   displayEl.addEventListener("focusin", (e) => { const el = e.target; if (el.dataset && "keepCaret" in el.dataset){ delete el.dataset.keepCaret; return; } if (el.matches && el.matches("input.sk-current-sp-input, input[data-role=supportLv]")) setTimeout(() => { if (document.activeElement === el) el.select(); }, 0); });
@@ -28520,6 +28554,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       }
     });
 
+    markHeroShortDesc();   // the short desc look (variant C) changes the card's height, so before the fit below measures it
     const skillSwitched = idSeen !== (selected && selected.id);   // a new card always fits at once, even under the scale lock
     positionStatsPanel();
     placeTestPanel();
@@ -41420,6 +41455,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-20T11:36:32.127Z","feat(bible): คำอธิบายสกิลเลิกใช้กล่องและแถบทองซ้าย ใช้เส้นทองบางบนล่างแทน และคำอธิบายสั้น (ไม่เกิน 2 บรรทัด ไม่มีบรรทัดไอคอน) แสดงตรงกลาง ตัวใหญ่ขึ้น 16px (แบบ C จาก 6 แบบ)"],
     ["2026-11-20T09:44:31.734Z","fix(bible): สูตรฮีล Medic Turret (TTO) รวมค่าคงที่เป็นตัวเดียวไว้หน้าส่วน TAL (40 + 0.2TAL, แคปซูล 65 + 0.3TAL) เหมือนสูตรการ์ดอื่น"],
     ["2026-11-20T06:14:37.364Z","feat(bible): Sky Drill (Mole) เปิด Sky Shaker แล้วมีแถวดาเมจแผ่นดินไหวและช่องกรอกเวลาใต้ดินบนการ์ดด้วย"],
     ["2026-11-20T05:54:51.125Z","feat(bible): Sky Shaker (Mole) มีช่องกรอกเวลาใต้ดิน ดาเมจและ KO = 8 + วินาทีใต้ดิน (3-12) พร้อมวิธีนับเวลา และหมายเหตุคำอธิบายในเกมแยกตามเซิร์ฟ"],
