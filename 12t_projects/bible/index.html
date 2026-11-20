@@ -2945,8 +2945,8 @@
      under the cover, so it is at the same height on every card whatever the title; then the title; then the foot behind a hairline */
   .cg-page .cg-guide > .cg-cover{order:0}
   @media(min-width:761px){.cg-page .cg-guide > .cg-cover{width:100%;height:80px}.cg-page .cg-gallery.is-compact .cg-guide > .cg-cover{height:64px}}   /* wide covers (user 2026-11-20, zigzag): the cover spans the card, classGuideFitCovers places the icons */
-  .cg-page .cg-guide .cg-guide-chips{order:1}
-  .cg-page .cg-guide > strong{order:2}
+  .cg-page .cg-guide > strong{order:1}
+  .cg-page .cg-guide .cg-guide-chips{order:2}   /* the title first (user 2026-11-20): its fixed box (desktop) or the row-tallest height (compact) keeps this row at one height */
   .cg-page .cg-guide .cg-guide-meta{order:3;margin-top:4px;padding:9px 2px 11px;border-top:1px solid rgba(255,255,255,.07)}
   .cg-guide .cg-title-in{display:block;max-width:100%;font-size:inherit;color:inherit}
   .cg-guide > strong.is-fitting .cg-word{max-width:none;overflow-wrap:normal}   /* while classGuideFitTitles measures: a wide word overflows, so it is seen */
@@ -41387,6 +41387,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-20T04:11:29.112Z","feat(bible): ไกด์อาชีพ บนจอคอมและจอเตี้ย ชื่อไกด์ขึ้นก่อนไอคอนอาชีพ เซิร์ฟ และ PVE"],
     ["2026-11-20T04:00:46.645Z","feat(bible): ไกด์อาชีพ มือถือได้ 6 ไกด์ต่อหน้าเท่าเดิม (แถวกระชับ แถบชวนเขียนไกด์บรรทัดเดียว) ผู้อ่านก่อนดาว และจอเตี้ยจัดชื่อไกด์บรรทัดเดียวให้อยู่กลางแถว"],
     ["2026-11-20T03:35:32.132Z","feat(bible): ไกด์อาชีพ รูปปกการ์ดบนจอคอมกางเต็มความกว้างแบบซิกแซก ไอคอนใหญ่ขึ้น มือถือเป็นแถวรายการ ชื่อไกด์พอดีกรอบสองบรรทัด ดาวกับผู้อ่านมุมขวาบน และขั้น 5 ดูการ์ดได้ทั้งมือถือ จอเตี้ย จอคอม"],
     ["2026-11-20T03:05:00.892Z","fix(bible): ไกด์อาชีพ การ์ดหน้ารวมไกด์ จอเตี้ยกลับมาได้ 8 ใบต่อหน้าในขนาดเดิม ชื่อไกด์ไม่ตัดกลางคำ ชื่อยาวเกินตัดเหลือ 3 บรรทัด และรูปปกหลายไอคอนใช้เส้นทองบางกับไอคอนใหญ่ขึ้น"],

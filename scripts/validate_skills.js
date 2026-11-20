@@ -4514,6 +4514,7 @@ let checkedRsim = 0;
         const t = (top, h) => ({ style: { minHeight: "" }, offsetHeight: h, parentElement: { offsetTop: top } }), bs = [t(0, 22), t(0, 44), t(0, 22), t(300, 22), t(300, 22)];
         if (align) align(bs);
         ok(!!align && bs.slice(0, 3).every((b) => b.style.minHeight === "44px") && bs.slice(3).every((b) => b.style.minHeight === "22px"), "classGuideAlignRowTitles gives every title of a grid row the height of the row's tallest title (a short window: one-line titles centred against two-line ones, user 2026-11-20), got " + JSON.stringify(bs.map((b) => b.style.minHeight))); }
+      ok(html.includes("  .cg-page .cg-guide > strong{order:1}\r\n  .cg-page .cg-guide .cg-guide-chips{order:2}"), "on the desktop and in compact mode the title comes before class / server / PVE (user 2026-11-20; the fixed title box keeps the row at one height)");
       ok(html.includes(".cg-page .cg-list .cg-guide .cg-views{order:-1}"), "phone list rows show the readers before the stars, top right (user 2026-11-20)");
       rejects(() => norm(change({ cover: [999] })), "reject a cover icon that is not in the grid");
       ok(same(norm(change({ title: "", author: "", date: "", cover: [101, 999, 101] }), { draft: true }).cover, [101]), "drafts drop cover icons the grid no longer has"); }
