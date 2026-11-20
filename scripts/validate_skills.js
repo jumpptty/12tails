@@ -7149,6 +7149,7 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
     ["no level tabs left", () => !/data-rec-tab=|function renderTabbedRecommender/.test(html)],
     ["the stat ranges refreshed on class change", () => /updateRecRanges\(\);\r?\n\s*updateRecommender\(\);/.test(html) && /data-rec-range=/.test(html)],
     ["the side-by-side CSS", () => /\.sr-rec-tiers \{ display: grid; grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/.test(html)],
+    ["the advanced pop-up's steppers, live (renderAdv, no Calculate button)", () => /function renderAdv\(\) \{[\s\S]{0,2400}?data-adv-step=[\s\S]{0,2400}?impossibleWhy/.test(html) && !/data-role="calcBtn"/.test(html) && !/"\.sr-stat-cell"/.test(ts)],
   ];
   let bad = 0;
   for (const [what, ok] of need) if (!ok()) { console.error(`[STAT ROLL ERROR] missing ${what} (see bible-hub-tools "Stat Roll").`); errorCount++; bad++; }
