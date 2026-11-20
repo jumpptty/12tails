@@ -11055,7 +11055,7 @@ const rabTtoTal = (p, TAL) => { const f = Math.fround, t = Math.min(512, Math.ma
 // Medic Turret heals: pulse 30 + talAdjust(10) (TTO1118:Rabbit::MedicTurretPulse@0x1E32BF0), capsule 50 + talAdjust(15) (TTO1118:Rabbit::MedicTurretShotHit@0x1E33210); 30 and 50 are flat (as since TTO1102).
 const medicTurretHeal = (g) => g && g.capsule ? [50, 15] : [30, 10];
 function medicTurretParts(rank, c){ const [k, p] = medicTurretHeal(c.group); return { crit: k + rabTtoTal(p, c.TAL), plain: 0, noCrit: true }; }
-function medicTurretFormulaItems(rank, c){ const [k, p] = medicTurretHeal(c.group), ta = rabTtoTal(p, c.TAL); return [{ value: p, sub: null, cls: "dmg-num" }, { op: "+" }, { value: ta - p, sub: (p * 2 / 100) + "TAL", cls: "dmg-tal" }, { op: "+" }, { value: k, sub: "ค่าคงที่", cls: "dmg-term" }]; }
+function medicTurretFormulaItems(rank, c){ const [k, p] = medicTurretHeal(c.group), ta = rabTtoTal(p, c.TAL); return [{ value: p + k, sub: p + " + " + k, cls: "dmg-num" }, { op: "+" }, { value: ta - p, sub: (p * 2 / 100) + "TAL", cls: "dmg-tal" }]; }   // the constant first, merged like the generic renderer (user 2026-11-20)
 // Coin Ricochet (TTO1118:Rabbit::CoinHit@0x1E2FB30, float32 then Math.Floor): coins 1-3 floor((floor(0.45f x ATK) + talAdjust(25)) x (1 + 0.25 x min(hop, 2))), KO 2;
 // coin 4 (Cash Out) floor((ATK + talAdjust(60)) x (1 + 0.2 x Gilded)), KO 8, no hop bonus. hop = the target's place in that coin's chain (0-5 since 1.7.0, CoinHops 6; the bonus stops at the 3rd), Gilded = its level before the hit.
 function coinRicochetParts(rank, c){
@@ -41485,6 +41485,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-20T09:44:31.734Z","fix(bible): สูตรฮีล Medic Turret (TTO) รวมค่าคงที่เป็นตัวเดียวไว้หน้าส่วน TAL (40 + 0.2TAL, แคปซูล 65 + 0.3TAL) เหมือนสูตรการ์ดอื่น"],
     ["2026-11-20T06:14:37.364Z","feat(bible): Sky Drill (Mole) เปิด Sky Shaker แล้วมีแถวดาเมจแผ่นดินไหวและช่องกรอกเวลาใต้ดินบนการ์ดด้วย"],
     ["2026-11-20T05:54:51.125Z","feat(bible): Sky Shaker (Mole) มีช่องกรอกเวลาใต้ดิน ดาเมจและ KO = 8 + วินาทีใต้ดิน (3-12) พร้อมวิธีนับเวลา และหมายเหตุคำอธิบายในเกมแยกตามเซิร์ฟ"],
     ["2026-11-20T05:07:05.868Z","fix(bible): Grand Codex (TTO) ป้ายระยะบนหัวการ์ดแสดงวงคัมภีร์ r 13m แทนระยะวาง 16m (วง 16m ยังอยู่ในรูป 3 มิติ)"],
