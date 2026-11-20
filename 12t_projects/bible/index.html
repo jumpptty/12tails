@@ -2925,6 +2925,7 @@
   .cg-page[data-mode="reader"]{background:radial-gradient(ellipse at 50% 45%,rgba(0,0,0,.55),transparent 75%)}
   /* Medallion Grid (user 2026-10-17): 4 columns (3 under 1100 px, 2 under 760 px), the round cover centred, title, chips, author and readers */
   .cg-page .cg-gallery{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .cg-page .cg-gallery{align-content:start}   /* the height lock (renderGallery) must not stretch a short page's rows */
   @media(max-width:1100px){.cg-page .cg-gallery{grid-template-columns:repeat(3,minmax(0,1fr))}}
   @media(max-width:760px){.cg-page .cg-gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}}
   .cg-page .cg-guide{display:grid;justify-items:center;align-content:start;text-align:center;gap:7px;min-height:0;padding:14px 12px 12px}
@@ -2964,6 +2965,7 @@
   .cg-page .cg-views svg{display:block;flex:none;width:15px;height:15px;stroke-width:2}
   .cg-page .cg-views b{display:block;font-weight:700;line-height:1}
   .cg-page .cg-guide .cg-guide-date{margin-left:4px}
+  .cg-page .cg-guide .cg-guide-date::before{content:"· "}   /* the dot is CSS, so the phone row can drop it (user 2026-11-20) */
   /* the dashed gap card (user 2026-10-29): where a missing guide would go; dashed gold instead of the gilded frame, the class face in a dashed ring */
   .cg-page .cg-guide.cg-gap{border:1px dashed color-mix(in srgb,var(--gold) 45%,transparent) !important;border-image:none !important;border-radius:14px;background:color-mix(in srgb,var(--gold) 4%,transparent);box-shadow:none;align-content:center}
   .cg-page .cg-guide.cg-gap:hover,.cg-page .cg-guide.cg-gap:focus-visible{border-color:var(--gold) !important;background:color-mix(in srgb,var(--gold) 10%,transparent)}
@@ -3035,7 +3037,8 @@
   .cg-page .cg-list .cg-guide > strong{grid-column:2 / 4;grid-row:2;align-self:center;width:100%;min-width:0;height:calc(2 * 1.2 * 14px);display:flex;align-items:safe center;justify-content:flex-start;font-size:14px;line-height:1.2}
   .cg-page .cg-list .cg-guide > strong.is-long > .cg-title-in{-webkit-line-clamp:2}
   .cg-page .cg-list .cg-guide .cg-guide-by{grid-column:2 / 4;grid-row:3;display:flex;justify-content:flex-start;width:100%;max-width:100%;font-size:11.5px;color:var(--muted);white-space:nowrap}
-  .cg-page .cg-list .cg-guide .cg-guide-date{display:inline}
+  .cg-page .cg-list .cg-guide .cg-guide-date{display:inline;margin-left:auto;padding-left:10px}
+  .cg-page .cg-list .cg-guide .cg-guide-date::before{content:none}   /* phones: the date at the right end of the author line (user 2026-11-20) */
   .cg-page .cg-list .cg-rate-star{width:11px;height:11px}
   .cg-page .cg-list .cg-views{font-size:11.5px}
   .cg-page .cg-list .cg-views svg{width:13px;height:13px}
@@ -38783,7 +38786,7 @@ function mountClassGuide(root){
     const meta = document.createElement("span"); meta.className = "cg-guide-meta";
     const who = document.createElement("span"); who.className = "cg-guide-by";
     const name = document.createElement("span"); name.className = "cg-guide-name"; name.textContent = guide.author || "ยังไม่ระบุผู้เขียน"; who.appendChild(name);   // two rows (user 2026-10-30): name · date, then stars and readers
-    const when = document.createElement("span"); when.className = "cg-guide-date"; when.textContent = "· " + classGuideDateText(guide.date);
+    const when = document.createElement("span"); when.className = "cg-guide-date"; when.textContent = classGuideDateText(guide.date);
     classGuideTipBind(when, () => '<div class="cg-tip-h">วันที่อัพเดทล่าสุด</div>');   // the page's pop-up, as on the stars (user 2026-10-30)
     who.appendChild(when); meta.appendChild(who);
     const done = classGuideCompleteness(guide), stars = document.createElement("span"); stars.className = "cg-rating"; stars.innerHTML = classGuideStarsHtml(done.stars, done.top);   // ความครบถ้วนของเนื้อหา (user 2026-10-20)
@@ -38803,6 +38806,16 @@ function mountClassGuide(root){
   // a phone page scrolls (20 rows), so a page change jumps back to the top of the list (user 2026-11-20); the desktop page never scrolls
 const galleryListTop = () => { if (window.innerWidth <= 760){ const y = el("guides").getBoundingClientRect().top + window.scrollY - 8; if (window.scrollY > y) window.scrollTo({ top: Math.max(0, y) }); } };
   for (const [role, step] of [["galleryPrev", -1], ["galleryNext", 1]]) el(role).addEventListener("click", () => { galleryPage += step; renderGallery(true); galleryListTop(); });
+  // A / D and the arrow keys page the gallery on the desktop (user 2026-11-20). e.code, so a Thai keyboard (ฟ / ก on those keys) works too; never while
+  // typing, with a modifier held, or with a pop-up or dialog open
+  document.addEventListener("keydown", (e) => {
+    if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || mode !== "gallery" || window.innerWidth <= 760 || !el("guides").offsetParent) return;
+    const t = e.target; if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    if (document.querySelector("dialog[open], [aria-modal=\"true\"]:not([hidden])")) return;
+    const dir = e.key === "ArrowRight" || e.code === "KeyD" ? 1 : e.key === "ArrowLeft" || e.code === "KeyA" ? -1 : 0;
+    const b = dir && el(dir > 0 ? "galleryNext" : "galleryPrev"); if (!b || b.hidden || b.disabled) return;
+    e.preventDefault(); b.click();
+  });
   // The dashed gap card (user 2026-10-29, option A of three mocks): the top of classGuideGaps for the current filters. No guide matches: the first
   // slot, "be the first"; 1-3 match: after them, "help add more"; 4+ (no filters too): the first slot of page 1 only. Gaps still tied take turns every
   // 6 s with the hub bar's swap (the old text lifts 14 px and fades, the new one rises in), paused while hovered or focused. No card during a title search.
@@ -38838,7 +38851,7 @@ const galleryListTop = () => { if (window.innerWidth <= 760){ const y = el("guid
   };
   function renderGallery(keepPage){
     if (keepPage !== true) galleryPage = 0;
-    const list = el("guides"), pager = el("pager"), cards = []; list.textContent = ""; list.style.zoom = ""; list.classList.remove("is-compact"); list.classList.toggle("cg-list", window.innerWidth <= 760);   // the fit below may have shrunk or compacted the grid; phones: list rows (user 2026-11-20)
+    const list = el("guides"), pager = el("pager"), cards = []; list.textContent = ""; list.style.zoom = ""; list.style.minHeight = ""; list.classList.remove("is-compact"); list.classList.toggle("cg-list", window.innerWidth <= 760);   // the fit below may have shrunk or compacted the grid; phones: list rows (user 2026-11-20)
     let validCount = 0, invalidCount = 0, totalCount = 0;
     const server = filterServer, classKey = filterClass;
     const byDate = [...CLASS_GUIDES.entries()].sort(([ia, a], [ib, z]) => { const d = String((a && (a.published || a.date)) || "").localeCompare(String((z && (z.published || z.date)) || "")) || ia - ib; return sortNewest ? -d : d; });
@@ -38896,9 +38909,24 @@ const galleryListTop = () => { if (window.innerWidth <= 760){ const y = el("guid
     if (desk && list.offsetParent && !list.style.zoom) for (let z = 1.02; z < 1.101; z += 0.02){ list.style.zoom = z.toFixed(2); if (tooTall()){ list.style.zoom = z > 1.03 ? (z - 0.02).toFixed(2) : ""; break; } }
     if (wantPage){ galleryPage = wantPage; draw(); }
     if (!desk && list.offsetParent) classGuideFitTitles([...list.querySelectorAll(".cg-guide > strong")], 12, 19);   // phones: the list row's 2-line title box (user 2026-11-20)
-    if (desk && list.offsetParent) classGuideFitCovers([...list.querySelectorAll(".cg-guide > .cg-cover")]);
-    if (desk && list.offsetParent && list.classList.contains("is-compact")) classGuideAlignRowTitles([...list.querySelectorAll(".cg-guide > strong")]);   // a short window: one-line titles centred against two-line ones   // wide covers (user 2026-11-20): the icons follow the card's width
-    if (desk && list.offsetParent && !list.classList.contains("is-compact")) classGuideFitTitles([...list.querySelectorAll(".cg-guide > strong")]);   // the title box (user 2026-11-20): last, after the zoom; the box has a fixed height, so the rows-per-page fit above does not depend on it; compact (a short window) keeps natural titles
+    // Desktop: every page's cards are laid out once, the fits run on all of them, and the gallery keeps the tallest page's height, so the pager never
+    // moves between pages (user 2026-11-20: a last page of one row, or compact pages with more two-line titles, made it jump). The fits stay on the cards.
+    if (desk && list.offsetParent){
+      const all = pages > 1, compact = list.classList.contains("is-compact");
+      const lockPages = () => {
+        if (all){ list.textContent = ""; cards.forEach((c) => list.appendChild(c)); }
+        classGuideFitCovers([...list.querySelectorAll(".cg-guide > .cg-cover")]);   // wide covers (user 2026-11-20): the icons follow the card's width
+        if (compact){ for (const t of list.querySelectorAll(".cg-guide > strong")) t.style.minHeight = ""; classGuideAlignRowTitles([...list.querySelectorAll(".cg-guide > strong")]); }   // a short window: one-line titles centred against two-line ones
+        else classGuideFitTitles([...list.querySelectorAll(".cg-guide > strong")]);   // the title box (user 2026-11-20)
+        let tallest = 0;
+        if (all) for (let i = 0; i < cards.length; i += perPage){ const rs = cards.slice(i, i + perPage).map((c) => c.getBoundingClientRect()); tallest = Math.max(tallest, Math.max(...rs.map((r) => r.bottom)) - Math.min(...rs.map((r) => r.top))); }
+        list.style.minHeight = pages > 1 ? tallest / (parseFloat(list.style.zoom) || 1) + "px" : "";
+        if (all) draw();
+      };
+      lockPages();
+      // the tallest page must fit the window too (compact pages are measured above with natural titles, so they can come out taller than page 1 was)
+      for (let z = parseFloat(list.style.zoom) || 1; all && overflows() && z > 0.71; ){ z = Math.round((z - 0.03) * 100) / 100; list.style.zoom = z.toFixed(2); lockPages(); }
+    }
     function drawPager(){
       const go = (n, text, label, current) => { const b = document.createElement("button"); b.type = "button"; b.className = "cg-page-btn"; b.textContent = text; b.setAttribute("aria-label", label); if (current) b.setAttribute("aria-current", "page"); b.disabled = n < 0 || n >= pages; b.addEventListener("click", () => { galleryPage = n; renderGallery(true); galleryListTop(); }); pager.appendChild(b); };
       go(galleryPage - 1, "‹", "หน้าก่อน");
@@ -41455,6 +41483,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-20T04:40:35.193Z","fix(bible): ไกด์อาชีพ ปุ่มเปลี่ยนหน้าบนจอคอมไม่ขยับขึ้นลงอีก ทุกหน้าสูงเท่าหน้าที่สูงที่สุด กด A D หรือลูกศรซ้ายขวาเพื่อเปลี่ยนหน้า และวันที่บนมือถือชิดขวา"],
     ["2026-11-20T04:23:25.662Z","feat(bible): ไกด์อาชีพ มือถือแสดง 20 ไกด์ต่อหน้า และเปลี่ยนหน้าแล้วเลื่อนกลับขึ้นไปต้นรายการ"],
     ["2026-11-20T04:17:39.167Z","feat(bible): ไกด์อาชีพ ไอคอนอาชีพ เซิร์ฟ และป้าย PVE PVP บนการ์ดจอคอมใหญ่ขึ้น (32px จอเตี้ย 28px) ระยะบนล่างเท่ากัน"],
     ["2026-11-20T04:11:29.112Z","feat(bible): ไกด์อาชีพ บนจอคอมและจอเตี้ย ชื่อไกด์ขึ้นก่อนไอคอนอาชีพ เซิร์ฟ และ PVE"],
