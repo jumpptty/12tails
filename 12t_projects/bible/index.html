@@ -38735,7 +38735,9 @@ function mountClassGuide(root){
   // Pages (user 2026-10-17): the gallery never scrolls; as many rows of cards as fit under the filters go on a page, the rest on page 2, 3 ...
   // A filter or sort change goes back to page 1; a resize keeps the page (clamped).
   let galleryPage = 0;
-  for (const [role, step] of [["galleryPrev", -1], ["galleryNext", 1]]) el(role).addEventListener("click", () => { galleryPage += step; renderGallery(true); });
+  // a phone page scrolls (20 rows), so a page change jumps back to the top of the list (user 2026-11-20); the desktop page never scrolls
+const galleryListTop = () => { if (window.innerWidth <= 760){ const y = el("guides").getBoundingClientRect().top + window.scrollY - 8; if (window.scrollY > y) window.scrollTo({ top: Math.max(0, y) }); } };
+  for (const [role, step] of [["galleryPrev", -1], ["galleryNext", 1]]) el(role).addEventListener("click", () => { galleryPage += step; renderGallery(true); galleryListTop(); });
   // The dashed gap card (user 2026-10-29, option A of three mocks): the top of classGuideGaps for the current filters. No guide matches: the first
   // slot, "be the first"; 1-3 match: after them, "help add more"; 4+ (no filters too): the first slot of page 1 only. Gaps still tied take turns every
   // 6 s with the hub bar's swap (the old text lifts 14 px and fades, the new one rises in), paused while hovered or focused. No card during a title search.
@@ -38810,7 +38812,7 @@ function mountClassGuide(root){
     // Rows per page: phones at least 3 (user 2026-10-17); desktop at least 2, i.e. 4 x 2 = 8 guides (user 2026-10-19: a short window, e.g. 1280 x 720
     // or a 125% display, showed one row of 4). When two rows do not fit, the cards shrink together (zoom on the grid, down to .7: they still fill the
     // width) instead of dropping a row; only a window too short even for that falls back to one row.
-    const desk = window.innerWidth > 760, floor = desk ? cols * 2 : Math.max(cols * 3, 6);
+    const desk = window.innerWidth > 760, floor = desk ? cols * 2 : 20;   // phones: 20 items a page (user 2026-11-20: the list rows scroll anyway; 6 until then)
     if (list.offsetParent && perPage < floor){ perPage = Math.min(cards.length, floor); draw(); }
     while (list.offsetParent && perPage > floor && overflows()){ perPage -= cols; draw(); }
     // the tallest page must fit too, not only page 1 (review 2026-10-30): a page is whole rows, so all the cards in the grid at once give every page's rows
@@ -38833,7 +38835,7 @@ function mountClassGuide(root){
     if (desk && list.offsetParent && list.classList.contains("is-compact")) classGuideAlignRowTitles([...list.querySelectorAll(".cg-guide > strong")]);   // a short window: one-line titles centred against two-line ones   // wide covers (user 2026-11-20): the icons follow the card's width
     if (desk && list.offsetParent && !list.classList.contains("is-compact")) classGuideFitTitles([...list.querySelectorAll(".cg-guide > strong")]);   // the title box (user 2026-11-20): last, after the zoom; the box has a fixed height, so the rows-per-page fit above does not depend on it; compact (a short window) keeps natural titles
     function drawPager(){
-      const go = (n, text, label, current) => { const b = document.createElement("button"); b.type = "button"; b.className = "cg-page-btn"; b.textContent = text; b.setAttribute("aria-label", label); if (current) b.setAttribute("aria-current", "page"); b.disabled = n < 0 || n >= pages; b.addEventListener("click", () => { galleryPage = n; renderGallery(true); }); pager.appendChild(b); };
+      const go = (n, text, label, current) => { const b = document.createElement("button"); b.type = "button"; b.className = "cg-page-btn"; b.textContent = text; b.setAttribute("aria-label", label); if (current) b.setAttribute("aria-current", "page"); b.disabled = n < 0 || n >= pages; b.addEventListener("click", () => { galleryPage = n; renderGallery(true); galleryListTop(); }); pager.appendChild(b); };
       go(galleryPage - 1, "‹", "หน้าก่อน");
       const show = pages <= 7 ? [...Array(pages).keys()] : [...new Set([0, galleryPage - 1, galleryPage, galleryPage + 1, pages - 1])].filter(n => n >= 0 && n < pages).sort((a, b) => a - b);
       let prev = -1;
@@ -41388,6 +41390,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-20T04:23:25.662Z","feat(bible): ไกด์อาชีพ มือถือแสดง 20 ไกด์ต่อหน้า และเปลี่ยนหน้าแล้วเลื่อนกลับขึ้นไปต้นรายการ"],
     ["2026-11-20T04:17:39.167Z","feat(bible): ไกด์อาชีพ ไอคอนอาชีพ เซิร์ฟ และป้าย PVE PVP บนการ์ดจอคอมใหญ่ขึ้น (32px จอเตี้ย 28px) ระยะบนล่างเท่ากัน"],
     ["2026-11-20T04:11:29.112Z","feat(bible): ไกด์อาชีพ บนจอคอมและจอเตี้ย ชื่อไกด์ขึ้นก่อนไอคอนอาชีพ เซิร์ฟ และ PVE"],
     ["2026-11-20T04:00:46.645Z","feat(bible): ไกด์อาชีพ มือถือได้ 6 ไกด์ต่อหน้าเท่าเดิม (แถวกระชับ แถบชวนเขียนไกด์บรรทัดเดียว) ผู้อ่านก่อนดาว และจอเตี้ยจัดชื่อไกด์บรรทัดเดียวให้อยู่กลางแถว"],
