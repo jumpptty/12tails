@@ -32,12 +32,12 @@
     raised: [".stg-tile:not(.is-on)", ".stg-close", ".stg-pill:not(.is-on)", ".news-feat", ".tt-btn:not(.is-on):not(.tt-play)", ".donate-tab:not([aria-selected=\"true\"])", ".pi-it:not(.is-on)", ".pi-var:not(.is-on)", ".pi-lv button:not(.is-on)", ".pi-res:not(.is-on)", ".sk-roster-card:not(.is-halo)", ".sk-roster-pager button", ".sg-gate-btn:not(.is-hero)", ".cls-picker-btn", ".cg-page .cg-btn-secondary", ".cg-format-btn:not(.is-on)",
       // the guide gallery controls (user 2026-10-17: they stayed plain dark brown on every server; the cards .cg-guide and the page buttons .cg-page-btn left 2026-11-20: the Soft tile glass is neutral and reads on every look)
       ".cg-mode-btn:not([aria-pressed=\"true\"])", ".cg-sort",   // .cg-icon-pick.is-all left 2026-10-20: the text filters have no box now
-      ".sr-preset-btn", ".credits-arrow", ".cg-set-rep.is-add", ".cg-set-ed .cg-gear-x", ".cg-start-opt", ".cg-cover-pick-btn", ".cg-desc-pager button", ".rsim-btn:not(.cg-btn-primary)", ".cao-toggle", ".cao-reset", ".cao-custom-icon", ".sk-ps-toggle", ".mon-races button", ".bg-tab", ".nl-kinds button", ".sk-browse-btn", ".sk-crit-btn", ".sk-enemy-info-btn", ".sk-stats-collapse", ".sk-enemy-pick", ".sk-enemy-result", ".sk-mods-btn", ".sk-enemy-imm-chip", ".sk-server-badge", ".chm-seg", ".chm-rbtn"],
+      ".credits-arrow", ".cg-set-rep.is-add", ".cg-set-ed .cg-gear-x", ".cg-start-opt", ".cg-cover-pick-btn", ".cg-desc-pager button", ".rsim-btn:not(.cg-btn-primary)", ".cao-toggle", ".cao-reset", ".cao-custom-icon", ".sk-ps-toggle", ".mon-races button", ".bg-tab", ".nl-kinds button", ".sk-browse-btn", ".sk-crit-btn", ".sk-enemy-info-btn", ".sk-stats-collapse", ".sk-enemy-pick", ".sk-enemy-result", ".sk-mods-btn", ".sk-enemy-imm-chip", ".sk-server-badge", ".chm-seg", ".chm-rbtn"],
     // menus, tooltips, pickers and toasts: the look's texture and edge, but their own SOLID fill, so text over the page stays readable (user 2026-10-17;
     // the enemy picker sat in "panel" and was see-through glass over the stat dials in ToT, user 2026-10-18)
     popup: [".hub-music-pop", ".copy-note", ".donate-nudge", ".hub-theme-menu", ".cg-menu-pop", ".changelog-popup", ".mech-popup", ".donate-popup", ".rsim-tip", ".sk-suggestions", ".sk-hero-info-pop", ".sk-enemy-info-popover", ".sk-enemy-picker", ".sk-mods-popup", ".sk-target-toast", ".sk-dmg-info-pop", ".sk-stat-tooltip", ".cls-picker-menu", ".sk-mod-icon-badge", ".sk-test-panel"],
     // inputs, number boxes and table headers: only the look's edge colour; their solid fill keeps typing and sticky headers clean (user 2026-10-17)
-    field: [".stg-search", ".stg-lck input", ".pi-lck input", ".sr-select", ".sr-num-input", ".sr-progress-bg", ".cg-page input", ".cg-page textarea", ".cg-page .cg-gear-stat-in", ".cao-rank", ".cao-num", ".mon-search", ".nl-search", ".mon-table th", ".mon-table td:first-child", ".sk-search", ".sk-enemy-search", ".chm-field select", ".chm-field input", ".chm-count", ".chm-log-search", ".chm-fps select", ".donate-form input", ".donate-form textarea"]
+    field: [".stg-search", ".stg-lck input", ".pi-lck input", ".cg-page input", ".cg-page textarea", ".cg-page .cg-gear-stat-in", ".cao-rank", ".cao-num", ".mon-search", ".nl-search", ".mon-table th", ".mon-table td:first-child", ".sk-search", ".sk-enemy-search", ".chm-field select", ".chm-field input", ".chm-count", ".chm-log-search", ".chm-fps select", ".donate-form input", ".donate-form textarea"]
   };
   (function(){
     var G = 'html:is([data-sk-server="og"],[data-sk-server="tto"],[data-sk-server="tot"],[data-sk-server="reborn"]) ';
@@ -498,7 +498,6 @@
     gap: 14px;
     padding-bottom: 14px;
     margin-bottom: 16px;
-    border-bottom: 1px solid var(--line);
   }
   .sr-header-text {
     flex: 1;
@@ -514,12 +513,6 @@
     color: var(--text);
     line-height: 1.35;
     letter-spacing: -0.01em;
-  }
-  .sr-header-sub {
-    font-size: 12.5px;
-    color: var(--muted);
-    margin: 5px 0 0 0;
-    line-height: 1.5;
   }
   .sr-header-controls {
     display: flex;
@@ -540,76 +533,27 @@
     color: var(--muted);
     line-height: 1;
   }
-  .sr-select {
-    padding: 6px 30px 6px 12px;
-    font-size: 13px;
-    font-weight: 600;
-    font-family: inherit;
-    background: var(--panel-2);
-    border: 1px solid var(--line);
-    border-radius: 3px;
-    color: var(--text);
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23c9a227' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 9px center;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.15);
-  }
-  .sr-select:hover {
-    border-color: var(--gold);
-  }
-  .sr-select:focus {
-    outline: none;
-    border-color: var(--gold);
-    box-shadow: 0 0 0 2px var(--gold-soft);
-  }
-  .sr-lang-toggle {
-    display: inline-flex;
-    background: var(--panel-2);
-    border: 1px solid var(--line);
-    border-radius: 18px;
-    padding: 2px;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
-  }
+  .sr-lang-toggle { display: inline-flex; }
   .sr-lang-btn {
     font-family: inherit;
     font-size: 11px;
     font-weight: 700;
-    padding: 3px 10px;
     border: none;
-    border-radius: 14px;
     cursor: pointer;
-    background: transparent;
-    color: var(--muted);
     transition: all 0.15s ease;
     letter-spacing: 0.05em;
     line-height: 1.2;
-  }
-  .sr-lang-btn:hover:not(.active) {
-    color: var(--text);
-  }
-  .sr-lang-btn.active {
-    background: var(--gold);
-    color: #14110b;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.25);
   }
   .sr-wrap.locked .sr-deck {
     filter: blur(5px);
     pointer-events: none;
     user-select: none;
   }
-  .sr-deck {
-    display: block;
-  }
-  /* No card chrome: the tool's own container already frames it, so the hero fills it edge to edge */
-  .sr-hero { background: none; border: none; box-shadow: none; padding: 0; }
+  /* the door to the advanced mode: % plus a label (review 2026-10-30: a bare % did not say what it opens); phones keep the bare % */
   .sr-adv-btn {
-    background: none; border: none; color: var(--muted);
-    font-family: inherit; font-size: 15px; font-weight: 700; line-height: 1; padding: 2px 6px; cursor: pointer; transition: color 0.15s ease;
+    background: none; border: 0; padding: 4px 0; color: var(--gold);
+    font-family: inherit; font-size: 15px; font-weight: 700; line-height: 1; cursor: pointer;
   }
-  .sr-adv-btn:hover { color: var(--gold); }
   .sr-modal-backdrop {
     position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,.66);
     display: flex; align-items: center; justify-content: center; padding: 16px;
@@ -682,206 +626,16 @@
     text-decoration: underline;
     background: var(--stat-atk-soft);
   }
-  .sr-stat-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 7px;
-  }
-  @media (max-width: 480px) {
-    .sr-stat-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-  .sr-stat-cell {
-    background: var(--panel-2);
-    border: 1px solid var(--line);
-    border-radius: 3px;
-    padding: 7px 8px 6px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    min-height: 64px;
-    transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
-    cursor: text;
-    position: relative;
-    box-sizing: border-box;
-  }
-  /* Signature stat accent (--sc, set per cell from --stat-*) */
-  .sr-stat-cell { border-color: color-mix(in srgb, var(--sc) 40%, var(--line)); }
-  .sr-stat-cell:hover {
-    border-color: var(--sc);
-  }
-  .sr-stat-cell:focus-within {
-    border-color: var(--sc);
-    background: color-mix(in srgb, var(--sc) 12%, var(--panel-2));
-    box-shadow: 0 0 8px color-mix(in srgb, var(--sc) 45%, transparent);
-  }
-  .sr-stat-cell.impossible {
-    border-color: var(--seal) !important;
-    background: var(--stat-atk-soft) !important;
-    box-shadow: 0 0 0 2px rgba(239,68,68,0.15) !important;
-  }
-  .sr-stat-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    line-height: 1;
-  }
-  .sr-stat-name {
-    font-size: 10.5px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    color: var(--sc);
-    text-transform: uppercase;
-  }
-  .sr-stat-range {
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--gold);
-    letter-spacing: -0.01em;
-  }
-  .sr-stat-range.hidden {
-    display: none;
-  }
-  .sr-stat-cell input[type="number"] {
-    width: 100%;
-    background: transparent;
-    border: none;
-    outline: none;
-    font-size: 17px;
-    font-weight: 700;
-    color: var(--text);
-    padding: 0;
-    font-family: inherit;
-    -moz-appearance: textfield;
-    margin: 3px 0;
-    text-align: left;
-    line-height: 1.2;
-    box-sizing: border-box;
-  }
-  .sr-stat-cell input[type="number"]::placeholder {
-    color: var(--muted);
-    opacity: 0.35;
-    font-weight: normal;
-  }
-  .sr-stat-cell input[type="number"]::-webkit-outer-spin-button,
-  .sr-stat-cell input[type="number"]::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-  }
-  /* desktop: the minimum inputs look like boxes to type in (review 2026-10-30: a bare grey "—" did not read as a field) */
-  @media (min-width: 761px) {
-    .sr-stat-cell input[type="number"] { height: 30px; padding: 0 8px; background: rgba(0,0,0,.28); border: 1px solid var(--line); border-radius: 3px; }
-    .sr-stat-cell input[type="number"]:focus { border-color: var(--sc); }
-    .sr-stat-cell input[type="number"]::placeholder { opacity: .6; }
-  }
-  .sr-stat-bottom {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    font-size: 9.5px;
-    color: var(--muted);
-    line-height: 1.2;
-  }
-  .sr-action-btn {
-    width: 100%;
-    padding: 9.5px 14px;
-    font-size: 13px;
-    font-weight: 700;
-    font-family: inherit;
-    background: linear-gradient(180deg, #deb838 0%, #b88f1e 100%);
-    color: #14110b;
-    border: 1px solid #e5bd42;
-    border-radius: 3px;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    letter-spacing: 0.02em;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.25);
-    text-shadow: 0 1px 0 rgba(255,255,255,0.2);
-    box-sizing: border-box;
-  }
-  .sr-action-btn:hover:not(:disabled) {
-    background: linear-gradient(180deg, #e8c446 0%, #c9a027 100%);
-    box-shadow: 0 3px 10px rgba(201,162,39,0.35), inset 0 1px 0 rgba(255,255,255,0.35);
-    transform: translateY(-1px);
-  }
-  .sr-action-btn:active:not(:disabled) {
-    transform: translateY(0);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-  }
-  .sr-action-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    background: var(--panel-2);
-    color: var(--muted);
-    border-color: var(--line);
-    box-shadow: none;
-    text-shadow: none;
-  }
-  .sr-result-box {
-    background: var(--panel-2);
-    border: 1px solid var(--line);
-    border-radius: 3px;
-    padding: 12px 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);
-    animation: fadeIn 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
+  .sr-result-box { animation: fadeIn 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); }   /* the recommender's result (no box since 2026-11-20) */
   @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-  .sr-metric-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-  .sr-metric {
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 3px;
-    padding: 8px 10px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  }
   .sr-metric-lbl {
-    font-size: 10px;
+    font-size: 14px;
     text-transform: uppercase;
-    letter-spacing: 0.07em;
+    letter-spacing: 0.04em;
     color: var(--muted);
     font-weight: 700;
-    margin-bottom: 3px;
+    margin-bottom: 10px !important;
     line-height: 1.2;
-  }
-  .sr-metric-val {
-    font-size: 18px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    color: var(--text);
-    line-height: 1.1;
-  }
-  .sr-metric-val.good { color: var(--stat-tal); }
-  .sr-metric-val.warn { color: var(--gold); }
-  .sr-metric-val.bad { color: var(--seal); }
-  .sr-summary-text {
-    font-size: 12px;
-    color: var(--muted);
-    line-height: 1.55;
-    border-top: 1px solid var(--line);
-    padding-top: 8px;
-  }
-  .sr-summary-text strong {
-    color: var(--text);
-    font-weight: 600;
-  }
-  .sr-tag {
-    display: inline-block;
-    background: var(--gold-soft);
-    border: 1px solid var(--gold);
-    color: var(--gold);
-    font-size: 10.5px;
-    padding: 2px 7px;
-    border-radius: 12px;
-    margin: 1px 3px 1px 0;
-    font-weight: 700;
-    letter-spacing: 0.02em;
   }
   .sr-err-msg {
     background: var(--stat-atk-soft);
@@ -916,7 +670,6 @@
       line-height: 1.2;
       margin: 0;
     }
-    .sr-header-sub { display: none !important; }
     .sr-header-controls {
       display: flex;
       align-items: center;
@@ -925,270 +678,59 @@
       padding-top: 0;
     }
     .sr-class-select-wrap label { display: none; }
-    .sr-cls-custom-picker .cls-picker-btn {
-      height: 30px;
-      padding: 2px 7px 2px 5px;
-      font-size: 11.5px;
-    }
+    .sr-cls-custom-picker .cls-picker-btn { font-size: 11.5px; }
     .sr-cls-custom-picker .cls-picker-thumb { width: 18px; height: 18px; }
-    .sr-lang-toggle { padding: 1px; }
-    .sr-lang-btn { font-size: 10px; padding: 2px 7px; }
-    .sr-deck { gap: 10px; }
+    .sr-lang-btn { font-size: 10px; }
     .sr-card { padding: 10px 12px; gap: 8px; }
     .sr-card-title { font-size: 13.5px; }
-    .sr-stat-grid { gap: 5px; }
-    .sr-stat-cell { min-height: 52px; padding: 5px 6px 4px; }
-    .sr-stat-cell input[type="number"] { font-size: 15px; margin: 1px 0; }
-    .sr-action-btn { padding: 8px 12px; font-size: 12.5px; }
-    .sr-result-box { padding: 8px 10px; gap: 6px; }
-    .sr-metric { padding: 6px 8px; }
-    .sr-metric-val { font-size: 16px; }
-    .sr-summary-text { font-size: 11px; padding-top: 6px; }
-    .sr-rec-grid { gap: 4px; }
-    .sr-rec-btn { padding: 4px 6px; font-size: 11px; }
   }
 
   @media (max-height: 820px) {
     .sr-wrap { padding: 10px 14px 12px; }
     .sr-header { padding-bottom: 8px; margin-bottom: 8px; }
     .sr-card { padding: 10px 12px; gap: 8px; }
-    .sr-stat-cell { min-height: 52px; padding: 5px 6px 4px; }
-    .sr-action-btn { padding: 7px 12px; font-size: 12px; }
   }
   .sr-err-msg strong {
     display: block;
     font-weight: 700;
     margin-bottom: 2px;
   }
-  .sr-guaranteed-msg {
-    background: var(--gold-soft);
-    border: 1px solid var(--gold);
-    border-radius: 3px;
-    padding: 10px 12px;
-    color: var(--gold);
-    font-size: 12px;
-    line-height: 1.5;
-    animation: fadeIn 0.2s ease;
-  }
-  .sr-guaranteed-msg strong {
-    display: block;
-    font-weight: 700;
-    margin-bottom: 2px;
-  }
-  /* Tactile recommender toggles */
-  .sr-rec-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
-  }
-  @media (max-width: 480px) {
-    .sr-rec-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-  .sr-rec-toggle {
-    background: var(--panel-2);
-    border: 1px solid var(--line);
-    border-radius: 3px;
-    padding: 7.5px 4px;
-    text-align: center;
-    cursor: pointer;
-    user-select: none;
-    transition: all 0.15s ease;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    box-sizing: border-box;
-  }
-  /* Each stat wears its signature accent (--sc, set per button from --stat-*): tinted border when idle, tinted fill + glow when active */
-  .sr-rec-toggle {
-    border-color: color-mix(in srgb, var(--sc) 40%, var(--line));
-  }
-  .sr-rec-toggle:hover {
-    border-color: var(--sc);
-    transform: translateY(-1px);
-  }
-  .sr-rec-toggle:active {
-    transform: translateY(0);
-  }
-  .sr-rec-toggle.active {
-    background: color-mix(in srgb, var(--sc) 24%, var(--panel-2));
-    border-color: var(--sc);
-    box-shadow: 0 0 8px color-mix(in srgb, var(--sc) 45%, transparent);
-  }
+  /* Recommender stat toggles: plain text, their look is in the "Stat Roll, containerless" block below */
+  .sr-rec-grid { display: grid; }
+  .sr-rec-toggle { text-align: center; cursor: pointer; user-select: none; box-sizing: border-box; }
   .sr-rec-name {
-    font-size: 10.5px;
     font-weight: 700;
-    letter-spacing: 0.06em;
     color: var(--sc);
     text-transform: uppercase;
     transition: color 0.15s ease;
     line-height: 1;
   }
-  .sr-presets {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-  }
-  .sr-preset-lbl {
-    font-size: 10.5px;
-    color: var(--muted);
-    margin-right: 2px;
-  }
-  .sr-preset-btn {
-    font-family: inherit;
-    font-size: 10.5px;
-    font-weight: 700;
-    background: var(--panel-2);
-    border: 1px solid var(--line);
-    color: var(--muted);
-    padding: 2.5px 7px;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    line-height: 1.2;
-  }
-  .sr-preset-btn:hover {
-    color: var(--text);
-    border-color: var(--gold);
-    background: var(--panel);
-  }
-  .sr-preset-btn.active {
-    background: var(--gold);
-    color: #14110b;
-    border-color: #e5bd42;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
-  }
-  .sr-num-input {
-    width: 100%;
-    padding: 7px 10px;
-    font-size: 13.5px;
-    font-weight: 600;
-    font-family: inherit;
-    background: var(--panel-2);
-    border: 1px solid var(--line);
-    border-radius: 3px;
-    color: var(--text);
-    outline: none;
-    transition: all 0.15s ease;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.15);
-    box-sizing: border-box;
-  }
-  .sr-num-input:focus {
-    border-color: var(--gold);
-    box-shadow: 0 0 0 2px var(--gold-soft);
-  }
-  .sr-progress-bg {
-    width: 100%;
-    height: 5px;
-    background: var(--panel-2);
-    border-radius: 3px;
-    overflow: hidden;
-    display: none;
-    margin-top: -4px;
-  }
-  .sr-progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #b88f1e, #deb838);
-    width: 0%;
-    transition: width 0.08s linear;
-  }
-
-  /* ---- Compact Tabbed Recommender (Option 2) ---- */
-  .sr-rec-tab-bar {
-    display: flex;
-    gap: 4px;
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 4px;
-    padding: 2px;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.15);
-  }
-  .sr-rec-tab {
-    flex: 1;
-    padding: 4px 6px;
-    font-size: 10.5px;
-    font-weight: 700;
-    font-family: inherit;
-    background: transparent;
-    border: none;
-    border-radius: 3px;
-    color: var(--muted);
-    cursor: pointer;
-    transition: all 0.15s ease;
-    text-align: center;
-    white-space: nowrap;
-    line-height: 1.2;
-  }
-  .sr-rec-tab:hover:not(.active) {
-    color: var(--text);
-    background: var(--gold-soft);
-  }
-  .sr-rec-tab.active {
-    background: var(--gold);
-    color: #14110b;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
-  }
-  .sr-rec-card {
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 3px;
-    padding: 8px 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  /* ---- Recommender hero at full size (2026-09-26): real type sizes instead of zoom,
-     the result reads as a ledger entry: target line, then probability as the hero figure ---- */
-  .sr-hero .sr-card-head { margin-bottom: 14px; }
+  /* ---- Recommender hero at full size (2026-09-26): real type sizes instead of zoom ---- */
   .sr-hero .sr-card-title { font-size: 20px; gap: 10px; }
   .sr-hero .sr-card-title::before { width: 10px; height: 10px; }
-  .sr-hero .sr-adv-btn { font-size: 20px; padding: 4px 10px; }
-  .sr-hero .sr-metric-lbl { font-size: 14px; letter-spacing: 0.04em; margin-bottom: 10px !important; }
-  .sr-hero .sr-rec-grid { gap: 10px; }
-  .sr-hero .sr-rec-toggle { padding: 18px 8px; }
-  .sr-hero .sr-rec-name { font-size: 20px; letter-spacing: 0.08em; }
-  .sr-hero .sr-result-box { padding: 14px; gap: 14px; }
-  .sr-hero .sr-rec-tab-bar { padding: 4px; gap: 6px; }
-  .sr-hero .sr-rec-tab { font-size: 16px; padding: 12px 10px; }
-  .sr-hero .sr-rec-card { padding: 22px 26px 18px; gap: 18px; }
-  .sr-hero .sr-err-msg, .sr-hero .sr-guaranteed-msg { font-size: 15px; padding: 14px 16px; }
-  /* no stat picked yet: a dashed box where the result will show, as tall as the result so the card keeps its size (review 2026-10-30); phones skip it */
-  .sr-rec-empty { display: flex; align-items: center; justify-content: center; min-height: 340px; padding: 16px; border: 1px dashed var(--line); border-radius: 3px; color: var(--muted); font-size: 16px; text-align: center; }
-  /* the door to the advanced mode: a labelled pill like วิธีใช้ (review 2026-10-30: a bare % did not say what it opens); hover = a small lift. Phones keep the bare % */
-  @media (min-width: 761px) {
-    .sr-hero .sr-adv-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; padding: 7px 15px; border: 1px solid rgba(212,175,55,.38); border-radius: 20px; background: rgba(212,175,55,.14); color: #d4af37; transition: transform .15s ease, background-color .15s ease; }
-    .sr-hero .sr-adv-btn:hover { transform: translateY(-1px); background: rgba(212,175,55,.24); color: #d4af37; }
-  }
+  .sr-hero .sr-err-msg { font-size: 15px; padding: 14px 16px; }
+  /* no stat picked yet: an empty space as tall as the result, so the card keeps its size (review 2026-10-30); phones skip it */
+  .sr-rec-empty { display: flex; align-items: center; justify-content: center; min-height: 300px; padding: 16px; color: var(--muted); font-size: 16px; text-align: center; }
+  @media (min-width: 761px) { .sr-hero .sr-adv-btn { display: inline-flex; align-items: center; gap: 6px; } }
   @media (max-width: 760px) { .sr-adv-lbl, .sr-rec-empty { display: none; } }
-  .sr-rec-target {
-    font-family: 'Prompt', sans-serif;
-    font-size: 30px; font-weight: 700; line-height: 1.2; color: var(--text);
-    font-variant-numeric: lining-nums;
-  }
-  .sr-rec-target .sr-rec-ge { color: var(--muted); font-weight: 400; margin: 0 0.12em; }
-  .sr-rec-hero { display: grid; grid-template-columns: 1.4fr 1fr; gap: 26px; align-items: end; }
-  .sr-rec-fig + .sr-rec-fig { border-left: 1px solid var(--line); padding-left: 26px; }
   .sr-rec-num {
     font-family: 'Prompt', sans-serif;
-    font-size: 64px; font-weight: 700; line-height: 1; letter-spacing: -0.02em;
+    font-size: 54px; font-weight: 700; line-height: 1; letter-spacing: -0.015em;
     font-variant-numeric: lining-nums tabular-nums; color: var(--text);
   }
-  .sr-rec-fig + .sr-rec-fig .sr-rec-num { font-size: 48px; }
   .sr-rec-num.good { color: var(--stat-tal); }
   .sr-rec-num.warn { color: var(--gold); }
   .sr-rec-num.bad { color: var(--seal); }
-  .sr-rec-lbl { font-size: 14px; font-weight: 600; color: var(--muted); margin-top: 10px; }
-  .sr-rec-foot { font-size: 14px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 12px; }
+  .sr-rec-foot { font-size: 14px; color: var(--muted); }
   .sr-rec-foot strong { color: var(--text); font-weight: 700; margin-left: 6px; }
   /* Header controls at the same scale as the hero (desktop; the <=640px header keeps its compact sizes) */
   @media (min-width: 641px) {
     .sr-header .sr-header-title { font-size: 28px; }
-    .sr-header .chm-header-pill { font-size: 14px; padding: 8px 16px; }
+    .sr-header .chm-header-pill { font-size: 14px; }
     .sr-header .sr-class-select-wrap label { font-size: 14px; }
-    .sr-header .cls-picker-btn { height: 54px; }
     .sr-header .cls-picker-thumb { width: 46px; height: 46px; }
     .sr-header .cls-picker-name { font-size: 16px; }
-    .sr-header .sr-lang-toggle { padding: 3px; }
-    .sr-header .sr-lang-btn { font-size: 14px; padding: 6px 14px; }
+    .sr-header .sr-lang-btn { font-size: 14px; }
   }
   /* Stat-roll tour popover, sized up from the shared chm-guide base */
   .chm-guide-popover.sr-guide { padding: 22px 26px; border-radius: 10px; }
@@ -1208,42 +750,29 @@
   }
   @media (max-width: 640px) {
     .sr-hero .sr-card-title { font-size: 16px; }
-    .sr-hero .sr-rec-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
-    .sr-hero .sr-rec-toggle { padding: 13px 2px; }
-    .sr-hero .sr-rec-name { font-size: 15px; letter-spacing: 0.04em; }
-    .sr-hero .sr-result-box { padding: 8px; gap: 10px; }
-    .sr-hero .sr-rec-tab { font-size: 13px; padding: 10px 4px; white-space: normal; }
-    .sr-hero .sr-rec-card { padding: 16px 16px 14px; gap: 14px; }
-    .sr-rec-target { font-size: 22px; }
-    .sr-rec-hero { gap: 14px; }
-    .sr-rec-fig + .sr-rec-fig { padding-left: 14px; }
-    .sr-rec-num { font-size: 32px; }
-    .sr-rec-fig + .sr-rec-fig .sr-rec-num { font-size: 26px; }
-    .sr-rec-lbl, .sr-rec-foot { font-size: 12.5px; }
+    .sr-rec-foot { font-size: 12.5px; }
   }
   /* ---- Stat Roll, containerless (user 2026-11-20: mock A's stat row + mock B's three levels side by side, of 4 mocks) ----
      No boxes: the server looks no longer dress the hero, its result, the stat toggles or EN / TH (taken out of THEME_SURFACES), the header
      pills are plain text, a gold hairline that fades at both ends sits under the header, each stat shows the range this class can roll
      under its name with an underline when picked, and the three levels stand side by side, split by vertical hairlines (stacked on phones). */
-  .sr-header { border-bottom: 0; position: relative; }
+  .sr-header { position: relative; }
   .sr-header::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; pointer-events: none; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--gold) 45%, transparent), transparent); }
   .sr-header .chm-header-guide-btn, .sr-header .chm-header-guide-btn:hover { background: none; border: 0; box-shadow: none; transform: none; padding: 4px 0; letter-spacing: 0; }
   .sr-header .chm-header-guide-btn { color: var(--muted); font-weight: 600; }
   .sr-header .chm-header-guide-btn:hover { color: var(--text); }
   .sr-header .sr-cls-custom-picker .cls-picker-btn { background: none !important; border: 0; box-shadow: none !important; --th-blur: none; padding: 0; height: auto; }
   .sr-header .sr-cls-custom-picker .cls-picker-btn:hover .cls-picker-name { color: var(--gold); }
-  .sr-header .sr-lang-toggle { background: none; border: 0; box-shadow: none; padding: 0; border-radius: 0; gap: 14px; }
+  .sr-header .sr-lang-toggle { gap: 14px; }
   .sr-header .sr-lang-btn, .sr-header .sr-lang-btn.active { background: none; box-shadow: none; border-radius: 0; padding: 3px 0; border-bottom: 2px solid transparent; color: var(--muted); }
   .sr-header .sr-lang-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
   .sr-header .sr-lang-btn:hover:not(.active) { color: var(--text); }
-  .sr-card.sr-hero { background: none; border: 0; border-radius: 0; box-shadow: none; padding: 0; }   /* the old .sr-hero rule above .sr-card lost to it on order, so the hero kept its box */
+  .sr-card.sr-hero { background: none; border: 0; border-radius: 0; box-shadow: none; padding: 0; }   /* both classes, to outrank .sr-card's box */
   .sr-hero .sr-card-head { margin: 10px 0 16px; }
-  .sr-hero .sr-adv-btn, .sr-hero .sr-adv-btn:hover { background: none; border: 0; border-radius: 0; padding: 4px 0; transform: none; color: var(--gold); font-size: 15px; }
   .sr-hero .sr-adv-lbl { color: var(--muted); font-weight: 600; transition: color .15s ease; }
   .sr-hero .sr-adv-btn:hover .sr-adv-lbl { color: var(--text); }
   .sr-rec-hint { font-style: normal; font-weight: 400; color: var(--muted); opacity: .75; margin-left: 8px; letter-spacing: 0; }
   .sr-hero .sr-rec-grid { grid-template-columns: repeat(8, 1fr); gap: 0; }
-  .sr-hero .sr-rec-toggle, .sr-hero .sr-rec-toggle:hover, .sr-hero .sr-rec-toggle.active { background: none; border: 0; box-shadow: none; transform: none; }
   .sr-hero .sr-rec-toggle { padding: 10px 0 8px; display: flex; flex-direction: column; align-items: center; gap: 5px; opacity: .4; transition: opacity .15s ease; }
   .sr-hero .sr-rec-toggle:hover { opacity: .72; }
   .sr-hero .sr-rec-toggle.active { opacity: 1; }
@@ -1251,7 +780,6 @@
   .sr-rec-range { font-size: 12px; font-weight: 500; color: var(--muted); line-height: 1.2; min-height: 1.2em; }
   .sr-rec-bar { width: 28px; height: 3px; border-radius: 2px; background: var(--sc); transform: scaleX(0); transition: transform .18s ease; }
   .sr-rec-toggle.active .sr-rec-bar { transform: scaleX(1); }
-  .sr-hero .sr-result-box { display: block; background: none; border: 0; box-shadow: none; padding: 0; }
   .sr-rec-goal { margin: 30px 0 4px; display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
   .sr-rec-goal small { font-size: 14px; color: var(--muted); }
   .sr-rec-names { font-size: 26px; font-weight: 700; }
@@ -1262,7 +790,6 @@
   .sr-rec-tier-name { font-size: 15.5px; font-weight: 600; color: var(--muted); }
   .sr-rec-tier-sum { font-size: 30px; font-weight: 700; color: var(--text); margin: 8px 0 18px; }
   .sr-rec-tier-sum small { font-size: 14px; font-weight: 500; color: var(--muted); margin-right: 8px; }
-  .sr-rec-tier .sr-rec-num { font-size: 54px; letter-spacing: -.015em; }
   .sr-rec-tier-rolls { font-size: 18px; font-weight: 600; color: var(--text); margin-top: 12px; }
   .sr-rec-tier-rolls span { font-size: 14px; font-weight: 500; color: var(--muted); margin-left: 6px; }
   .sr-rec-meter { height: 3px; border-radius: 2px; margin-top: 20px; overflow: hidden; background: color-mix(in srgb, var(--text) 9%, transparent); }
@@ -1270,8 +797,7 @@
   .sr-rec-meter.good { color: var(--stat-tal); }
   .sr-rec-meter.warn { color: var(--gold); }
   .sr-rec-meter.bad { color: var(--seal); }
-  .sr-hero .sr-rec-foot { border-top: 0; margin-top: 30px; padding-top: 0; }
-  .sr-rec-empty { border: 0; min-height: 300px; }
+  .sr-hero .sr-rec-foot { margin-top: 30px; }
   @media (max-width: 640px) {
     .sr-hero .sr-rec-grid { grid-template-columns: repeat(4, 1fr); row-gap: 6px; }
     .sr-hero .sr-rec-toggle { padding: 8px 0 6px; }
@@ -29848,7 +29374,7 @@ function mountStatRoll(root) {
                 <span class="cls-picker-arrow">▾</span>
               </button>
               
-              <select class="sr-select cls-hidden-select" data-role="classSelect" tabindex="-1">
+              <select class="cls-hidden-select" data-role="classSelect" tabindex="-1">
                 <option value="" data-role="optPlaceholder">— เลือกคลาส —</option>
                 <option value="Wolf">หมาป่า</option>
                 <option value="Bison">ไบซัน</option>
@@ -41532,6 +41058,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-20T18:14:37Z", "refactor(bible): ลบ CSS เก่าที่ไม่ได้ใช้แล้วของหน้าสุ่มค่าสเตตัส 474 บรรทัด (ช่องกรอก ปุ่มคำนวณ กล่องผลลัพธ์ของหน้าต่างขั้นสูงเดิม แท็บ พรีเซ็ต และกฎที่แบบไม่มีกล่องทับไว้หมดแล้ว) หน้าตาเหมือนเดิม"],
     ["2026-11-20T15:36:27.507Z","feat(bible): หน้าต่างขั้นสูงของหน้าสุ่มค่าสเตตัสใช้ปุ่ม − / + ตั้งค่าขั้นต่ำทีละสเตตัส โอกาสคำนวณทันทีไม่ต้องกดปุ่ม บอกโอกาสของแต่ละสเตตัส และบอกว่าเป็นไปไม่ได้แทน 0% / ∞"],
     ["2026-11-20T14:15:48.521Z","feat(bible): หน้าอัตราการเติบโตของค่าสเตตัสแบบไม่มีกล่อง ค่าสเตตัสเป็นแถบสี (ส่วนจาง = มีอยู่แล้ว ส่วนสี = ได้เพิ่ม) บอกอัตราต่อเลเวล และบน ToT มีบรรทัดบอกว่าสเตตัสหยุดโตที่เลเวล 95"],
     ["2026-11-20T14:06:55.635Z","feat(bible): หน้าสุ่มค่าสเตตัสตอนสร้างตัวละครแบบไม่มีกล่อง ปุ่มสเตตัสเป็นตัวอักษรสีพร้อมช่วงค่าที่สุ่มได้ของคลาส และแสดง 3 ระดับเป้าหมายเทียบกันพร้อมกัน ไม่ต้องกดแท็บ"],
