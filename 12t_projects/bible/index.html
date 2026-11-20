@@ -7092,7 +7092,8 @@
   /* Description frame (user 2026-11-20): no box, no wash and no left bar (the pull quote is gone); a 1 px gold hairline above and
      below that fades at both ends. Long descs stay left-aligned at 12 px with their icon columns and topics, the lines full width.
      Short desc (variant C of 6 mocks): no icon lines, no topic groups, no • bullet and at most 2 lines at 12 px (markHeroShortDesc:
-     .is-short, .is-short-2 for two lines) = centred and bigger, its hairlines 12 % in from each side. */
+     .is-short, .is-short-2 for two lines) = centred and bigger, its hairlines 12 % in from each side. A short lead over icon lines
+     (.is-short-lead, user 2026-11-20: Phantasm Blast) = only the lead centred and bigger; the icon lines and the full hairlines stay. */
   .sk-hero > .sk-hero-head > .sk-hero-desc{position:relative; border-left:0; background:none; padding:9px 2px 8px}
   .sk-hero > .sk-hero-head > .sk-hero-desc::before,
   .sk-hero > .sk-hero-head > .sk-hero-desc::after{content:""; position:absolute; left:0; right:0; height:1px; pointer-events:none; background:linear-gradient(90deg, transparent, color-mix(in srgb, var(--gold) 55%, transparent), transparent)}
@@ -7102,7 +7103,10 @@
   .sk-hero > .sk-hero-head > .sk-hero-desc.is-short.is-short-2{font-size:15px}
   .sk-hero > .sk-hero-head > .sk-hero-desc.is-short::before,
   .sk-hero > .sk-hero-head > .sk-hero-desc.is-short::after{left:12%; right:12%}
+  .sk-hero > .sk-hero-head > .sk-hero-desc.is-short-lead > .sk-desc-lead{display:block; text-align:center; text-wrap:balance; font-size:16px; line-height:1.45; padding:2px 40px 3px}
+  .sk-hero > .sk-hero-head > .sk-hero-desc.is-short-lead.is-short-2 > .sk-desc-lead{font-size:15px}
   @media (max-width:620px){
+    .sk-hero > .sk-hero-head > .sk-hero-desc.is-short-lead > .sk-desc-lead{font-size:15px; padding:2px 14px 3px}
     .sk-hero > .sk-hero-head > .sk-hero-desc.is-short{font-size:15px; padding:10px 14px; margin-top:10px}
     .sk-hero > .sk-hero-head > .sk-hero-desc.is-short::before,
     .sk-hero > .sk-hero-head > .sk-hero-desc.is-short::after{left:4%; right:4%}
@@ -15777,9 +15781,11 @@ function formatChangeTags(s) {
     .replace(/\[(adjust|rework)\]/gi, '<span class="sk-tag-adjust">$1</span>')
     .replace(/\[fix\]/gi, '<span class="sk-tag-fix">FIX</span>');
 }
-// Loanwords Chrome's Thai line breaker does not know, so it splits them mid-word (ดา|เมจ, คูลดา|วน์).
-// Glued with a nowrap span, only in text between tags (never inside an attribute). Add a word here when a scan finds it.
-const NOBR_THAI = /(ดาเมจ|คูลดาวน์|สกิล)/g;
+// Loanwords Chrome's Thai line breaker does not know, so it splits them mid-word (ดา|เมจ, คูลดา|วน์), and compounds its dictionary
+// sees as two words that read wrong apart (ตัว|เอง on a phone short desc, user 2026-11-20; ได้|รับ, เป้า|หมาย, เสีย|หาย, ต่อ|เนื่อง, กับ|ดัก).
+// Glued with a nowrap span, only in text between tags (never inside an attribute). Add a word here when a scan finds it; keep each
+// word at 8 letters or fewer (vowel and tone marks not counted), or glueDescTails enters its span and the orphan guard stops working.
+const NOBR_THAI = /(ดาเมจ|คูลดาวน์|สกิล|ตัวเอง|ได้รับ|เป้าหมาย|เสียหาย|ต่อเนื่อง|กับดัก)/g;
 function glueThaiLoanwords(html) {
   return String(html).replace(/(^|>)([^<]+)/g, (m, gt, text) => gt + text.replace(NOBR_THAI, '<span class="sk-nobr">$1</span>'));
 }
@@ -21847,17 +21853,27 @@ function mountSkillCooldownLookup(root){
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(balanceHeroDesc);
   // Short desc (user 2026-11-20, variant C): no icon lines, no topic groups, no • bullet and at most 2 lines at the normal 12 px =
   // .is-short (+ .is-short-2 for two lines), drawn centred at 16 / 15 px between the desc's gold hairlines (CSS after the head strip block).
-  // Measured with the classes off, so the bigger look never feeds back into the count; again on resize and when the fonts arrive,
-  // since the line count follows the width. renderHeroNow runs it before its fit measures the card.
+  // Short lead over icon lines (user 2026-11-20, Phantasm Blast: "the main explanation is short"): a lead of at most 2 lines with no
+  // • bullet, then only icon lines (no text after them, .sk-desc-after) = .is-short-lead: the lead alone centred and bigger, the icon
+  // lines keep their columns. The lead's lines are counted from its line boxes (it is inline). An icon line a toggle hides leaves the
+  // lead as it was, so a toggle never moves it. Measured with the classes off, so the bigger look never feeds back into the count;
+  // again on resize and when the fonts arrive, since the line count follows the width. renderHeroNow runs it before its fit measures the card.
   function markHeroShortDesc(){
     const d = displayEl.querySelector(".sk-hero > .sk-hero-head > .sk-hero-desc");
     if (!d || typeof getComputedStyle !== "function") return;
-    d.classList.remove("is-short", "is-short-2");
-    if (d.classList.contains("sk-soon") || d.querySelector(".sk-desc-mods, .sk-desc-topics") || /(^|\n)\s*•/.test(d.innerText || "")) return;
+    d.classList.remove("is-short", "is-short-2", "is-short-lead");
+    if (d.classList.contains("sk-soon") || d.querySelector(".sk-desc-topics")) return;
+    const bullet = (el) => /(^|\n)\s*•/.test(el.innerText || "");
+    const mark = (lines, cls) => { if (lines >= 1 && lines <= 2){ d.classList.add(cls); if (lines === 2) d.classList.add("is-short-2"); } };
+    if (d.querySelector(".sk-desc-mods")){
+      const lead = d.querySelector(":scope > .sk-desc-lead");
+      if (!lead || d.querySelector(".sk-desc-after") || bullet(lead) || typeof lead.getClientRects !== "function") return;
+      return mark(new Set(Array.from(lead.getClientRects(), (r) => Math.round(r.top))).size, "is-short-lead");
+    }
+    if (bullet(d)) return;
     const cs = getComputedStyle(d), lh = parseFloat(cs.lineHeight), pad = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
     if (!(lh > 0) || !(d.clientHeight > 0)) return;
-    const lines = Math.round((d.clientHeight - pad) / lh);
-    if (lines >= 1 && lines <= 2){ d.classList.add("is-short"); if (lines === 2) d.classList.add("is-short-2"); }
+    mark(Math.round((d.clientHeight - pad) / lh), "is-short");
   }
   window.addEventListener("resize", markHeroShortDesc);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { markHeroShortDesc(); if (typeof fitStageToScreen === "function") fitStageToScreen(); });
@@ -41455,6 +41471,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-20T12:56:49.182Z","feat(bible): คำอธิบายสั้นที่มีบรรทัดไอคอนต่อท้าย (เช่น Phantasm Blast) ได้หน้าตาคำอธิบายสั้นด้วย บรรทัดหลักอยู่ตรงกลาง ตัวใหญ่ขึ้น และคำไทยอย่าง ตัวเอง ได้รับ เป้าหมาย ไม่ถูกตัดกลางคำตอนขึ้นบรรทัดใหม่"],
     ["2026-11-20T11:36:32.127Z","feat(bible): คำอธิบายสกิลเลิกใช้กล่องและแถบทองซ้าย ใช้เส้นทองบางบนล่างแทน และคำอธิบายสั้น (ไม่เกิน 2 บรรทัด ไม่มีบรรทัดไอคอน) แสดงตรงกลาง ตัวใหญ่ขึ้น 16px (แบบ C จาก 6 แบบ)"],
     ["2026-11-20T09:44:31.734Z","fix(bible): สูตรฮีล Medic Turret (TTO) รวมค่าคงที่เป็นตัวเดียวไว้หน้าส่วน TAL (40 + 0.2TAL, แคปซูล 65 + 0.3TAL) เหมือนสูตรการ์ดอื่น"],
     ["2026-11-20T06:14:37.364Z","feat(bible): Sky Drill (Mole) เปิด Sky Shaker แล้วมีแถวดาเมจแผ่นดินไหวและช่องกรอกเวลาใต้ดินบนการ์ดด้วย"],
