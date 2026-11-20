@@ -2944,6 +2944,7 @@
   /* Soft tile (user 2026-11-20, design 4 of 5 mock-ups; docs/superpowers/specs/2026-11-20-guide-gallery-soft-tile-design.md): the class / server / PVE row sits
      under the cover, so it is at the same height on every card whatever the title; then the title; then the foot behind a hairline */
   .cg-page .cg-guide > .cg-cover{order:0}
+  @media(min-width:761px){.cg-page .cg-guide > .cg-cover{width:100%;height:80px}.cg-page .cg-gallery.is-compact .cg-guide > .cg-cover{height:64px}}   /* wide covers (user 2026-11-20, zigzag): the cover spans the card, classGuideFitCovers places the icons */
   .cg-page .cg-guide .cg-guide-chips{order:1}
   .cg-page .cg-guide > strong{order:2}
   .cg-page .cg-guide .cg-guide-meta{order:3;margin-top:4px;padding:9px 2px 11px;border-top:1px solid rgba(255,255,255,.07)}
@@ -2955,7 +2956,7 @@
     .cg-page .cg-guide > strong{height:calc(3 * 1.3 * 13px);width:100%;min-width:0;display:flex;align-items:safe center;justify-content:center;line-height:1.3}   /* the title box, 3 lines of 13 px (the longest live title, 87 characters, fits at the floor): classGuideFitTitles sizes each title to it; safe: a longer one spills down, not over the icons */
   }
   @media(max-width:760px){.cg-page .cg-guide .cg-guide-meta{margin-top:2px;padding:6px 0 0}}
-  .cg-card-preview{width:min(240px,100%)}
+  .cg-card-preview{width:min(340px,100%)}
   /* estimated readers: gold, the icon and the number centred on one line (user 2026-10-17) */
   .cg-page .cg-views{display:inline-flex;align-items:center;gap:5px;line-height:1;color:var(--gold);font-size:12.5px;vertical-align:-0.25em}   /* centred on the text beside it in an inline line (measured 2026-10-17: it floated 3.6 px high); the gallery's flex row ignores this */
   .cg-page .cg-views[hidden]{display:none}
@@ -3017,6 +3018,34 @@
     .cg-page .cg-filters .cg-tabs .cg-btn{min-height:34px;height:34px;font-size:12px}
     .cg-page .cg-gallery-note{font-size:11px;margin:0}
   }
+  /* Phones (user 2026-11-20, P1 of 4 mocks): list rows on a cg-list grid (renderGallery sets it under 761 px; step 5's มือถือ view uses it on the desktop
+     too, so it hangs on a class, not a media query). One column, the cover stacked on the left; class / server / PVE top left with the stars and readers
+     top right on the same row (user 2026-11-20); the title in a 2-line box fitted 12-19 px like the desktop (user 2026-11-20); author · date below it. */
+  .cg-page .cg-gallery.cg-list{grid-template-columns:minmax(0,1fr);gap:8px}
+  .cg-page .cg-list .cg-guide:not(.cg-gap){display:grid;grid-template-columns:76px minmax(0,1fr) auto;grid-template-rows:auto auto auto;align-content:center;column-gap:12px;row-gap:3px;justify-items:start;align-items:start;text-align:left;min-height:104px;padding:10px 12px}
+  .cg-page .cg-list .cg-guide > .cg-cover{grid-column:1;grid-row:1 / 4;align-self:center;width:76px;height:76px;--cg-cover:76px !important;margin:0}
+  .cg-page .cg-list .cg-guide .cg-guide-chips{grid-column:2;grid-row:1;justify-content:flex-start;gap:4px 6px}
+  .cg-page .cg-list .cg-guide .cg-chip img{width:20px;height:20px}
+  .cg-page .cg-list .cg-guide .cg-chip.is-mode{font-size:10.5px;line-height:16px;padding:1px 6px}
+  .cg-page .cg-list .cg-guide .cg-guide-meta{display:contents}
+  .cg-page .cg-list .cg-guide .cg-guide-stats{grid-column:3;grid-row:1;justify-self:end;align-self:center;display:flex;align-items:center;gap:8px;min-height:0}
+  .cg-page .cg-list .cg-guide > strong{grid-column:2 / 4;grid-row:2;align-self:center;width:100%;min-width:0;height:calc(2 * 1.25 * 15px);display:flex;align-items:safe center;justify-content:flex-start;font-size:15px;line-height:1.25}
+  .cg-page .cg-list .cg-guide > strong.is-long > .cg-title-in{-webkit-line-clamp:2}
+  .cg-page .cg-list .cg-guide .cg-guide-by{grid-column:2 / 4;grid-row:3;display:flex;justify-content:flex-start;width:100%;max-width:100%;font-size:11.5px;color:var(--muted);white-space:nowrap}
+  .cg-page .cg-list .cg-guide .cg-guide-date{display:inline}
+  .cg-page .cg-list .cg-rate-star{width:11px;height:11px}
+  .cg-page .cg-list .cg-views{font-size:11.5px}
+  .cg-page .cg-list .cg-views svg{width:13px;height:13px}
+  .cg-page .cg-list .cg-guide.cg-gap{display:flex;align-items:center;gap:12px;text-align:left;min-height:96px;padding:10px 12px}
+  .cg-page .cg-list .cg-gap .cg-gap-rot{display:grid;grid-template-columns:76px minmax(0,1fr);column-gap:12px;row-gap:2px;justify-items:start;align-items:center}
+  .cg-page .cg-list .cg-gap .cg-gap-face{grid-row:1 / 3;justify-self:center}
+  .cg-page .cg-list .cg-gap .cg-gap-btn{margin-left:auto;white-space:nowrap}
+  /* step 5's view switch (user 2026-11-20): the filters' look, a gold word with a gold underline */
+  .cg-pv-tabs{display:flex;gap:2px;margin:0 0 6px}
+  .cg-pv-tabs button{font:inherit;font-size:13px;color:var(--muted);background:none;border:0;padding:4px 8px;cursor:pointer}
+  .cg-pv-tabs button:hover{color:var(--text)}
+  .cg-pv-tabs button[aria-pressed="true"]{color:var(--gold);box-shadow:inset 0 -2px 0 var(--gold)}
+  .cg-page .cg-pv{display:block}
   .rsim-clear{padding:2px 10px; font-size:12px}
   .rsim-row{display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); margin-bottom:10px}
   .rsim-slot{position:relative; display:flex; align-items:center; justify-content:center}
@@ -34981,6 +35010,24 @@ function classGuideCoverEl(g, px){   // the cover arrangement as round framed ic
   });
   return box;
 }
+// Wide covers (user 2026-11-20, "zigzag" of 3 mocks): on the desktop a gallery card's cover spans the card (CSS: full width, 80 px tall, 64 in compact
+// mode). 1-3 icons sit in one centred row; 4-5 zigzag (up, down, up ...), as big as the box allows with at least G px between neighbours; a box under
+// 200 px wide keeps the square stack of CLASS_GUIDE_COVER_SPOTS. Returns [left, top, size] in px, in pick order.
+function classGuideCoverLayout(n, W, H, G = 6){
+  if (W < 200){ const B = Math.min(W, H); return CLASS_GUIDE_COVER_SPOTS[n].map(([x, y, d]) => [(W - B) / 2 + x * B, (H - B) / 2 + y * B, d * B]); }
+  const rowD = Math.min(H, (W - (n - 1) * G) / n);
+  if (n < 4){ const w = n * rowD + (n - 1) * G; return Array.from({ length: n }, (_, i) => [(W - w) / 2 + i * (rowD + G), (H - rowD) / 2, rowD]); }
+  const step = (d) => Math.max(Math.sqrt(Math.max(0, (d + G) ** 2 - (H - d) ** 2)), (d + G) / 2);   // centre to centre across, so neighbours keep G apart
+  let lo = rowD, hi = H;
+  for (let k = 0; k < 24; k++){ const d = (lo + hi) / 2; if ((n - 1) * step(d) + d <= W) lo = d; else hi = d; }
+  const d = lo, sx = step(d), w = (n - 1) * sx + d;
+  return Array.from({ length: n }, (_, i) => [(W - w) / 2 + i * sx, i % 2 ? H - d : 0, d]);
+}
+// places the icons of rendered covers (gallery cards and step 5's card): reads every box first, then writes, so a page costs one layout
+function classGuideFitCovers(covers){
+  const boxes = covers.filter(Boolean).map((c) => ({ W: c.clientWidth, H: c.clientHeight, rings: [...c.querySelectorAll(".cg-cover-ring")] })).filter((b) => b.W && b.rings.length);
+  for (const b of boxes) classGuideCoverLayout(b.rings.length, b.W, b.H).forEach(([x, y, d], i) => { const st = b.rings[i].style; st.left = x + "px"; st.top = y + "px"; st.width = st.height = d + "px"; });
+}
 function classGuideGearClean(raw, classKey, draft, server){
   if (raw === undefined) return {};
   const obj = o => o && typeof o === "object" && !Array.isArray(o);
@@ -38200,11 +38247,24 @@ function mountClassGuide(root){
     updateSteps(); queueReaderFit();
   }
   // Step 6 shows the guide's gallery card as it will appear in ไกด์จากผู้เล่น (user 2026-10-17: moved here from the preview, which must match the PNG)
-  // Step 5's live gallery card (user 2026-10-17: one preview, beside the cover picker): rebuilt on every cover pick and when the step opens.
+  // Step 5's live gallery card (user 2026-10-17: one preview, beside the cover picker): rebuilt on every cover pick and when the step opens. Three views
+  // (user 2026-11-20, A of 3 mocks): มือถือ (the phone list row, a cg-list host), จอเตี้ย (a short window, a cg-gallery is-compact host) and จอคอม, one at a
+  // time at its real card width, the pick remembered; each runs the fits its view runs in the gallery.
+  const CARD_VIEWS = [["phone", "มือถือ", "cg-list", 340], ["compact", "จอเตี้ย", "cg-gallery is-compact", 264], ["desk", "จอคอม", "", 261]];
+  let cardView = "desk"; try { const v = localStorage.getItem("12t-bible-class-guide-cardview"); if (CARD_VIEWS.some((c) => c[0] === v)) cardView = v; } catch (e) {}
   function fillCoverCard(){
     const box = el("cardPreview"); box.textContent = "";
     let g = null; try { g = draft && classGuideNormalize(draft, { draft: true }); } catch (e) { g = null; }
-    if (g){ const card = guideCard(g, "div"); box.appendChild(card); if (window.innerWidth > 760 && card.offsetParent) classGuideFitTitles([card.querySelector(":scope > strong")]); }
+    if (!g) return;
+    const tabs = document.createElement("div"); tabs.className = "cg-pv-tabs"; tabs.setAttribute("role", "group"); tabs.setAttribute("aria-label", "ดูการ์ดบนจอแบบไหน");
+    for (const [k, label] of CARD_VIEWS){ const b = document.createElement("button"); b.type = "button"; b.textContent = label; b.setAttribute("aria-pressed", String(k === cardView)); b.addEventListener("click", () => { cardView = k; try { localStorage.setItem("12t-bible-class-guide-cardview", k); } catch (e) {} fillCoverCard(); }); tabs.appendChild(b); }
+    const [, , host, w] = CARD_VIEWS.find((c) => c[0] === cardView);
+    const wrap = document.createElement("div"); wrap.className = ("cg-pv " + host).trim(); wrap.style.width = "min(" + w + "px, 100%)";
+    const card = guideCard(g, "div"); wrap.appendChild(card); box.append(tabs, wrap);
+    if (!card.offsetParent) return;
+    const title = card.querySelector(":scope > strong");
+    if (cardView === "phone") classGuideFitTitles([title], 12, 19);
+    else if (window.innerWidth > 760){ classGuideFitCovers([card.querySelector(":scope > .cg-cover")]); if (cardView === "desk") classGuideFitTitles([title]); }
   }
   // Step 6's size slider (user 2026-10-21): รูป PNG, then the guide page at common desktop window sizes. The page itself runs in a frame at that size
   // (#class-guide/preview, made on first use), scaled to the box; the draft goes in by postMessage (works from a file:// page too), and GoatCounter
@@ -38763,7 +38823,7 @@ function mountClassGuide(root){
   };
   function renderGallery(keepPage){
     if (keepPage !== true) galleryPage = 0;
-    const list = el("guides"), pager = el("pager"), cards = []; list.textContent = ""; list.style.zoom = ""; list.classList.remove("is-compact");   // the fit below may have shrunk or compacted the grid
+    const list = el("guides"), pager = el("pager"), cards = []; list.textContent = ""; list.style.zoom = ""; list.classList.remove("is-compact"); list.classList.toggle("cg-list", window.innerWidth <= 760);   // the fit below may have shrunk or compacted the grid; phones: list rows (user 2026-11-20)
     let validCount = 0, invalidCount = 0, totalCount = 0;
     const server = filterServer, classKey = filterClass;
     const byDate = [...CLASS_GUIDES.entries()].sort(([ia, a], [ib, z]) => { const d = String((a && (a.published || a.date)) || "").localeCompare(String((z && (z.published || z.date)) || "")) || ia - ib; return sortNewest ? -d : d; });
@@ -38820,6 +38880,8 @@ function mountClassGuide(root){
     // spare height under the two rows (compacted or not): they grow into it, up to 1.1 (review 2026-10-30: a 100 px empty band under the pager)
     if (desk && list.offsetParent && !list.style.zoom) for (let z = 1.02; z < 1.101; z += 0.02){ list.style.zoom = z.toFixed(2); if (tooTall()){ list.style.zoom = z > 1.03 ? (z - 0.02).toFixed(2) : ""; break; } }
     if (wantPage){ galleryPage = wantPage; draw(); }
+    if (!desk && list.offsetParent) classGuideFitTitles([...list.querySelectorAll(".cg-guide > strong")], 12, 19);   // phones: the list row's 2-line title box (user 2026-11-20)
+    if (desk && list.offsetParent) classGuideFitCovers([...list.querySelectorAll(".cg-guide > .cg-cover")]);   // wide covers (user 2026-11-20): the icons follow the card's width
     if (desk && list.offsetParent && !list.classList.contains("is-compact")) classGuideFitTitles([...list.querySelectorAll(".cg-guide > strong")]);   // the title box (user 2026-11-20): last, after the zoom; the box has a fixed height, so the rows-per-page fit above does not depend on it; compact (a short window) keeps natural titles
     function drawPager(){
       const go = (n, text, label, current) => { const b = document.createElement("button"); b.type = "button"; b.className = "cg-page-btn"; b.textContent = text; b.setAttribute("aria-label", label); if (current) b.setAttribute("aria-current", "page"); b.disabled = n < 0 || n >= pages; b.addEventListener("click", () => { galleryPage = n; renderGallery(true); }); pager.appendChild(b); };
@@ -41377,6 +41439,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-20T03:35:32.132Z","feat(bible): ไกด์อาชีพ รูปปกการ์ดบนจอคอมกางเต็มความกว้างแบบซิกแซก ไอคอนใหญ่ขึ้น มือถือเป็นแถวรายการ ชื่อไกด์พอดีกรอบสองบรรทัด ดาวกับผู้อ่านมุมขวาบน และขั้น 5 ดูการ์ดได้ทั้งมือถือ จอเตี้ย จอคอม"],
     ["2026-11-20T03:05:00.892Z","fix(bible): ไกด์อาชีพ การ์ดหน้ารวมไกด์ จอเตี้ยกลับมาได้ 8 ใบต่อหน้าในขนาดเดิม ชื่อไกด์ไม่ตัดกลางคำ ชื่อยาวเกินตัดเหลือ 3 บรรทัด และรูปปกหลายไอคอนใช้เส้นทองบางกับไอคอนใหญ่ขึ้น"],
     ["2026-11-20T02:30:48.497Z","feat(bible): ไกด์อาชีพ การ์ดหน้ารวมไกด์โฉมใหม่ เป็นการ์ดกระจกบาง ไอคอนอาชีพ เซิร์ฟ และ PVE อยู่ใต้รูปปกสูงเท่ากันทุกใบ ชื่อไกด์ขยายหรือย่อให้พอดีกรอบเดียวกัน"],
     ["2026-11-20T01:38:32.197Z","fix(bible): ไกด์ #5 #29 #59 กลับไปใช้วันที่เดิม (แค่แก้สัตว์เลี้ยงเป็น Mother Flower Bug ไม่ใช่การอัปเดตไกด์)"],
