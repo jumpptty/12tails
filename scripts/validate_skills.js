@@ -7138,6 +7138,22 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
   for (const [what, re] of sync) if (!re.test(html)) fail(`missing ${what}`);
   if (!bad) console.log(`Verified the Brave Spirit toggle on ${want.length} Wolf damage cards, mirrored with the popup's Valor.`);
 }
+// Stat Roll containerless look (user 2026-11-20, mocks A + B; bible-hub-tools "Stat Roll"): no server surface on the hero, its result, the stat
+// toggles or EN / TH; the three levels side by side (no tabs); each stat's range for the class under its name.
+{
+  const ts = (html.match(/var THEME_SURFACES = \{[\s\S]*?\n  \};/) || [""])[0];
+  const need = [
+    ["the hero card out of the theme surfaces", () => ts.includes('".sr-card:not(.sr-hero)"') && !/"\.sr-card",/.test(ts)],
+    ["no theme surface on the stat toggles, EN / TH, the tab bar or the result card", () => !/"\.sr-(rec-toggle|lang-toggle|rec-tab-bar|rec-card)"/.test(ts) && !/"\.sr-result-box"/.test(ts)],
+    ["renderRecTiers() drawing the three level columns", () => /function renderRecTiers\(\) \{[\s\S]{0,1600}?data-rec-tier=[\s\S]{0,600}?sr-rec-meter/.test(html)],
+    ["no level tabs left", () => !/data-rec-tab=|function renderTabbedRecommender/.test(html)],
+    ["the stat ranges refreshed on class change", () => /updateRecRanges\(\);\r?\n\s*updateRecommender\(\);/.test(html) && /data-rec-range=/.test(html)],
+    ["the side-by-side CSS", () => /\.sr-rec-tiers \{ display: grid; grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/.test(html)],
+  ];
+  let bad = 0;
+  for (const [what, ok] of need) if (!ok()) { console.error(`[STAT ROLL ERROR] missing ${what} (see bible-hub-tools "Stat Roll").`); errorCount++; bad++; }
+  if (!bad) console.log("Verified the Stat Roll containerless look (three levels side by side, ranges under the stats).");
+}
 // Font ban (user 2026-10-18: "Prompt looks better in all places"): the angular Chakra Petch was replaced by Prompt everywhere and must not come back.
 // Old changelog entries ("[<ISO date>", ...) may still name it; they are history.
 {
