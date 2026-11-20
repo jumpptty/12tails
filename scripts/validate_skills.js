@@ -7154,6 +7154,20 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
   for (const [what, ok] of need) if (!ok()) { console.error(`[STAT ROLL ERROR] missing ${what} (see bible-hub-tools "Stat Roll").`); errorCount++; bad++; }
   if (!bad) console.log("Verified the Stat Roll containerless look (three levels side by side, ranges under the stats).");
 }
+// Stat Gain containerless bars (user 2026-11-20, mock B; bible-hub-tools "Stat Gain"): no surface on the controls or fields, one bar per stat, the
+// shared stat colours and the ToT line.
+{
+  const ts = (html.match(/var THEME_SURFACES = \{[\s\S]*?\n  \};/) || [""])[0];
+  const need = [
+    ["no theme surface on the controls, the level fields or a table head", () => !/"\.sg-(controls|controls select|controls input|results thead th)"/.test(ts)],
+    ["the bars render (sg-row with sg-track)", () => /class="sg-row"[\s\S]{0,400}?class="sg-track"/.test(html) && !/<table>\s*<thead>\s*<tr>\s*<th data-role="thStat">/.test(html)],
+    ["the shared stat colours", () => /const COLOR = \{ATK:"var\(--stat-atk\)"/.test(html)],
+    ["the ToT growth line", () => /totNote\.hidden = sgServer !== "tot"/.test(html) && /data-role="totNote"/.test(html)],
+  ];
+  let bad = 0;
+  for (const [what, ok] of need) if (!ok()) { console.error(`[STAT GAIN ERROR] missing ${what} (see bible-hub-tools "Stat Gain").`); errorCount++; bad++; }
+  if (!bad) console.log("Verified the Stat Gain containerless bars.");
+}
 // Font ban (user 2026-10-18: "Prompt looks better in all places"): the angular Chakra Petch was replaced by Prompt everywhere and must not come back.
 // Old changelog entries ("[<ISO date>", ...) may still name it; they are history.
 {

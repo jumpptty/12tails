@@ -61,6 +61,12 @@ Simulates Combo 4 arrows (normal shots, Fatal Strike, Left Stride + Double Strid
 * **Stats:** eight coloured words in one row (4 × 2 on phones), 40 % opacity when off, full colour plus a 3 px underline when on; under each name the range it can roll for the chosen class (`updateRecRanges`, `minStat`–`maxStat`, refreshed on class change).
 * **Levels side by side (`renderRecTiers`, no tabs):** ★ สเตตัสสูงสุด / ⚖ แนะนำ / ⚡ สบายๆ each get a column (stacked on phones) split by vertical hairlines: the sum, the chance (`fmtRecPct`, about 3 significant digits), the average rolls and a difficulty line on a log scale (0.001 % to 100 %, colour = `rateColor`). The tour's steps 2.1-2.3 spotlight their own column (`recTierEl`). `[STAT ROLL ERROR]`.
 
+## Stat Gain (`stat-gain`, `mountStatGain`, อัตราการเติบโตของค่าสเตตัส)
+
+* **Containerless bars (user 2026-11-20, mock B of 4 mocks; one CSS block "Stat Gain, containerless" in place of the old controls and table rules):** `.sg-controls`, its fields and the old table head are out of `THEME_SURFACES`. A gold hairline that fades at both ends under the title; the server logos plain (the picked one gold-underlined, no glow); the class as its face and name (the shared picker, no box); the levels as big numbers on a gold underline, with `→` between them and `สูงสุด N` after (`data-role="cap"`).
+* **One bar per stat (`.sg-row`):** the faint part = the value at the current level, the coloured part = the gain to the target level, a full bar = the strongest stat at the server's top level (`top` in `render()`); then the gain, `a → b` and, under the name, the growth per level (`(base + 3) × 0.083`). A legend line says what the parts mean. Phones drop `a → b` and the per-level line. Colours are the shared `--stat-*` tokens.
+* **ToT:** besides the pop-up when switching to ToT, a line under the controls (`data-role="totNote"`, from `totNerf`) says growth stops at Lv 95 while ToT is picked. `[STAT GAIN ERROR]`.
+
 ## Special Pet Info (`pet-info`, user 2026-10-18)
 
 Every pet whose code does more than stats (40 pets, 35 roster rows), live for pet level 1–9 and the owner's LCK. Spec: `docs/superpowers/specs/2026-10-18-special-pet-info-design.md`; every value comes from [12Tails-Mechanics-Reference.md §4.9](../../../12t_reference/12Tails-Mechanics-Reference.md) (BB client code). Pure stat pets are left out on purpose.

@@ -23,7 +23,7 @@
     // chip-like: contain position:fixed tooltips / pop-ups, so the blur sits on a ::before layer and the surface is isolated
     chip: [".sk-stat", ".sk-dmg-formula"],
     // flat panels and modals that never change fill on hover
-    panel: [".stg-panel", ".stg-desc", ".pi-roster", ".pi-hero", ".pi-desc", ".pi-tile", ".pi-box", ".sr-card:not(.sr-hero)", ".sg-controls", ".sg-gate-card:not(.is-bare)", ".rsim-tree-body", ".cg-note-editor",
+    panel: [".stg-panel", ".stg-desc", ".pi-roster", ".pi-hero", ".pi-desc", ".pi-tile", ".pi-box", ".sr-card:not(.sr-hero)", ".sg-gate-card:not(.is-bare)", ".rsim-tree-body", ".cg-note-editor",
       // every other --panel card and wrap (user 2026-10-17: plain --panel boxes did not match the server looks)
       ".sr-modal .sr-result-box", ".sr-metric", ".sr-stat-cell", ".cg-tabs", ".cg-send-opt", ".cg-send-preview", ".cg-cover-card", ".cg-send-steps", ".cg-steps", ".cg-step-guide", ".cg-mode-switch", ".cg-editor-wrap", ".cao-card", ".nl-rail", ".nl-grp-rows", ".nl-srv", ".nl-fixsum", ".mon-wrap", ".bg-stat", ".bg-cyc", ".bg-rung", ".bg-move", ".bg-fall div", ".bg-exp div", ".bg-saw-box", ".sk-roster-empty", ".sk-stat-summon", ".sk-dmg", ".sk-current-sp-wrap", ".sk-skill-nav", ".sk-support-lv", ".chm-pane", ".chm-clock", ".donate-form-box", ".donate-list-box", ".tt-bar", ".tt-sheet", ".tt-fret"],
     // clickable tiles whose own hover fill must keep winning
@@ -37,7 +37,7 @@
     // the enemy picker sat in "panel" and was see-through glass over the stat dials in ToT, user 2026-10-18)
     popup: [".hub-music-pop", ".copy-note", ".donate-nudge", ".hub-theme-menu", ".cg-menu-pop", ".changelog-popup", ".mech-popup", ".donate-popup", ".rsim-tip", ".sk-suggestions", ".sk-hero-info-pop", ".sk-enemy-info-popover", ".sk-enemy-picker", ".sk-mods-popup", ".sk-target-toast", ".sk-dmg-info-pop", ".sk-stat-tooltip", ".cls-picker-menu", ".sk-mod-icon-badge", ".sk-test-panel"],
     // inputs, number boxes and table headers: only the look's edge colour; their solid fill keeps typing and sticky headers clean (user 2026-10-17)
-    field: [".stg-search", ".stg-lck input", ".pi-lck input", ".sr-select", ".sr-num-input", ".sr-progress-bg", ".cg-page input", ".cg-page textarea", ".cg-page .cg-gear-stat-in", ".cao-rank", ".cao-num", ".sg-controls select", ".sg-controls input", ".sg-results thead th", ".mon-search", ".nl-search", ".mon-table th", ".mon-table td:first-child", ".sk-search", ".sk-enemy-search", ".chm-field select", ".chm-field input", ".chm-count", ".chm-log-search", ".chm-fps select", ".donate-form input", ".donate-form textarea"]
+    field: [".stg-search", ".stg-lck input", ".pi-lck input", ".sr-select", ".sr-num-input", ".sr-progress-bg", ".cg-page input", ".cg-page textarea", ".cg-page .cg-gear-stat-in", ".cao-rank", ".cao-num", ".mon-search", ".nl-search", ".mon-table th", ".mon-table td:first-child", ".sk-search", ".sk-enemy-search", ".chm-field select", ".chm-field input", ".chm-count", ".chm-log-search", ".chm-fps select", ".donate-form input", ".donate-form textarea"]
   };
   (function(){
     var G = 'html:is([data-sk-server="og"],[data-sk-server="tto"],[data-sk-server="tot"],[data-sk-server="reborn"]) ';
@@ -3265,70 +3265,72 @@
   }
   /* the donor ticker in the hub bar stops short of this tool's long page title on 1366-wide windows (windowed review 2026-10-30) */
   @media (min-width: 901px) and (max-width: 1440px){ html.tool-cao .donate-thanks.hub-thanks{max-width:34vw} }
-  .sg-controls{
-    background:var(--panel-2); border:1px solid var(--line); border-radius:3px;
-    padding:10px 14px; display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:12px; align-items:end;
-  }
-  .sg-controls label{display:block; font-size:10.5px; color:var(--muted); margin:0 0 4px; letter-spacing:.7px; text-transform:uppercase}
-  .sg-controls select,.sg-controls input{
-    width:100%; height:48px; box-sizing:border-box; background:var(--panel); color:var(--text); border:1px solid var(--line);
-    border-radius:6px; padding:6px 12px; font-size:15px; font-weight:700; outline:none; font-family:inherit;
-  }
-  .sg-controls select:focus,.sg-controls input:focus{border-color:var(--gold)}
-  .sg-msg{min-height:18px; margin:8px 2px 0; font-size:13px; color:var(--seal)}
+  /* ---- Stat Gain, containerless (user 2026-11-20, mock B "bars" of 4 mocks) ----
+     No boxes: the controls and the old table are out of THEME_SURFACES. A gold hairline that fades at both ends sits under the title; the
+     server logos are plain pictures (the picked one gold-underlined, no glow); the class is its face and name; the levels are big numbers on a
+     gold underline. Each stat is a bar: the part the current level already has is faint, the gain is in the stat's colour, a full bar is the
+     strongest stat at the server's top level; beside it the gain, "a → b", and under the name how much the stat grows per level. */
+  .sg-head { position: relative; margin: 0; padding: 2px 0 14px; }
+  .sg-head::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; pointer-events: none; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--gold) 45%, transparent), transparent); }
+  .sg-head h2 { font-size: 21px; }
+  .sg-head .sk-server-deps { gap: 14px; }
+  .sg-head .sk-server-btn { width: 40px; height: 40px; position: relative; }
+  .sg-head .sk-server-btn.active { filter: none; transform: none; }
+  .sg-head .sk-server-btn.active::after { content: ""; position: absolute; left: 22%; right: 22%; bottom: -7px; height: 2px; border-radius: 2px; background: var(--gold); }
+  .sg-controls { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px 16px; margin: 22px 0 4px; }
+  .sg-controls > div:first-child { margin-right: 26px; }
+  .sg-controls label { display: block; font-size: 12px; color: var(--muted); margin: 0 0 4px; }
+  .sg-controls .cls-picker-btn { background: none !important; border: 0; box-shadow: none !important; --th-blur: none; padding: 0; height: auto; }
+  .sg-controls .cls-picker-btn:hover .cls-picker-name { color: var(--gold); }
+  .sg-controls .cls-picker-thumb { width: 44px; height: 44px; }
+  .sg-controls .cls-picker-name { font-size: 19px; }
+  .sg-controls input { width: 3.2ch; padding: 0 0 2px; background: none; border: 0; border-bottom: 1px solid color-mix(in srgb, var(--gold) 35%, transparent); border-radius: 0; outline: none;
+    font: 700 28px 'Prompt', sans-serif; color: var(--text); text-align: center; -moz-appearance: textfield; transition: border-color .15s ease; }
+  .sg-controls input:hover { border-bottom-color: color-mix(in srgb, var(--gold) 65%, transparent); }
+  .sg-controls input:focus { border-bottom-color: var(--gold); }
+  .sg-controls input::-webkit-outer-spin-button, .sg-controls input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .sg-arrow { font-size: 20px; color: var(--muted); opacity: .7; padding-bottom: 8px; }
+  .sg-cap { font-size: 12px; color: var(--muted); opacity: .8; padding-bottom: 11px; }
+  .sg-msg { min-height: 18px; margin: 8px 2px 0; font-size: 13px; color: var(--seal); }
   @media (min-width: 761px) { .sg-msg:empty { display: none; } }   /* no blank band under the controls when there is no message (desktop; review 2026-10-30) */
-  .sg-results{margin-top:10px; border:1px solid var(--line); border-radius:3px; overflow:hidden}
-  .sg-results table{width:100%; border-collapse:collapse; font-size:14px}
-  .sg-results thead th{
-    background:var(--panel-2); color:var(--gold); font-weight:700; text-align:center;
-    padding:7px 12px; border-bottom:1px solid var(--gold); font-size:10.5px; letter-spacing:.6px; text-transform:uppercase;
-  }
-  .sg-results thead th:first-child{text-align:left}
-  .sg-results tbody td{padding:7px 12px; text-align:center; border-bottom:1px solid var(--line); font-size:13px}
-  .sg-results tbody tr:last-child td{border-bottom:none}
-  .sg-results tbody tr:hover td{background:var(--gold-soft)}
-  .sg-results tbody td.sg-statcell{text-align:left}
-  .sg-tick{display:inline-block; width:3px; height:13px; margin-right:9px; vertical-align:-2px; border-radius:1px}
-  .sg-stat-abbr{font-weight:700; font-size:13px}
-  .sg-gain{font-weight:700; font-size:14.5px}
-  .sg-gain.zero{color:var(--muted); font-weight:500}
-  .sg-muted{color:var(--muted)}
-  .sg-foot{color:var(--muted); font-size:12px; margin:8px 2px 0; line-height:1.4}
-  @media (min-width: 761px) { .sg-results thead th { font-size: 12px; } }   /* 10.5 px was smaller than it needs to be (review 2026-10-30) */
+  .sg-note { display: flex; align-items: center; gap: 10px; margin: 12px 0 0; font-size: 13px; color: var(--muted); }
+  .sg-note[hidden] { display: none; }
+  .sg-nerf { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; color: #f08c7a; border-bottom: 1.5px solid #f08c7a; padding-bottom: 1px; }
+  .sg-legend { display: flex; flex-wrap: wrap; gap: 6px 20px; margin: 18px 0 0; font-size: 12px; color: var(--muted); }
+  .sg-legend:empty { display: none; }
+  .sg-legend i { display: inline-block; width: 16px; height: 5px; border-radius: 3px; margin-right: 6px; vertical-align: 2px; }
+  .sg-bars { display: flex; flex-direction: column; gap: 11px; margin-top: 14px; }
+  .sg-row { display: grid; grid-template-columns: 96px minmax(0, 1fr) 58px 78px; align-items: center; gap: 14px; }
+  .sg-nm b { display: block; font-size: 16px; font-weight: 700; line-height: 1.2; }
+  .sg-nm small { font-size: 11px; color: var(--muted); opacity: .85; }
+  .sg-track { position: relative; height: 8px; border-radius: 4px; overflow: hidden; background: color-mix(in srgb, var(--text) 7%, transparent); }
+  .sg-track .a { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; opacity: .32; }
+  .sg-track .b { position: absolute; top: 0; bottom: 0; border-radius: 0 4px 4px 0; }
+  .sg-gn { font-size: 19px; font-weight: 700; text-align: right; }
+  .sg-gn.zero { color: var(--muted); font-weight: 500; }
+  .sg-rg { font-size: 13px; color: var(--muted); text-align: right; white-space: nowrap; }
+  .sg-rg b { color: var(--text); font-weight: 500; }
+  .sg-foot { color: var(--muted); font-size: 12px; margin: 18px 2px 0; line-height: 1.4; }
 
   @media (max-width: 640px) {
     .sg { padding: 10px 10px 14px; }
-    .sg-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: nowrap;
-      gap: 8px;
-      margin: 0 0 6px;
-    }
-    .sg-head h2 {
-      font-size: 14.5px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      line-height: 1.2;
-      margin: 0;
-    }
-    .sg-controls { padding: 8px 10px; gap: 8px; grid-template-columns: 1fr; }
-    .sg-controls select, .sg-controls input { height: 38px; font-size: 13.5px; padding: 4px 8px; }
-    .sg-results table { font-size: 12.5px; }
-    .sg-results thead th { padding: 5px 6px; font-size: 9.5px; }
-    .sg-results tbody td { padding: 5px 6px; font-size: 12px; }
-    .sg-stat-abbr { font-size: 12px; }
-    .sg-gain { font-size: 13px; }
-    .sg-foot { font-size: 10.5px; margin-top: 6px; }
+    .sg-head { flex-wrap: nowrap; gap: 8px; padding-bottom: 12px; }
+    .sg-head h2 { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
+    .sg-head .sk-server-deps { gap: 6px; }
+    .sg-head .sk-server-btn { width: 30px; height: 30px; }
+    .sg-controls { margin-top: 16px; gap: 10px 12px; }
+    .sg-controls > div:first-child { flex-basis: 100%; margin-right: 0; }
+    .sg-controls input { font-size: 24px; }
+    .sg-row { grid-template-columns: 50px minmax(0, 1fr) 46px; gap: 10px; }
+    .sg-nm small, .sg-rg { display: none; }
+    .sg-gn { font-size: 16px; }
+    .sg-foot { font-size: 10.5px; margin-top: 12px; }
   }
 
   @media (max-height: 820px) {
     .sg { padding: 10px 14px 12px; }
-    .sg-controls { padding: 6px 10px; gap: 6px; }
-    .sg-controls select, .sg-controls input { height: 38px; font-size: 13px; }
-    .sg-results tbody td { padding: 4px 8px; font-size: 12px; }
+    .sg-controls { margin-top: 16px; }
+    .sg-bars { gap: 9px; }
   }
 
   .sg-gate{
@@ -3514,9 +3516,7 @@
        would render as a solid gold rectangle before any class is selected. */
     visibility:hidden;
   }
-  .sg-controls,.sg-msg,.sg-results,.sg-foot{position:relative}
-
-  @media(max-width:620px){.sg-controls{grid-template-columns:1fr 1fr}}
+  .sg-controls,.sg-msg,.sg-note,.sg-legend,.sg-bars,.sg-foot{position:relative}
 
   /* ================= skill cooldown lookup tool ================= */
   /* Vertical rhythm here is deliberately tight (2026-08-14): this tool runs
@@ -8217,25 +8217,11 @@
     color: var(--text);
     background: rgba(255,255,255,0.04);
   }
-  .sg-controls .cls-custom-picker {
-    width: 100%;
-  }
-  .sg-controls .cls-picker-btn {
-    width: 100%;
-    justify-content: flex-start;
-  }
-  .sg-controls .cls-picker-arrow {
-    margin-left: auto;
-  }
-  /* desktop: the class picker lines up with the level inputs (review 2026-10-30): a block box (no inline gap under it) at the inputs' height */
-  @media (min-width: 761px) {
-    .sg-controls .cls-custom-picker { display: block; }
-    .sg-controls .cls-picker-btn { display: flex; }
-  }
-  @media (min-width: 761px) and (max-height: 820px) {
-    .sg-controls .cls-picker-btn { height: 38px; }
-    .sg-controls .cls-picker-thumb { width: 32px; height: 32px; }
-  }
+  /* Stat Gain's class picker (no box since 2026-11-20): the face, the name and ▾ side by side at their own width, the rest of its look in the
+     "Stat Gain, containerless" block (the old rules sized it like the boxed level inputs) */
+  .sg-controls .cls-picker-btn { justify-content: flex-start; }
+  .sg-controls .cls-picker-arrow { margin-left: 2px; }
+  @media (max-height: 820px) { .sg-controls .cls-picker-thumb { width: 38px; height: 38px; } }
   .sr-header-controls .cls-picker-menu {
     right: 0;
     left: auto;
@@ -40149,7 +40135,7 @@ function mountStatGain(root){
   let sgServer = "og"; // "og" (BigBug / No Cap), "tot" (Tales of Tail / Lv.95 Cap), "tto" (Tailstopia / No Cap, max Lv 100) or "reborn" (Tails Reborn / No Cap, max Lv 150)
 
   const STATS = ["ATK","DEF","AGI","VIT","INT","CHA","TAL","LCK"];
-  const COLOR = {ATK:"#c2503c",DEF:"#4f7fb8",AGI:"#5a9a63",VIT:"#c9a227",INT:"#b0568f",CHA:"#8a72b8",TAL:"#3f9a8c",LCK:"#a3862c"};
+  const COLOR = {ATK:"var(--stat-atk)",DEF:"var(--stat-def)",AGI:"var(--stat-agi)",VIT:"var(--stat-vit)",INT:"var(--stat-int)",CHA:"var(--stat-cha)",TAL:"var(--stat-tal)",LCK:"var(--stat-lck)"};   // the shared stat colours (user 2026-11-20; it had its own muted set)
 
   // base[i] per class, ATK..LCK
   const CLASSES = {
@@ -40167,6 +40153,11 @@ function mountStatGain(root){
       lblClass: "คลาส",
       lblCur: "เลเวลปัจจุบัน",
       lblTgt: "เลเวลเป้าหมาย",
+      lvMax: (n) => "สูงสุด " + n,
+      perLv: (r) => "≈ +" + r.toFixed(2) + " / เลเวล",
+      legendHave: (lv) => "มีอยู่แล้วที่เลเวล " + lv,
+      legendGain: (lv) => "ได้เพิ่มถึงเลเวล " + lv,
+      legendFull: (lv) => "แถบเต็ม = สเตตัสสูงสุดที่เลเวล " + lv,
       thStat: "สเตตัส",
       thCur: "ที่เลเวลปัจจุบัน",
       thTgt: "ที่เลเวลเป้าหมาย",
@@ -40220,28 +40211,19 @@ function mountStatGain(root){
             </div>
             <div>
               <label data-role="lblCur">เลเวลปัจจุบัน</label>
-              <input data-role="cur" type="number" min="1" max="95" step="1" value="1">
+              <input data-role="cur" type="number" inputmode="numeric" min="1" max="95" step="1" value="1">
             </div>
+            <span class="sg-arrow" aria-hidden="true">→</span>
             <div>
               <label data-role="lblTgt">เลเวลเป้าหมาย</label>
-              <input data-role="tgt" type="number" min="1" max="95" step="1" value="95">
+              <input data-role="tgt" type="number" inputmode="numeric" min="1" max="95" step="1" value="95">
             </div>
+            <span class="sg-cap" data-role="cap"></span>
           </div>
           <div class="sg-msg" data-role="msg"></div>
-
-          <div class="sg-results">
-            <table>
-              <thead>
-                <tr>
-                  <th data-role="thStat">สเตตัส</th>
-                  <th data-role="thCur">ที่เลเวลปัจจุบัน</th>
-                  <th data-role="thTgt">ที่เลเวลเป้าหมาย</th>
-                  <th data-role="thGain">ได้รับเพิ่ม</th>
-                </tr>
-              </thead>
-              <tbody data-role="rows"></tbody>
-            </table>
-          </div>
+          <p class="sg-note" data-role="totNote" hidden></p>
+          <div class="sg-legend" data-role="legend"></div>
+          <div class="sg-bars" data-role="rows"></div>
 
           <p class="sg-foot" data-role="foot">* ไม่รวมค่าสเตตัสสุ่มเริ่มต้นตอนสร้างตัวละคร, สกิลติดตัว (เช่น Stat Plus) และอุปกรณ์สวมใส่</p>
         </div>
@@ -40289,6 +40271,9 @@ function mountStatGain(root){
   const curEl    = $('[data-role="cur"]', root);
   const tgtEl    = $('[data-role="tgt"]', root);
   const rows     = $('[data-role="rows"]', root);
+  const legend   = $('[data-role="legend"]', root);
+  const capEl    = $('[data-role="cap"]', root);
+  const totNote  = $('[data-role="totNote"]', root);
   const msg      = $('[data-role="msg"]', root);
   const art      = $('[data-role="art"]', root);
   const body     = $(".sg-body", root);
@@ -40393,7 +40378,11 @@ function mountStatGain(root){
       art.style.maskImage = artUrl;
     }
 
+    capEl.textContent = L.lvMax(maxLv());
+    totNote.hidden = sgServer !== "tot";
+    if (!totNote.hidden && !totNote.innerHTML) totNote.innerHTML = L.totNerf.replace(/^•\s*/, "").replace(/\[nerf\]\s*/i, '<span class="sg-nerf">NERF</span>ToT: ');
     rows.innerHTML = "";
+    legend.innerHTML = "";
     if (!base || cur === null || tgt === null){
       msg.textContent = L.msgInvalid;
       return;
@@ -40404,18 +40393,22 @@ function mountStatGain(root){
     }
     msg.textContent = "";
 
+    // one bar per stat (mock B): faint = what the current level already has, colour = the gain; a full bar = the strongest stat at the top level
+    const top = Math.max(1, ...base.map(b => gain(maxLv(), b)));
+    const pct = (v) => (v / top * 100).toFixed(2) + "%";
+    legend.innerHTML = '<span><i style="background:color-mix(in srgb, var(--text) 28%, transparent)"></i>' + L.legendHave(cur) + '</span>'
+      + '<span><i style="background:var(--gold)"></i>' + L.legendGain(tgt) + '</span><span>' + L.legendFull(maxLv()) + '</span>';
+    let html = "";
     for (let i=0;i<8;i++){
       const s = STATS[i], b = base[i];
       const atCur = gain(cur, b), atTgt = gain(tgt, b), g = atTgt - atCur;
-      const tr = document.createElement("tr");
-      tr.innerHTML =
-        '<td class="sg-statcell"><span class="sg-tick" style="background:'+COLOR[s]+'"></span>'+
-          '<span class="sg-stat-abbr" style="color:'+COLOR[s]+'">'+s+'</span> <span class="sg-muted">'+L.full[s]+'</span></td>'+
-        '<td class="sg-muted num">'+atCur+'</td>'+
-        '<td class="sg-muted num">'+atTgt+'</td>'+
-        '<td class="num"><span class="sg-gain'+(g===0?' zero':'')+'" style="color:'+(g===0?'':COLOR[s])+'">'+(g>0?'+':'')+g+'</span></td>';
-      rows.appendChild(tr);
+      html += '<div class="sg-row" title="' + L.full[s] + '">'
+        + '<div class="sg-nm"><b style="color:' + COLOR[s] + '">' + s + '</b><small class="num">' + L.perLv((b + 3) * 0.083) + '</small></div>'
+        + '<div class="sg-track"><span class="a" style="width:' + pct(atCur) + '; background:' + COLOR[s] + '"></span><span class="b" style="left:' + pct(atCur) + '; width:' + pct(g) + '; background:' + COLOR[s] + '"></span></div>'
+        + '<div class="sg-gn' + (g === 0 ? ' zero' : '') + '"' + (g === 0 ? '' : ' style="color:' + COLOR[s] + '"') + '>' + (g > 0 ? '+' : '') + g + '</div>'
+        + '<div class="sg-rg num">' + atCur + ' → <b>' + atTgt + '</b></div></div>';
     }
+    rows.innerHTML = html;
     if (typeof fitStageToScreen === 'function') fitStageToScreen();
   }
 
@@ -41565,6 +41558,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-20T14:15:48.521Z","feat(bible): หน้าอัตราการเติบโตของค่าสเตตัสแบบไม่มีกล่อง ค่าสเตตัสเป็นแถบสี (ส่วนจาง = มีอยู่แล้ว ส่วนสี = ได้เพิ่ม) บอกอัตราต่อเลเวล และบน ToT มีบรรทัดบอกว่าสเตตัสหยุดโตที่เลเวล 95"],
     ["2026-11-20T14:06:55.635Z","feat(bible): หน้าสุ่มค่าสเตตัสตอนสร้างตัวละครแบบไม่มีกล่อง ปุ่มสเตตัสเป็นตัวอักษรสีพร้อมช่วงค่าที่สุ่มได้ของคลาส และแสดง 3 ระดับเป้าหมายเทียบกันพร้อมกัน ไม่ต้องกดแท็บ"],
     ["2026-11-20T14:06:54.635Z","feat(bible): ปุ่ม Brave Spirit / Glorious Spirit บนการ์ดหมาป่า 19 ใบที่ได้ผลจาก dmgMod ของ valor (ผูกกับแถว Valor ในหน้าต่าง Buff / Debuff) และบันทึกว่าบน TTO 1.7.0 มีแค่ Dark Edge ที่ดาเมจม่วงได้ dmgMod"],
     ["2026-11-20T12:56:49.182Z","feat(bible): คำอธิบายสั้นที่มีบรรทัดไอคอนต่อท้าย (เช่น Phantasm Blast) ได้หน้าตาคำอธิบายสั้นด้วย บรรทัดหลักอยู่ตรงกลาง ตัวใหญ่ขึ้น และคำไทยอย่าง ตัวเอง ได้รับ เป้าหมาย ไม่ถูกตัดกลางคำตอนขึ้นบรรทัดใหม่"],
