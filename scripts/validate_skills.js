@@ -872,6 +872,7 @@ if (RUN_DAMAGE_CHECKS) {
           const rawText = sandbox._getDmgText(sk, r);
           if (!sk.dmgGroups && !computable(rawText)) continue;
           sandbox._skillRanks[sk.id] = r;
+          if (sk.rankDep) sandbox._depRanks[sk.rankDep.id] = r;   // a summon move's level is its summon's toggle (rankDep, 90db6e00): the render reads the toggle, so roll that same rank
           sandbox._calcRangeFor = undefined; sandbox._finalRangeForRange = undefined;
           sandbox._selectSkill(card);
           if (!sandbox._calcRangeFor || !sandbox._finalRangeForRange) continue;
@@ -896,6 +897,7 @@ if (RUN_DAMAGE_CHECKS) {
         }
       }
       depIds.forEach(([id]) => { delete sandbox._depRanks[id]; });
+      if (sk.rankDep) delete sandbox._depRanks[sk.rankDep.id];   // back to the summon level's default
       saved.forEach(([id, val]) => { if (val !== undefined) sandbox._depRanks[id] = val; });
     });
     if (profile) { inputs.atk.value = savedStats.atk; inputs.tal.value = savedStats.tal; inputs.lck.value = savedStats.lck; }
