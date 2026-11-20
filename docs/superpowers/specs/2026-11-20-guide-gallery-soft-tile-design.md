@@ -35,6 +35,9 @@ Mock-ups: real gallery DOM captured from the page and restyled (session scratch 
 - **Side arrows and page numbers:** the same glass (hairline, faint fill, the look's blur); the current page stays solid gold.
 - **Server looks:** `.cg-guide` and `.cg-page-btn` leave `THEME_SURFACES` (the glass is neutral and reads on every wallpaper), and `.cg-guide` leaves the gilded frame rule.
 - **Phones and compact mode:** phones keep today's titles. Compact mode (a short window) has no title box and no fit (titles at their natural size) and a trimmed foot, so it keeps today's zoom: built so after the review of 2026-11-20, which measured the fixed box costing 32 px per card there and dropping 1280 × 600 to one row of 4 (user complaint 2026-10-19).
+- **Wide covers (user 2026-11-20, zigzag of 3 mocks):** on the desktop the cover spans the card, 80 px tall (64 in compact mode): 1-3 icons in one row, 4-5 zigzag, as big as the box allows; under 200 px of card width the square stack. Measured against the live page: the same cards per page and zoom at 1280 × 600 to 1920 × 1080; 5-icon covers 41 → 49 px on a 1920 desktop, 26 → 60 px in compact mode.
+- **Phones (user 2026-11-20, P1 of 4 mocks):** list rows, one column: the cover on the left; class / server / PVE top left, stars and readers top right on the same row; the title in a fixed 2-line box fitted 12-19 px (user: like the desktop); author · date below. About 6 guides a phone screen, as before, with bigger titles.
+- **Step 5 (user 2026-11-20, A of 3 mocks):** the editor's column is 260-360 px wide, so the card is shown one view at a time (มือถือ / จอเตี้ย / จอคอม) at its real width, the pick remembered.
 - **Cover rings (user 2026-11-20, C+D of 4 mocks):** one icon keeps the full ring; 2-5 icons get one 1.5 px gold line and a soft shadow, and grow into the freed room (2-4 icons 0.49 of the box, 5 icons 0.41 / 0.355), on the page and in the PNG.
 
 ## Left to the builder
