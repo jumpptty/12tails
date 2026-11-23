@@ -41122,6 +41122,7 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-23T09:02:19Z", "fix(bible): ป้ายในแพตช์โน้ตเปลี่ยนจาก แอบเปลี่ยน เป็น ไม่ระบุในแพตช์"],
     ["2026-11-23T08:53:21Z", "fix(bible): ประวัติแพตช์ TAILSTOPIA 1.7.1.1–1.7.1.2 ย้าย Nine Lives ขึ้นเป็นเรื่องสำคัญที่สุดแทนการแก้ดีเลย์ตอนตาย"],
     ["2026-11-23T08:29:41Z", "feat(bible): ประวัติแพตช์ TAILSTOPIA 1.7.1.1–1.7.1.2 สิ่งที่เปลี่ยนจริง 16 รายการ (Dark Edge, การตายและการชุบ, Nine Lives, Divine Channel, Swallow, Psalm of Energy, ขวดยากระต่าย, แคมป์กิลด์ และอื่นๆ)"],
     ["2026-11-23T07:44:22Z", "fix(bible): TTO 1.7.1.2 จากโค้ดเกม (TTO1123) ดาเมจม่วงของ Dark Edge ไม่ได้ผลจาก dmgMod อีกแล้ว รวม Brave Spirit, Nine Lives คูลดาวน์ 60 วินาทีคงที่ไม่ลดตาม AGI, Divine Channel และ Psalm of Energy เลือกผู้เล่นก่อนและเฉพาะตัวที่รับการฟื้นฟูได้"],
@@ -41960,7 +41961,7 @@ function mountChangelog(){
 // No "code" wording in any line, chip or title: everything here is code-derived and people know it (user 2026-11-06).
 // "bug" = a real bug fix (chip แก้บัค, the [Fix] violet); "sneak-nerf" = a change for the worse TTO's notes do not mention (chip แอบ Nerf, the [Nerf]
 // red, dashed); "sneak" = a change TTO's notes do not mention
-// (chip แอบเปลี่ยน); "fix" / "change" = TTO's notes say it was fixed / changed but the code shows nothing that does it (chip บอกว่าแก้แต่ / บอกว่าเปลี่ยนแต่;
+// (chip ไม่ระบุในแพตช์); "fix" / "change" = TTO's notes say it was fixed / changed but the code shows nothing that does it (chip บอกว่าแก้แต่ / บอกว่าเปลี่ยนแต่;
 // the text says what the code really changed). Never call such a gap a server-side change: small fixes like these live in the client (user 2026-11-06).
 const PATCH_HISTORY = [{
   key: "tto-1.7.1.2",
@@ -42089,7 +42090,7 @@ function mountPatchPopup(){
   if (!modal || !ok || !list || !PATCH_HISTORY.length) return null;
   const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   const rich = (t) => esc(t).replace(/\*\*(.+?)\*\*/g, '<b class="sk-val">$1</b>');
-  const KIND = { bug: ['is-bug', "แก้บัค", "การแก้บัค"], "sneak-nerf": ['is-sneak-nerf', "แอบ Nerf", "แย่ลงจาก BB และไม่อยู่ในแพตช์โน้ตของเซิร์ฟ"], sneak: ['is-sneak', "แอบเปลี่ยน", "ไม่อยู่ในแพตช์โน้ตของเซิร์ฟ"], fix: ['is-claim', "บอกว่าแก้แต่", "แพตช์โน้ตบอกว่าแก้ แต่ไม่ได้แก้ตามนั้น"],
+  const KIND = { bug: ['is-bug', "แก้บัค", "การแก้บัค"], "sneak-nerf": ['is-sneak-nerf', "แอบ Nerf", "แย่ลงจาก BB และไม่อยู่ในแพตช์โน้ตของเซิร์ฟ"], sneak: ['is-sneak', "ไม่ระบุในแพตช์", "ไม่อยู่ในแพตช์โน้ตของเซิร์ฟ"], fix: ['is-claim', "บอกว่าแก้แต่", "แพตช์โน้ตบอกว่าแก้ แต่ไม่ได้แก้ตามนั้น"],
     change: ['is-claim', "บอกว่าเปลี่ยนแต่", "แพตช์โน้ตบอกว่าเปลี่ยน แต่ไม่ได้เปลี่ยนตามนั้น"] };
   // an entry's lines by tier: tier 1 and tier 2 as cards (hero icon of the tag's class, else the server logo), tier 3 numbered by its rank
   const lines = (e) => { const [a, b] = e.tiers || [0, 0], t1 = Math.min(a, e.items.length), f = Math.min(t1 + b, e.items.length);
