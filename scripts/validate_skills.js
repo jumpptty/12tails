@@ -2046,9 +2046,9 @@ if (RUN_DAMAGE_CHECKS) {
       }
     }))));
   });
-  // TTO 1.7.0 (TTO1118:Wolf.<RPC_nAttack1>d__N::MoveNext@0x1f3e8e0): Dark Edge's purple hit takes the Wolf's damageMod (float32 dmgAdjust, no LCK roll,
-  // CharacterControl::dmgAdjust@0x2526220) before its own LCK roll; BB leaves damageMod out. ATK 200, rank 1 stage 1 = raw 100, damageMod 1.1 (Brave Spirit 4,
-  // fed through the group's damageMod hook so no buff is left on the page): BB 100, TTO 110 (1.1 x 100 in double would ceil to 111); LCK 150 adds the roll 0-29 after it.
+  // TTO 1.7.0 gave Dark Edge's purple hit the Wolf's damageMod (TTO1118:Wolf.<RPC_nAttack1>d__N::MoveNext@0x1f3e8e0); 1.7.1.2 took it out again
+  // (TTO1123:Wolf.<RPC_nAttack1>d__182::MoveNext@0x1f4b2f0 and stages 2-4 call no dmgAdjust), so BB and TTO both leave damageMod out. ATK 200, rank 1
+  // stage 1 = raw 100, damageMod 1.1 (Brave Spirit 4, fed through the group's damageMod hook so no buff is left on the page): 100 on both; LCK 150 adds the roll 0-29.
   {
     setDeps({ wolfDarkEdgeOn: 1 });
     const stage1 = (srv) => {
@@ -2062,10 +2062,10 @@ if (RUN_DAMAGE_CHECKS) {
     try {
       inputs.atk.value = "200"; inputs.lck.value = "0";
       let got = stage1("og"); check("Dark Edge + damageMod 1.1 on BB: stage 1 stays 100 (Final / Test)", got === "100/100/100/100", got);
-      got = stage1("tto"); check("Dark Edge + damageMod 1.1 on TTO: stage 1 = ceil(fround(1.1 x 100)) = 110 (Final / Test)", got === "110/110/110/110", got);
+      got = stage1("tto"); check("Dark Edge + damageMod 1.1 on TTO (1.7.1.2): stage 1 stays 100 like BB (Final / Test)", got === "100/100/100/100", got);
       inputs.lck.value = "150";
       const t = stage1("tto").split("/").map(Number);
-      check("Dark Edge + damageMod 1.1 on TTO, LCK 150: Final 110-139 (dmgAdjust, then the roll) and every Test roll inside", t[0] === 110 && t[1] === 139 && t[2] >= 110 && t[3] <= 139, t.join("/"));
+      check("Dark Edge + damageMod 1.1 on TTO, LCK 150: Final 100-129 (no damageMod, then the roll) and every Test roll inside", t[0] === 100 && t[1] === 129 && t[2] >= 100 && t[3] <= 129, t.join("/"));
     } finally { sandbox._setServer("og"); }
   }
   inputs.atk.value = saved.atk; inputs.lck.value = saved.lck;
@@ -5531,7 +5531,7 @@ async function donateChildTests(env) {
         const ids = ["cat_nineLives", "cat_nAttack", "cat_openWound", "penguin_novaFlare", "penguin_cosmicRift", "penguin_giantStar", "penguin_fallingStars", "rabbit_miracleBlend", "bison_ironSkin", "bison_diamondSkin", "bat_mimic", "whale_wallPuncture", "whale_gourmetHeart"];
         ids.forEach(id => good(/\[Fix\]/.test(tto(id).changeNote), id + ": a [Fix] line on its TTO tab"));
         good(!/\[Fix\]/.test(tto("rabbit_contract").changeNote) && !(c("mole_gigaCannon").servers || {}).tto && !/\[Fix\]/.test(tto("monkey_summonSoul").changeNote), "TTO fixing its own bugs is no [Fix] line: Contract double Gil, Giga Cannon, Summon Soul with Ja Ascension (user 2026-11-04)");
-        good(tto("cat_nineLives").cd === 60 && tto("cat_nineLives").bbBug === "" && !tto("cat_nineLives").desc(1).includes("ไม่ถูกเรียกใช้") && c("cat_nineLives").bbBug, "Nine Lives: 60 s and no bug on TTO, the BB card keeps its note");
+        good(tto("cat_nineLives").cd === 60 && tto("cat_nineLives").cdWrapped === false && tto("cat_nineLives").bbBug === "" && !tto("cat_nineLives").desc(1).includes("ไม่ถูกเรียกใช้") && c("cat_nineLives").bbBug, "Nine Lives: 60 s and no bug on TTO, the BB card keeps its note");
         [["bison_ironSkin", 1, "**8%**"], ["bison_ironSkin", 2, "**16%**"], ["bison_ironSkin", 3, "**24%**"], ["bison_diamondSkin", 1, "**8%**"], ["bison_diamondSkin", 2, "**16%**"]].forEach(([id, r, want]) => good(tto(id).desc(r).includes(want), id + " rank " + r + " reads " + want));
         good(c("bison_ironSkin").desc(1).includes("**16%**"), "the BB Iron Skin stays 16% at rank 1");
         good(tto("bison_diamondSkin").tooltipNote === "" && tto("bison_ironSkin").tooltipNote(1).includes("6m") && !tto("bison_ironSkin").tooltipNote(1).includes("โค้ดจริงลด"), "the Skin tooltip notes keep only what is still wrong");
