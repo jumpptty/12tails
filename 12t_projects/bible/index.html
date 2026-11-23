@@ -23,21 +23,21 @@
     // chip-like: contain position:fixed tooltips / pop-ups, so the blur sits on a ::before layer and the surface is isolated
     chip: [".sk-stat", ".sk-dmg-formula"],
     // flat panels and modals that never change fill on hover
-    panel: [".stg-panel", ".stg-desc", ".pi-roster", ".pi-hero", ".pi-desc", ".pi-tile", ".pi-box", ".sr-card", ".sg-controls", ".sg-gate-card:not(.is-bare)", ".rsim-tree-body", ".cg-note-editor",
+    panel: [".stg-panel", ".stg-desc", ".pi-roster", ".pi-hero", ".pi-desc", ".pi-tile", ".pi-box", ".sr-card:not(.sr-hero)", ".sg-gate-card:not(.is-bare)", ".rsim-tree-body", ".cg-note-editor",
       // every other --panel card and wrap (user 2026-10-17: plain --panel boxes did not match the server looks)
-      ".sr-result-box", ".sr-metric", ".sr-rec-tab-bar", ".sr-rec-card", ".sr-stat-cell", ".cg-tabs", ".cg-send-opt", ".cg-send-preview", ".cg-cover-card", ".cg-send-steps", ".cg-steps", ".cg-step-guide", ".cg-mode-switch", ".cg-editor-wrap", ".cao-card", ".nl-rail", ".nl-grp-rows", ".nl-srv", ".nl-fixsum", ".mon-wrap", ".bg-stat", ".bg-cyc", ".bg-rung", ".bg-move", ".bg-fall div", ".bg-exp div", ".bg-saw-box", ".sk-roster-empty", ".sk-stat-summon", ".sk-dmg", ".sk-current-sp-wrap", ".sk-skill-nav", ".sk-support-lv", ".chm-pane", ".chm-clock", ".donate-form-box", ".donate-list-box", ".tt-bar", ".tt-sheet", ".tt-fret"],
+      ".cg-tabs", ".cg-send-opt", ".cg-send-preview", ".cg-cover-card", ".cg-send-steps", ".cg-steps", ".cg-step-guide", ".cg-mode-switch", ".cg-editor-wrap", ".cao-card", ".nl-rail", ".nl-grp-rows", ".nl-srv", ".nl-fixsum", ".mon-wrap", ".bg-stat", ".bg-cyc", ".bg-rung", ".bg-move", ".bg-fall div", ".bg-exp div", ".bg-saw-box", ".sk-roster-empty", ".sk-stat-summon", ".sk-dmg", ".sk-current-sp-wrap", ".sk-skill-nav", ".sk-support-lv", ".chm-pane", ".chm-clock", ".donate-form-box", ".donate-list-box", ".tt-bar", ".tt-sheet", ".tt-fret"],
     // clickable tiles whose own hover fill must keep winning
     tile: [".ln-thb"],
     // clickable and raised (the --panel-2 level); popup and field (below) keep their own solid fill
     raised: [".stg-tile:not(.is-on)", ".stg-close", ".stg-pill:not(.is-on)", ".news-feat", ".tt-btn:not(.is-on):not(.tt-play)", ".donate-tab:not([aria-selected=\"true\"])", ".pi-it:not(.is-on)", ".pi-var:not(.is-on)", ".pi-lv button:not(.is-on)", ".pi-res:not(.is-on)", ".sk-roster-card:not(.is-halo)", ".sk-roster-pager button", ".sg-gate-btn:not(.is-hero)", ".cls-picker-btn", ".cg-page .cg-btn-secondary", ".cg-format-btn:not(.is-on)",
       // the guide gallery controls (user 2026-10-17: they stayed plain dark brown on every server; the cards .cg-guide and the page buttons .cg-page-btn left 2026-11-20: the Soft tile glass is neutral and reads on every look)
       ".cg-mode-btn:not([aria-pressed=\"true\"])", ".cg-sort",   // .cg-icon-pick.is-all left 2026-10-20: the text filters have no box now
-      ".sr-lang-toggle", ".sr-rec-toggle", ".sr-preset-btn", ".credits-arrow", ".cg-set-rep.is-add", ".cg-set-ed .cg-gear-x", ".cg-start-opt", ".cg-cover-pick-btn", ".cg-desc-pager button", ".rsim-btn:not(.cg-btn-primary)", ".cao-toggle", ".cao-reset", ".cao-custom-icon", ".sk-ps-toggle", ".mon-races button", ".bg-tab", ".nl-kinds button", ".sk-browse-btn", ".sk-crit-btn", ".sk-enemy-info-btn", ".sk-stats-collapse", ".sk-enemy-pick", ".sk-enemy-result", ".sk-mods-btn", ".sk-enemy-imm-chip", ".sk-server-badge", ".chm-seg", ".chm-rbtn"],
+      ".credits-arrow", ".cg-set-rep.is-add", ".cg-set-ed .cg-gear-x", ".cg-start-opt", ".cg-cover-pick-btn", ".cg-desc-pager button", ".rsim-btn:not(.cg-btn-primary)", ".cao-toggle", ".cao-reset", ".cao-custom-icon", ".sk-ps-toggle", ".mon-races button", ".bg-tab", ".nl-kinds button", ".sk-browse-btn", ".sk-crit-btn", ".sk-enemy-info-btn", ".sk-stats-collapse", ".sk-enemy-pick", ".sk-enemy-result", ".sk-mods-btn", ".sk-enemy-imm-chip", ".sk-server-badge", ".chm-seg", ".chm-rbtn"],
     // menus, tooltips, pickers and toasts: the look's texture and edge, but their own SOLID fill, so text over the page stays readable (user 2026-10-17;
     // the enemy picker sat in "panel" and was see-through glass over the stat dials in ToT, user 2026-10-18)
     popup: [".hub-music-pop", ".copy-note", ".donate-nudge", ".hub-theme-menu", ".cg-menu-pop", ".changelog-popup", ".mech-popup", ".donate-popup", ".rsim-tip", ".sk-suggestions", ".sk-hero-info-pop", ".sk-enemy-info-popover", ".sk-enemy-picker", ".sk-mods-popup", ".sk-target-toast", ".sk-dmg-info-pop", ".sk-stat-tooltip", ".cls-picker-menu", ".sk-mod-icon-badge", ".sk-test-panel"],
     // inputs, number boxes and table headers: only the look's edge colour; their solid fill keeps typing and sticky headers clean (user 2026-10-17)
-    field: [".stg-search", ".stg-lck input", ".pi-lck input", ".sr-select", ".sr-num-input", ".sr-progress-bg", ".cg-page input", ".cg-page textarea", ".cg-page .cg-gear-stat-in", ".cao-rank", ".cao-num", ".sg-controls select", ".sg-controls input", ".sg-results thead th", ".mon-search", ".nl-search", ".mon-table th", ".mon-table td:first-child", ".sk-search", ".sk-enemy-search", ".chm-field select", ".chm-field input", ".chm-count", ".chm-log-search", ".chm-fps select", ".donate-form input", ".donate-form textarea"]
+    field: [".stg-search", ".stg-lck input", ".pi-lck input", ".cg-page input", ".cg-page textarea", ".cg-page .cg-gear-stat-in", ".cao-rank", ".cao-num", ".mon-search", ".nl-search", ".mon-table th", ".mon-table td:first-child", ".sk-search", ".sk-enemy-search", ".chm-field select", ".chm-field input", ".chm-count", ".chm-log-search", ".chm-fps select", ".donate-form input", ".donate-form textarea"]
   };
   (function(){
     var G = 'html:is([data-sk-server="og"],[data-sk-server="tto"],[data-sk-server="tot"],[data-sk-server="reborn"]) ';
@@ -498,7 +498,6 @@
     gap: 14px;
     padding-bottom: 14px;
     margin-bottom: 16px;
-    border-bottom: 1px solid var(--line);
   }
   .sr-header-text {
     flex: 1;
@@ -514,12 +513,6 @@
     color: var(--text);
     line-height: 1.35;
     letter-spacing: -0.01em;
-  }
-  .sr-header-sub {
-    font-size: 12.5px;
-    color: var(--muted);
-    margin: 5px 0 0 0;
-    line-height: 1.5;
   }
   .sr-header-controls {
     display: flex;
@@ -540,76 +533,27 @@
     color: var(--muted);
     line-height: 1;
   }
-  .sr-select {
-    padding: 6px 30px 6px 12px;
-    font-size: 13px;
-    font-weight: 600;
-    font-family: inherit;
-    background: var(--panel-2);
-    border: 1px solid var(--line);
-    border-radius: 3px;
-    color: var(--text);
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23c9a227' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 9px center;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.15);
-  }
-  .sr-select:hover {
-    border-color: var(--gold);
-  }
-  .sr-select:focus {
-    outline: none;
-    border-color: var(--gold);
-    box-shadow: 0 0 0 2px var(--gold-soft);
-  }
-  .sr-lang-toggle {
-    display: inline-flex;
-    background: var(--panel-2);
-    border: 1px solid var(--line);
-    border-radius: 18px;
-    padding: 2px;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
-  }
+  .sr-lang-toggle { display: inline-flex; }
   .sr-lang-btn {
     font-family: inherit;
     font-size: 11px;
     font-weight: 700;
-    padding: 3px 10px;
     border: none;
-    border-radius: 14px;
     cursor: pointer;
-    background: transparent;
-    color: var(--muted);
     transition: all 0.15s ease;
     letter-spacing: 0.05em;
     line-height: 1.2;
-  }
-  .sr-lang-btn:hover:not(.active) {
-    color: var(--text);
-  }
-  .sr-lang-btn.active {
-    background: var(--gold);
-    color: #14110b;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.25);
   }
   .sr-wrap.locked .sr-deck {
     filter: blur(5px);
     pointer-events: none;
     user-select: none;
   }
-  .sr-deck {
-    display: block;
-  }
-  /* No card chrome: the tool's own container already frames it, so the hero fills it edge to edge */
-  .sr-hero { background: none; border: none; box-shadow: none; padding: 0; }
+  /* the door to the advanced mode: % plus a label (review 2026-10-30: a bare % did not say what it opens); phones keep the bare % */
   .sr-adv-btn {
-    background: none; border: none; color: var(--muted);
-    font-family: inherit; font-size: 15px; font-weight: 700; line-height: 1; padding: 2px 6px; cursor: pointer; transition: color 0.15s ease;
+    background: none; border: 0; padding: 4px 0; color: var(--gold);
+    font-family: inherit; font-size: 15px; font-weight: 700; line-height: 1; cursor: pointer;
   }
-  .sr-adv-btn:hover { color: var(--gold); }
   .sr-modal-backdrop {
     position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,.66);
     display: flex; align-items: center; justify-content: center; padding: 16px;
@@ -682,206 +626,16 @@
     text-decoration: underline;
     background: var(--stat-atk-soft);
   }
-  .sr-stat-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 7px;
-  }
-  @media (max-width: 480px) {
-    .sr-stat-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-  .sr-stat-cell {
-    background: var(--panel-2);
-    border: 1px solid var(--line);
-    border-radius: 3px;
-    padding: 7px 8px 6px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    min-height: 64px;
-    transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
-    cursor: text;
-    position: relative;
-    box-sizing: border-box;
-  }
-  /* Signature stat accent (--sc, set per cell from --stat-*) */
-  .sr-stat-cell { border-color: color-mix(in srgb, var(--sc) 40%, var(--line)); }
-  .sr-stat-cell:hover {
-    border-color: var(--sc);
-  }
-  .sr-stat-cell:focus-within {
-    border-color: var(--sc);
-    background: color-mix(in srgb, var(--sc) 12%, var(--panel-2));
-    box-shadow: 0 0 8px color-mix(in srgb, var(--sc) 45%, transparent);
-  }
-  .sr-stat-cell.impossible {
-    border-color: var(--seal) !important;
-    background: var(--stat-atk-soft) !important;
-    box-shadow: 0 0 0 2px rgba(239,68,68,0.15) !important;
-  }
-  .sr-stat-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    line-height: 1;
-  }
-  .sr-stat-name {
-    font-size: 10.5px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    color: var(--sc);
-    text-transform: uppercase;
-  }
-  .sr-stat-range {
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--gold);
-    letter-spacing: -0.01em;
-  }
-  .sr-stat-range.hidden {
-    display: none;
-  }
-  .sr-stat-cell input[type="number"] {
-    width: 100%;
-    background: transparent;
-    border: none;
-    outline: none;
-    font-size: 17px;
-    font-weight: 700;
-    color: var(--text);
-    padding: 0;
-    font-family: inherit;
-    -moz-appearance: textfield;
-    margin: 3px 0;
-    text-align: left;
-    line-height: 1.2;
-    box-sizing: border-box;
-  }
-  .sr-stat-cell input[type="number"]::placeholder {
-    color: var(--muted);
-    opacity: 0.35;
-    font-weight: normal;
-  }
-  .sr-stat-cell input[type="number"]::-webkit-outer-spin-button,
-  .sr-stat-cell input[type="number"]::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-  }
-  /* desktop: the minimum inputs look like boxes to type in (review 2026-10-30: a bare grey "—" did not read as a field) */
-  @media (min-width: 761px) {
-    .sr-stat-cell input[type="number"] { height: 30px; padding: 0 8px; background: rgba(0,0,0,.28); border: 1px solid var(--line); border-radius: 3px; }
-    .sr-stat-cell input[type="number"]:focus { border-color: var(--sc); }
-    .sr-stat-cell input[type="number"]::placeholder { opacity: .6; }
-  }
-  .sr-stat-bottom {
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    font-size: 9.5px;
-    color: var(--muted);
-    line-height: 1.2;
-  }
-  .sr-action-btn {
-    width: 100%;
-    padding: 9.5px 14px;
-    font-size: 13px;
-    font-weight: 700;
-    font-family: inherit;
-    background: linear-gradient(180deg, #deb838 0%, #b88f1e 100%);
-    color: #14110b;
-    border: 1px solid #e5bd42;
-    border-radius: 3px;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    letter-spacing: 0.02em;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.25);
-    text-shadow: 0 1px 0 rgba(255,255,255,0.2);
-    box-sizing: border-box;
-  }
-  .sr-action-btn:hover:not(:disabled) {
-    background: linear-gradient(180deg, #e8c446 0%, #c9a027 100%);
-    box-shadow: 0 3px 10px rgba(201,162,39,0.35), inset 0 1px 0 rgba(255,255,255,0.35);
-    transform: translateY(-1px);
-  }
-  .sr-action-btn:active:not(:disabled) {
-    transform: translateY(0);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-  }
-  .sr-action-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    background: var(--panel-2);
-    color: var(--muted);
-    border-color: var(--line);
-    box-shadow: none;
-    text-shadow: none;
-  }
-  .sr-result-box {
-    background: var(--panel-2);
-    border: 1px solid var(--line);
-    border-radius: 3px;
-    padding: 12px 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.15);
-    animation: fadeIn 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
+  .sr-result-box { animation: fadeIn 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); }   /* the recommender's result (no box since 2026-11-20) */
   @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-  .sr-metric-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-  .sr-metric {
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 3px;
-    padding: 8px 10px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  }
   .sr-metric-lbl {
-    font-size: 10px;
+    font-size: 14px;
     text-transform: uppercase;
-    letter-spacing: 0.07em;
+    letter-spacing: 0.04em;
     color: var(--muted);
     font-weight: 700;
-    margin-bottom: 3px;
+    margin-bottom: 10px !important;
     line-height: 1.2;
-  }
-  .sr-metric-val {
-    font-size: 18px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    color: var(--text);
-    line-height: 1.1;
-  }
-  .sr-metric-val.good { color: var(--stat-tal); }
-  .sr-metric-val.warn { color: var(--gold); }
-  .sr-metric-val.bad { color: var(--seal); }
-  .sr-summary-text {
-    font-size: 12px;
-    color: var(--muted);
-    line-height: 1.55;
-    border-top: 1px solid var(--line);
-    padding-top: 8px;
-  }
-  .sr-summary-text strong {
-    color: var(--text);
-    font-weight: 600;
-  }
-  .sr-tag {
-    display: inline-block;
-    background: var(--gold-soft);
-    border: 1px solid var(--gold);
-    color: var(--gold);
-    font-size: 10.5px;
-    padding: 2px 7px;
-    border-radius: 12px;
-    margin: 1px 3px 1px 0;
-    font-weight: 700;
-    letter-spacing: 0.02em;
   }
   .sr-err-msg {
     background: var(--stat-atk-soft);
@@ -916,7 +670,6 @@
       line-height: 1.2;
       margin: 0;
     }
-    .sr-header-sub { display: none !important; }
     .sr-header-controls {
       display: flex;
       align-items: center;
@@ -925,270 +678,59 @@
       padding-top: 0;
     }
     .sr-class-select-wrap label { display: none; }
-    .sr-cls-custom-picker .cls-picker-btn {
-      height: 30px;
-      padding: 2px 7px 2px 5px;
-      font-size: 11.5px;
-    }
+    .sr-cls-custom-picker .cls-picker-btn { font-size: 11.5px; }
     .sr-cls-custom-picker .cls-picker-thumb { width: 18px; height: 18px; }
-    .sr-lang-toggle { padding: 1px; }
-    .sr-lang-btn { font-size: 10px; padding: 2px 7px; }
-    .sr-deck { gap: 10px; }
+    .sr-lang-btn { font-size: 10px; }
     .sr-card { padding: 10px 12px; gap: 8px; }
     .sr-card-title { font-size: 13.5px; }
-    .sr-stat-grid { gap: 5px; }
-    .sr-stat-cell { min-height: 52px; padding: 5px 6px 4px; }
-    .sr-stat-cell input[type="number"] { font-size: 15px; margin: 1px 0; }
-    .sr-action-btn { padding: 8px 12px; font-size: 12.5px; }
-    .sr-result-box { padding: 8px 10px; gap: 6px; }
-    .sr-metric { padding: 6px 8px; }
-    .sr-metric-val { font-size: 16px; }
-    .sr-summary-text { font-size: 11px; padding-top: 6px; }
-    .sr-rec-grid { gap: 4px; }
-    .sr-rec-btn { padding: 4px 6px; font-size: 11px; }
   }
 
   @media (max-height: 820px) {
     .sr-wrap { padding: 10px 14px 12px; }
     .sr-header { padding-bottom: 8px; margin-bottom: 8px; }
     .sr-card { padding: 10px 12px; gap: 8px; }
-    .sr-stat-cell { min-height: 52px; padding: 5px 6px 4px; }
-    .sr-action-btn { padding: 7px 12px; font-size: 12px; }
   }
   .sr-err-msg strong {
     display: block;
     font-weight: 700;
     margin-bottom: 2px;
   }
-  .sr-guaranteed-msg {
-    background: var(--gold-soft);
-    border: 1px solid var(--gold);
-    border-radius: 3px;
-    padding: 10px 12px;
-    color: var(--gold);
-    font-size: 12px;
-    line-height: 1.5;
-    animation: fadeIn 0.2s ease;
-  }
-  .sr-guaranteed-msg strong {
-    display: block;
-    font-weight: 700;
-    margin-bottom: 2px;
-  }
-  /* Tactile recommender toggles */
-  .sr-rec-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
-  }
-  @media (max-width: 480px) {
-    .sr-rec-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-  .sr-rec-toggle {
-    background: var(--panel-2);
-    border: 1px solid var(--line);
-    border-radius: 3px;
-    padding: 7.5px 4px;
-    text-align: center;
-    cursor: pointer;
-    user-select: none;
-    transition: all 0.15s ease;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    box-sizing: border-box;
-  }
-  /* Each stat wears its signature accent (--sc, set per button from --stat-*): tinted border when idle, tinted fill + glow when active */
-  .sr-rec-toggle {
-    border-color: color-mix(in srgb, var(--sc) 40%, var(--line));
-  }
-  .sr-rec-toggle:hover {
-    border-color: var(--sc);
-    transform: translateY(-1px);
-  }
-  .sr-rec-toggle:active {
-    transform: translateY(0);
-  }
-  .sr-rec-toggle.active {
-    background: color-mix(in srgb, var(--sc) 24%, var(--panel-2));
-    border-color: var(--sc);
-    box-shadow: 0 0 8px color-mix(in srgb, var(--sc) 45%, transparent);
-  }
+  /* Recommender stat toggles: plain text, their look is in the "Stat Roll, containerless" block below */
+  .sr-rec-grid { display: grid; }
+  .sr-rec-toggle { text-align: center; cursor: pointer; user-select: none; box-sizing: border-box; }
   .sr-rec-name {
-    font-size: 10.5px;
     font-weight: 700;
-    letter-spacing: 0.06em;
     color: var(--sc);
     text-transform: uppercase;
     transition: color 0.15s ease;
     line-height: 1;
   }
-  .sr-presets {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-  }
-  .sr-preset-lbl {
-    font-size: 10.5px;
-    color: var(--muted);
-    margin-right: 2px;
-  }
-  .sr-preset-btn {
-    font-family: inherit;
-    font-size: 10.5px;
-    font-weight: 700;
-    background: var(--panel-2);
-    border: 1px solid var(--line);
-    color: var(--muted);
-    padding: 2.5px 7px;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    line-height: 1.2;
-  }
-  .sr-preset-btn:hover {
-    color: var(--text);
-    border-color: var(--gold);
-    background: var(--panel);
-  }
-  .sr-preset-btn.active {
-    background: var(--gold);
-    color: #14110b;
-    border-color: #e5bd42;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
-  }
-  .sr-num-input {
-    width: 100%;
-    padding: 7px 10px;
-    font-size: 13.5px;
-    font-weight: 600;
-    font-family: inherit;
-    background: var(--panel-2);
-    border: 1px solid var(--line);
-    border-radius: 3px;
-    color: var(--text);
-    outline: none;
-    transition: all 0.15s ease;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.15);
-    box-sizing: border-box;
-  }
-  .sr-num-input:focus {
-    border-color: var(--gold);
-    box-shadow: 0 0 0 2px var(--gold-soft);
-  }
-  .sr-progress-bg {
-    width: 100%;
-    height: 5px;
-    background: var(--panel-2);
-    border-radius: 3px;
-    overflow: hidden;
-    display: none;
-    margin-top: -4px;
-  }
-  .sr-progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #b88f1e, #deb838);
-    width: 0%;
-    transition: width 0.08s linear;
-  }
-
-  /* ---- Compact Tabbed Recommender (Option 2) ---- */
-  .sr-rec-tab-bar {
-    display: flex;
-    gap: 4px;
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 4px;
-    padding: 2px;
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.15);
-  }
-  .sr-rec-tab {
-    flex: 1;
-    padding: 4px 6px;
-    font-size: 10.5px;
-    font-weight: 700;
-    font-family: inherit;
-    background: transparent;
-    border: none;
-    border-radius: 3px;
-    color: var(--muted);
-    cursor: pointer;
-    transition: all 0.15s ease;
-    text-align: center;
-    white-space: nowrap;
-    line-height: 1.2;
-  }
-  .sr-rec-tab:hover:not(.active) {
-    color: var(--text);
-    background: var(--gold-soft);
-  }
-  .sr-rec-tab.active {
-    background: var(--gold);
-    color: #14110b;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.25);
-  }
-  .sr-rec-card {
-    background: var(--panel);
-    border: 1px solid var(--line);
-    border-radius: 3px;
-    padding: 8px 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  /* ---- Recommender hero at full size (2026-09-26): real type sizes instead of zoom,
-     the result reads as a ledger entry: target line, then probability as the hero figure ---- */
-  .sr-hero .sr-card-head { margin-bottom: 14px; }
+  /* ---- Recommender hero at full size (2026-09-26): real type sizes instead of zoom ---- */
   .sr-hero .sr-card-title { font-size: 20px; gap: 10px; }
   .sr-hero .sr-card-title::before { width: 10px; height: 10px; }
-  .sr-hero .sr-adv-btn { font-size: 20px; padding: 4px 10px; }
-  .sr-hero .sr-metric-lbl { font-size: 14px; letter-spacing: 0.04em; margin-bottom: 10px !important; }
-  .sr-hero .sr-rec-grid { gap: 10px; }
-  .sr-hero .sr-rec-toggle { padding: 18px 8px; }
-  .sr-hero .sr-rec-name { font-size: 20px; letter-spacing: 0.08em; }
-  .sr-hero .sr-result-box { padding: 14px; gap: 14px; }
-  .sr-hero .sr-rec-tab-bar { padding: 4px; gap: 6px; }
-  .sr-hero .sr-rec-tab { font-size: 16px; padding: 12px 10px; }
-  .sr-hero .sr-rec-card { padding: 22px 26px 18px; gap: 18px; }
-  .sr-hero .sr-err-msg, .sr-hero .sr-guaranteed-msg { font-size: 15px; padding: 14px 16px; }
-  /* no stat picked yet: a dashed box where the result will show, as tall as the result so the card keeps its size (review 2026-10-30); phones skip it */
-  .sr-rec-empty { display: flex; align-items: center; justify-content: center; min-height: 340px; padding: 16px; border: 1px dashed var(--line); border-radius: 3px; color: var(--muted); font-size: 16px; text-align: center; }
-  /* the door to the advanced mode: a labelled pill like วิธีใช้ (review 2026-10-30: a bare % did not say what it opens); hover = a small lift. Phones keep the bare % */
-  @media (min-width: 761px) {
-    .sr-hero .sr-adv-btn { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; padding: 7px 15px; border: 1px solid rgba(212,175,55,.38); border-radius: 20px; background: rgba(212,175,55,.14); color: #d4af37; transition: transform .15s ease, background-color .15s ease; }
-    .sr-hero .sr-adv-btn:hover { transform: translateY(-1px); background: rgba(212,175,55,.24); color: #d4af37; }
-  }
+  .sr-hero .sr-err-msg { font-size: 15px; padding: 14px 16px; }
+  /* no stat picked yet: an empty space as tall as the result, so the card keeps its size (review 2026-10-30); phones skip it */
+  .sr-rec-empty { display: flex; align-items: center; justify-content: center; min-height: 300px; padding: 16px; color: var(--muted); font-size: 16px; text-align: center; }
+  @media (min-width: 761px) { .sr-hero .sr-adv-btn { display: inline-flex; align-items: center; gap: 6px; } }
   @media (max-width: 760px) { .sr-adv-lbl, .sr-rec-empty { display: none; } }
-  .sr-rec-target {
-    font-family: 'Prompt', sans-serif;
-    font-size: 30px; font-weight: 700; line-height: 1.2; color: var(--text);
-    font-variant-numeric: lining-nums;
-  }
-  .sr-rec-target .sr-rec-ge { color: var(--muted); font-weight: 400; margin: 0 0.12em; }
-  .sr-rec-hero { display: grid; grid-template-columns: 1.4fr 1fr; gap: 26px; align-items: end; }
-  .sr-rec-fig + .sr-rec-fig { border-left: 1px solid var(--line); padding-left: 26px; }
   .sr-rec-num {
     font-family: 'Prompt', sans-serif;
-    font-size: 64px; font-weight: 700; line-height: 1; letter-spacing: -0.02em;
+    font-size: 54px; font-weight: 700; line-height: 1; letter-spacing: -0.015em;
     font-variant-numeric: lining-nums tabular-nums; color: var(--text);
   }
-  .sr-rec-fig + .sr-rec-fig .sr-rec-num { font-size: 48px; }
   .sr-rec-num.good { color: var(--stat-tal); }
   .sr-rec-num.warn { color: var(--gold); }
   .sr-rec-num.bad { color: var(--seal); }
-  .sr-rec-lbl { font-size: 14px; font-weight: 600; color: var(--muted); margin-top: 10px; }
-  .sr-rec-foot { font-size: 14px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 12px; }
+  .sr-rec-foot { font-size: 14px; color: var(--muted); }
   .sr-rec-foot strong { color: var(--text); font-weight: 700; margin-left: 6px; }
   /* Header controls at the same scale as the hero (desktop; the <=640px header keeps its compact sizes) */
   @media (min-width: 641px) {
     .sr-header .sr-header-title { font-size: 28px; }
-    .sr-header .chm-header-pill { font-size: 14px; padding: 8px 16px; }
+    .sr-header .chm-header-pill { font-size: 14px; }
     .sr-header .sr-class-select-wrap label { font-size: 14px; }
-    .sr-header .cls-picker-btn { height: 54px; }
     .sr-header .cls-picker-thumb { width: 46px; height: 46px; }
     .sr-header .cls-picker-name { font-size: 16px; }
-    .sr-header .sr-lang-toggle { padding: 3px; }
-    .sr-header .sr-lang-btn { font-size: 14px; padding: 6px 14px; }
+    .sr-header .sr-lang-btn { font-size: 14px; }
   }
   /* Stat-roll tour popover, sized up from the shared chm-guide base */
   .chm-guide-popover.sr-guide { padding: 22px 26px; border-radius: 10px; }
@@ -1208,18 +750,120 @@
   }
   @media (max-width: 640px) {
     .sr-hero .sr-card-title { font-size: 16px; }
-    .sr-hero .sr-rec-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
-    .sr-hero .sr-rec-toggle { padding: 13px 2px; }
-    .sr-hero .sr-rec-name { font-size: 15px; letter-spacing: 0.04em; }
-    .sr-hero .sr-result-box { padding: 8px; gap: 10px; }
-    .sr-hero .sr-rec-tab { font-size: 13px; padding: 10px 4px; white-space: normal; }
-    .sr-hero .sr-rec-card { padding: 16px 16px 14px; gap: 14px; }
-    .sr-rec-target { font-size: 22px; }
-    .sr-rec-hero { gap: 14px; }
-    .sr-rec-fig + .sr-rec-fig { padding-left: 14px; }
-    .sr-rec-num { font-size: 32px; }
-    .sr-rec-fig + .sr-rec-fig .sr-rec-num { font-size: 26px; }
-    .sr-rec-lbl, .sr-rec-foot { font-size: 12.5px; }
+    .sr-rec-foot { font-size: 12.5px; }
+  }
+  /* ---- Stat Roll, containerless (user 2026-11-20: mock A's stat row + mock B's three levels side by side, of 4 mocks) ----
+     No boxes: the server looks no longer dress the hero, its result, the stat toggles or EN / TH (taken out of THEME_SURFACES), the header
+     pills are plain text, a gold hairline that fades at both ends sits under the header, each stat shows the range this class can roll
+     under its name with an underline when picked, and the three levels stand side by side, split by vertical hairlines (stacked on phones). */
+  .sr-header { position: relative; }
+  .sr-header::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; pointer-events: none; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--gold) 45%, transparent), transparent); }
+  .sr-header .chm-header-guide-btn, .sr-header .chm-header-guide-btn:hover { background: none; border: 0; box-shadow: none; transform: none; padding: 4px 0; letter-spacing: 0; }
+  .sr-header .chm-header-guide-btn { color: var(--muted); font-weight: 600; }
+  .sr-header .chm-header-guide-btn:hover { color: var(--text); }
+  .sr-header .sr-cls-custom-picker .cls-picker-btn { background: none !important; border: 0; box-shadow: none !important; --th-blur: none; padding: 0; height: auto; }
+  .sr-header .sr-cls-custom-picker .cls-picker-btn:hover .cls-picker-name { color: var(--gold); }
+  .sr-header .sr-lang-toggle { gap: 14px; }
+  .sr-header .sr-lang-btn, .sr-header .sr-lang-btn.active { background: none; box-shadow: none; border-radius: 0; padding: 3px 0; border-bottom: 2px solid transparent; color: var(--muted); }
+  .sr-header .sr-lang-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+  .sr-header .sr-lang-btn:hover:not(.active) { color: var(--text); }
+  .sr-card.sr-hero { background: none; border: 0; border-radius: 0; box-shadow: none; padding: 0; }   /* both classes, to outrank .sr-card's box */
+  .sr-hero .sr-card-head { margin: 10px 0 16px; }
+  .sr-hero .sr-adv-lbl { color: var(--muted); font-weight: 600; transition: color .15s ease; }
+  .sr-hero .sr-adv-btn:hover .sr-adv-lbl { color: var(--text); }
+  .sr-rec-hint { font-style: normal; font-weight: 400; color: var(--muted); opacity: .75; margin-left: 8px; letter-spacing: 0; }
+  .sr-hero .sr-rec-grid { grid-template-columns: repeat(8, 1fr); gap: 0; }
+  .sr-hero .sr-rec-toggle { padding: 10px 0 8px; display: flex; flex-direction: column; align-items: center; gap: 5px; opacity: .4; transition: opacity .15s ease; }
+  .sr-hero .sr-rec-toggle:hover { opacity: .72; }
+  .sr-hero .sr-rec-toggle.active { opacity: 1; }
+  .sr-hero .sr-rec-name { font-size: 25px; letter-spacing: .02em; }
+  .sr-rec-range { font-size: 12px; font-weight: 500; color: var(--muted); line-height: 1.2; min-height: 1.2em; }
+  .sr-rec-bar { width: 28px; height: 3px; border-radius: 2px; background: var(--sc); transform: scaleX(0); transition: transform .18s ease; }
+  .sr-rec-toggle.active .sr-rec-bar { transform: scaleX(1); }
+  .sr-rec-goal { margin: 30px 0 4px; display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .sr-rec-goal small { font-size: 14px; color: var(--muted); }
+  .sr-rec-names { font-size: 26px; font-weight: 700; }
+  .sr-rec-tiers { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 20px; }
+  .sr-rec-tier { position: relative; min-width: 0; padding: 6px 36px 8px; }
+  .sr-rec-tier:first-child { padding-left: 4px; }
+  .sr-rec-tier + .sr-rec-tier::before { content: ""; position: absolute; left: 0; top: 4%; bottom: 4%; width: 1px; background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--gold) 42%, transparent), transparent); }
+  .sr-rec-tier-name { font-size: 15.5px; font-weight: 600; color: var(--muted); }
+  .sr-rec-tier-sum { font-size: 30px; font-weight: 700; color: var(--text); margin: 8px 0 18px; }
+  .sr-rec-tier-sum small { font-size: 14px; font-weight: 500; color: var(--muted); margin-right: 8px; }
+  .sr-rec-tier-rolls { font-size: 18px; font-weight: 600; color: var(--text); margin-top: 12px; }
+  .sr-rec-tier-rolls span { font-size: 14px; font-weight: 500; color: var(--muted); margin-left: 6px; }
+  .sr-rec-meter { height: 3px; border-radius: 2px; margin-top: 20px; overflow: hidden; background: color-mix(in srgb, var(--text) 9%, transparent); }
+  .sr-rec-meter i { display: block; height: 100%; border-radius: 2px; background: currentColor; }
+  .sr-rec-meter.good { color: var(--stat-tal); }
+  .sr-rec-meter.warn { color: var(--gold); }
+  .sr-rec-meter.bad { color: var(--seal); }
+  .sr-hero .sr-rec-foot { margin-top: 30px; }
+  @media (max-width: 640px) {
+    .sr-hero .sr-rec-grid { grid-template-columns: repeat(4, 1fr); row-gap: 6px; }
+    .sr-hero .sr-rec-toggle { padding: 8px 0 6px; }
+    .sr-hero .sr-rec-name { font-size: 20px; }
+    .sr-rec-hint { display: block; margin: 2px 0 0; }
+    .sr-rec-goal { margin-top: 22px; }
+    .sr-rec-names { font-size: 22px; }
+    .sr-rec-tiers { grid-template-columns: 1fr; margin-top: 8px; }
+    .sr-rec-tier, .sr-rec-tier:first-child { padding: 16px 2px; }
+    .sr-rec-tier + .sr-rec-tier::before { left: 0; right: 0; top: 0; bottom: auto; width: auto; height: 1px; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--gold) 42%, transparent), transparent); }
+    .sr-rec-tier-sum { font-size: 24px; margin: 4px 0 10px; }
+    .sr-rec-tier .sr-rec-num { font-size: 40px; }
+    .sr-hero .sr-rec-foot { margin-top: 14px; }
+  }
+  /* ---- Stat Roll advanced pop-up (user 2026-11-20, mock B "steppers" of 4, without the mock's +1 budget line): the pop-up keeps its one
+     panel, nothing boxed inside. A − / + stepper per stat over the values this class can roll (the first + jumps to the lowest value worth
+     asking for), that stat's own chance under it, and the combined chance live under a hairline (no Calculate button). Sizes are before the
+     pop-up's own zoom (1.3 or the page's scale from 901 px). */
+  .sr-modal .sr-card-head { align-items: flex-start; gap: 14px; margin-bottom: 0; }
+  .sr-modal .sr-card-head > span { gap: 12px; }
+  .sr-adv-titles { flex: 1; min-width: 0; }
+  .sr-adv-sub { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+  .sr-adv-cls { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--text); }
+  .sr-adv-cls img { width: 24px; height: 24px; object-fit: contain; }
+  .sr-modal .sr-clear-btn:not(.sr-modal-close) { color: var(--muted); opacity: 1; padding: 2px 0; }
+  .sr-modal .sr-clear-btn:not(.sr-modal-close):hover { color: var(--text); background: none; text-decoration: none; }
+  .sr-adv-rule { height: 1px; border: 0; margin: 12px 0 14px; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--gold) 42%, transparent), transparent); }
+  .sr-adv-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px 8px; }
+  .sr-adv-cell { position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 3px 0; }
+  .sr-adv-cell + .sr-adv-cell::before { content: ""; position: absolute; left: -4px; top: 12%; bottom: 12%; width: 1px; background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--gold) 20%, transparent), transparent); }
+  .sr-adv-cell:nth-child(4n+1)::before { display: none; }
+  .sr-adv-name { font-size: 12.5px; font-weight: 700; color: var(--sc); }
+  .sr-adv-name small { font-size: 9.5px; font-weight: 500; color: var(--muted); opacity: .8; margin-left: 5px; }
+  .sr-adv-ctl { display: flex; align-items: center; gap: 8px; }
+  .sr-adv-step { width: 26px; height: 26px; padding: 0; border-radius: 50%; border: 0; background: none; cursor: pointer; font: 400 15px/1 'Prompt', sans-serif; color: var(--muted);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--sc) 35%, transparent); transition: color .12s ease, transform .12s ease; }
+  .sr-adv-step:hover:not(:disabled) { color: var(--sc); transform: translateY(-1px); }
+  .sr-adv-step:disabled { opacity: .25; cursor: default; }
+  .sr-adv-val { min-width: 2.6ch; text-align: center; font-size: 24px; font-weight: 700; line-height: 1; color: var(--text); }
+  .sr-adv-val.off { color: var(--muted); opacity: .6; font-weight: 500; }
+  .sr-adv-one { font-size: 10px; color: var(--muted); opacity: .8; min-height: 1.3em; }
+  .sr-adv-res { position: relative; display: flex; align-items: flex-end; gap: 24px; min-height: 68px; margin-top: 14px; padding-top: 14px; }
+  .sr-adv-res::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 1px; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--gold) 42%, transparent), transparent); }
+  .sr-adv-vr { width: 1px; align-self: stretch; background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--gold) 42%, transparent), transparent); }
+  .sr-adv-big { font-size: 36px; font-weight: 700; line-height: 1; letter-spacing: -.015em; color: var(--text); }
+  .sr-adv-big.good { color: var(--stat-tal); }
+  .sr-adv-big.warn { color: var(--gold); }
+  .sr-adv-big.bad { color: var(--seal); }
+  .sr-adv-big2 { font-size: 26px; font-weight: 700; line-height: 1; color: var(--text); }
+  .sr-adv-k { font-size: 11px; color: var(--muted); margin-top: 6px; }
+  .sr-adv-msg { font-size: 12.5px; color: var(--muted); align-self: center; }
+  .sr-adv-no { font-size: 24px; font-weight: 700; color: var(--seal); line-height: 1.1; }
+  .sr-adv-why { font-size: 11.5px; color: var(--muted); margin-top: 5px; }
+  .sr-adv-sum { font-size: 11.5px; color: var(--muted); margin: 10px 0 0; }
+  .sr-adv-sum b { font-weight: 600; }
+  @media (max-width: 640px) {
+    .sr-adv-sub, .sr-adv-cls { display: none; }
+    .sr-adv-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 8px; }
+    .sr-adv-cell:nth-child(4n+1)::before { display: block; }
+    .sr-adv-cell:nth-child(2n+1)::before { display: none; }
+    .sr-adv-name { font-size: 14px; }
+    .sr-adv-step { width: 32px; height: 32px; font-size: 18px; }
+    .sr-adv-val { font-size: 26px; }
+    .sr-adv-one { font-size: 11px; }
+    .sr-adv-big { font-size: 32px; }
+    .sr-adv-big2 { font-size: 24px; }
   }
   /* ---- header ---- */
   /* no line under the hub bar on any page (user 2026-10-23: "remove the gold thin line from every page"; the menu went without it on
@@ -3200,70 +2844,72 @@
   }
   /* the donor ticker in the hub bar stops short of this tool's long page title on 1366-wide windows (windowed review 2026-10-30) */
   @media (min-width: 901px) and (max-width: 1440px){ html.tool-cao .donate-thanks.hub-thanks{max-width:34vw} }
-  .sg-controls{
-    background:var(--panel-2); border:1px solid var(--line); border-radius:3px;
-    padding:10px 14px; display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:12px; align-items:end;
-  }
-  .sg-controls label{display:block; font-size:10.5px; color:var(--muted); margin:0 0 4px; letter-spacing:.7px; text-transform:uppercase}
-  .sg-controls select,.sg-controls input{
-    width:100%; height:48px; box-sizing:border-box; background:var(--panel); color:var(--text); border:1px solid var(--line);
-    border-radius:6px; padding:6px 12px; font-size:15px; font-weight:700; outline:none; font-family:inherit;
-  }
-  .sg-controls select:focus,.sg-controls input:focus{border-color:var(--gold)}
-  .sg-msg{min-height:18px; margin:8px 2px 0; font-size:13px; color:var(--seal)}
+  /* ---- Stat Gain, containerless (user 2026-11-20, mock B "bars" of 4 mocks) ----
+     No boxes: the controls and the old table are out of THEME_SURFACES. A gold hairline that fades at both ends sits under the title; the
+     server logos are plain pictures (the picked one gold-underlined, no glow); the class is its face and name; the levels are big numbers on a
+     gold underline. Each stat is a bar: the part the current level already has is faint, the gain is in the stat's colour, a full bar is the
+     strongest stat at the server's top level; beside it the gain, "a → b", and under the name how much the stat grows per level. */
+  .sg-head { position: relative; margin: 0; padding: 2px 0 14px; }
+  .sg-head::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; pointer-events: none; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--gold) 45%, transparent), transparent); }
+  .sg-head h2 { font-size: 21px; }
+  .sg-head .sk-server-deps { gap: 14px; }
+  .sg-head .sk-server-btn { width: 40px; height: 40px; position: relative; }
+  .sg-head .sk-server-btn.active { filter: none; transform: none; }
+  .sg-head .sk-server-btn.active::after { content: ""; position: absolute; left: 22%; right: 22%; bottom: -7px; height: 2px; border-radius: 2px; background: var(--gold); }
+  .sg-controls { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px 16px; margin: 22px 0 4px; }
+  .sg-controls > div:first-child { margin-right: 26px; }
+  .sg-controls label { display: block; font-size: 12px; color: var(--muted); margin: 0 0 4px; }
+  .sg-controls .cls-picker-btn { background: none !important; border: 0; box-shadow: none !important; --th-blur: none; padding: 0; height: auto; }
+  .sg-controls .cls-picker-btn:hover .cls-picker-name { color: var(--gold); }
+  .sg-controls .cls-picker-thumb { width: 44px; height: 44px; }
+  .sg-controls .cls-picker-name { font-size: 19px; }
+  .sg-controls input { width: 3.2ch; padding: 0 0 2px; background: none; border: 0; border-bottom: 1px solid color-mix(in srgb, var(--gold) 35%, transparent); border-radius: 0; outline: none;
+    font: 700 28px 'Prompt', sans-serif; color: var(--text); text-align: center; -moz-appearance: textfield; transition: border-color .15s ease; }
+  .sg-controls input:hover { border-bottom-color: color-mix(in srgb, var(--gold) 65%, transparent); }
+  .sg-controls input:focus { border-bottom-color: var(--gold); }
+  .sg-controls input::-webkit-outer-spin-button, .sg-controls input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .sg-arrow { font-size: 20px; color: var(--muted); opacity: .7; padding-bottom: 8px; }
+  .sg-cap { font-size: 12px; color: var(--muted); opacity: .8; padding-bottom: 11px; }
+  .sg-msg { min-height: 18px; margin: 8px 2px 0; font-size: 13px; color: var(--seal); }
   @media (min-width: 761px) { .sg-msg:empty { display: none; } }   /* no blank band under the controls when there is no message (desktop; review 2026-10-30) */
-  .sg-results{margin-top:10px; border:1px solid var(--line); border-radius:3px; overflow:hidden}
-  .sg-results table{width:100%; border-collapse:collapse; font-size:14px}
-  .sg-results thead th{
-    background:var(--panel-2); color:var(--gold); font-weight:700; text-align:center;
-    padding:7px 12px; border-bottom:1px solid var(--gold); font-size:10.5px; letter-spacing:.6px; text-transform:uppercase;
-  }
-  .sg-results thead th:first-child{text-align:left}
-  .sg-results tbody td{padding:7px 12px; text-align:center; border-bottom:1px solid var(--line); font-size:13px}
-  .sg-results tbody tr:last-child td{border-bottom:none}
-  .sg-results tbody tr:hover td{background:var(--gold-soft)}
-  .sg-results tbody td.sg-statcell{text-align:left}
-  .sg-tick{display:inline-block; width:3px; height:13px; margin-right:9px; vertical-align:-2px; border-radius:1px}
-  .sg-stat-abbr{font-weight:700; font-size:13px}
-  .sg-gain{font-weight:700; font-size:14.5px}
-  .sg-gain.zero{color:var(--muted); font-weight:500}
-  .sg-muted{color:var(--muted)}
-  .sg-foot{color:var(--muted); font-size:12px; margin:8px 2px 0; line-height:1.4}
-  @media (min-width: 761px) { .sg-results thead th { font-size: 12px; } }   /* 10.5 px was smaller than it needs to be (review 2026-10-30) */
+  .sg-note { display: flex; align-items: center; gap: 10px; margin: 12px 0 0; font-size: 13px; color: var(--muted); }
+  .sg-note[hidden] { display: none; }
+  .sg-nerf { font-size: 10.5px; font-weight: 700; letter-spacing: .06em; color: #f08c7a; border-bottom: 1.5px solid #f08c7a; padding-bottom: 1px; }
+  .sg-legend { display: flex; flex-wrap: wrap; gap: 6px 20px; margin: 18px 0 0; font-size: 12px; color: var(--muted); }
+  .sg-legend:empty { display: none; }
+  .sg-legend i { display: inline-block; width: 16px; height: 5px; border-radius: 3px; margin-right: 6px; vertical-align: 2px; }
+  .sg-bars { display: flex; flex-direction: column; gap: 11px; margin-top: 14px; }
+  .sg-row { display: grid; grid-template-columns: 96px minmax(0, 1fr) 58px 78px; align-items: center; gap: 14px; }
+  .sg-nm b { display: block; font-size: 16px; font-weight: 700; line-height: 1.2; }
+  .sg-nm small { font-size: 11px; color: var(--muted); opacity: .85; }
+  .sg-track { position: relative; height: 8px; border-radius: 4px; overflow: hidden; background: color-mix(in srgb, var(--text) 7%, transparent); }
+  .sg-track .a { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; opacity: .32; }
+  .sg-track .b { position: absolute; top: 0; bottom: 0; border-radius: 0 4px 4px 0; }
+  .sg-gn { font-size: 19px; font-weight: 700; text-align: right; }
+  .sg-gn.zero { color: var(--muted); font-weight: 500; }
+  .sg-rg { font-size: 13px; color: var(--muted); text-align: right; white-space: nowrap; }
+  .sg-rg b { color: var(--text); font-weight: 500; }
+  .sg-foot { color: var(--muted); font-size: 12px; margin: 18px 2px 0; line-height: 1.4; }
 
   @media (max-width: 640px) {
     .sg { padding: 10px 10px 14px; }
-    .sg-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: nowrap;
-      gap: 8px;
-      margin: 0 0 6px;
-    }
-    .sg-head h2 {
-      font-size: 14.5px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      line-height: 1.2;
-      margin: 0;
-    }
-    .sg-controls { padding: 8px 10px; gap: 8px; grid-template-columns: 1fr; }
-    .sg-controls select, .sg-controls input { height: 38px; font-size: 13.5px; padding: 4px 8px; }
-    .sg-results table { font-size: 12.5px; }
-    .sg-results thead th { padding: 5px 6px; font-size: 9.5px; }
-    .sg-results tbody td { padding: 5px 6px; font-size: 12px; }
-    .sg-stat-abbr { font-size: 12px; }
-    .sg-gain { font-size: 13px; }
-    .sg-foot { font-size: 10.5px; margin-top: 6px; }
+    .sg-head { flex-wrap: nowrap; gap: 8px; padding-bottom: 12px; }
+    .sg-head h2 { font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
+    .sg-head .sk-server-deps { gap: 6px; }
+    .sg-head .sk-server-btn { width: 30px; height: 30px; }
+    .sg-controls { margin-top: 16px; gap: 10px 12px; }
+    .sg-controls > div:first-child { flex-basis: 100%; margin-right: 0; }
+    .sg-controls input { font-size: 24px; }
+    .sg-row { grid-template-columns: 50px minmax(0, 1fr) 46px; gap: 10px; }
+    .sg-nm small, .sg-rg { display: none; }
+    .sg-gn { font-size: 16px; }
+    .sg-foot { font-size: 10.5px; margin-top: 12px; }
   }
 
   @media (max-height: 820px) {
     .sg { padding: 10px 14px 12px; }
-    .sg-controls { padding: 6px 10px; gap: 6px; }
-    .sg-controls select, .sg-controls input { height: 38px; font-size: 13px; }
-    .sg-results tbody td { padding: 4px 8px; font-size: 12px; }
+    .sg-controls { margin-top: 16px; }
+    .sg-bars { gap: 9px; }
   }
 
   .sg-gate{
@@ -3449,9 +3095,7 @@
        would render as a solid gold rectangle before any class is selected. */
     visibility:hidden;
   }
-  .sg-controls,.sg-msg,.sg-results,.sg-foot{position:relative}
-
-  @media(max-width:620px){.sg-controls{grid-template-columns:1fr 1fr}}
+  .sg-controls,.sg-msg,.sg-note,.sg-legend,.sg-bars,.sg-foot{position:relative}
 
   /* ================= skill cooldown lookup tool ================= */
   /* Vertical rhythm here is deliberately tight (2026-08-14): this tool runs
@@ -7089,6 +6733,28 @@
     .sk-hero > .sk-hero-head > .sk-hero-desc{flex-basis:100%; margin-left:0}
     .sk-hero > .sk-hero-head:has(.sk-hero-pips):has(.sk-hero-desc){row-gap:20px; margin-bottom:12px}
   }
+  /* Description frame (user 2026-11-20): no box, no wash and no left bar (the pull quote is gone); a 1 px gold hairline above and
+     below that fades at both ends. Long descs stay left-aligned at 12 px with their icon columns and topics, the lines full width.
+     Short desc (variant C of 6 mocks): no icon lines, no topic groups, no • bullet and at most 2 lines at 12 px (markHeroShortDesc:
+     .is-short, .is-short-2 for two lines) = centred and bigger, its hairlines 12 % in from each side. A short lead over icon lines
+     (.is-short-lead, user 2026-11-20: Phantasm Blast) = only the lead centred and bigger; the icon lines and the full hairlines stay. */
+  .sk-hero > .sk-hero-head > .sk-hero-desc{position:relative; border-left:0; background:none; padding:9px 2px 8px}
+  .sk-hero > .sk-hero-head > .sk-hero-desc::before,
+  .sk-hero > .sk-hero-head > .sk-hero-desc::after{content:""; position:absolute; left:0; right:0; height:1px; pointer-events:none; background:linear-gradient(90deg, transparent, color-mix(in srgb, var(--gold) 55%, transparent), transparent)}
+  .sk-hero > .sk-hero-head > .sk-hero-desc::before{top:0}
+  .sk-hero > .sk-hero-head > .sk-hero-desc::after{bottom:0}
+  .sk-hero > .sk-hero-head > .sk-hero-desc.is-short{text-align:center; text-wrap:balance; font-size:16px; line-height:1.45; padding:11px 40px}
+  .sk-hero > .sk-hero-head > .sk-hero-desc.is-short.is-short-2{font-size:15px}
+  .sk-hero > .sk-hero-head > .sk-hero-desc.is-short::before,
+  .sk-hero > .sk-hero-head > .sk-hero-desc.is-short::after{left:12%; right:12%}
+  .sk-hero > .sk-hero-head > .sk-hero-desc.is-short-lead > .sk-desc-lead{display:block; text-align:center; text-wrap:balance; font-size:16px; line-height:1.45; padding:2px 40px 3px}
+  .sk-hero > .sk-hero-head > .sk-hero-desc.is-short-lead.is-short-2 > .sk-desc-lead{font-size:15px}
+  @media (max-width:620px){
+    .sk-hero > .sk-hero-head > .sk-hero-desc.is-short-lead > .sk-desc-lead{font-size:15px; padding:2px 14px 3px}
+    .sk-hero > .sk-hero-head > .sk-hero-desc.is-short{font-size:15px; padding:10px 14px; margin-top:10px}
+    .sk-hero > .sk-hero-head > .sk-hero-desc.is-short::before,
+    .sk-hero > .sk-hero-head > .sk-hero-desc.is-short::after{left:4%; right:4%}
+  }
   /* Effect-line list (renderDescWithMods, user 2026-10-26): every run of "**Name:** effect" lines, each line led by its skill's or gear's
      icon. Two or more lines = two columns (.sk-desc-col), each its own stack, so a tall line never leaves a hole beside it (user
      2026-10-28: with every toggle on, the old shared-row grid left gaps); the left column takes the first half and balanceDescCols
@@ -8130,25 +7796,11 @@
     color: var(--text);
     background: rgba(255,255,255,0.04);
   }
-  .sg-controls .cls-custom-picker {
-    width: 100%;
-  }
-  .sg-controls .cls-picker-btn {
-    width: 100%;
-    justify-content: flex-start;
-  }
-  .sg-controls .cls-picker-arrow {
-    margin-left: auto;
-  }
-  /* desktop: the class picker lines up with the level inputs (review 2026-10-30): a block box (no inline gap under it) at the inputs' height */
-  @media (min-width: 761px) {
-    .sg-controls .cls-custom-picker { display: block; }
-    .sg-controls .cls-picker-btn { display: flex; }
-  }
-  @media (min-width: 761px) and (max-height: 820px) {
-    .sg-controls .cls-picker-btn { height: 38px; }
-    .sg-controls .cls-picker-thumb { width: 32px; height: 32px; }
-  }
+  /* Stat Gain's class picker (no box since 2026-11-20): the face, the name and ▾ side by side at their own width, the rest of its look in the
+     "Stat Gain, containerless" block (the old rules sized it like the boxed level inputs) */
+  .sg-controls .cls-picker-btn { justify-content: flex-start; }
+  .sg-controls .cls-picker-arrow { margin-left: 2px; }
+  @media (max-height: 820px) { .sg-controls .cls-picker-thumb { width: 38px; height: 38px; } }
   .sr-header-controls .cls-picker-menu {
     right: 0;
     left: auto;
@@ -11548,6 +11200,14 @@ const WOLF_TARGET_ARMOR_BREAK_DEP = { id:"targetArmorBreak", label:"Armor Break 
 const WOLF_WILDHEART_DEP = { id: "wildHeart", label: "Wild Heart", icon: "wolf_wildHeart5", minRank: 0, maxRank: 1 };
 // Feral Instinct 1-4; rank 5 = Feral Instinct 4 + Wild Heart (+1 level), one toggle (user 2026-10-08). Rank 5 uses the Wild Heart art.
 const WOLF_FERALINSTINCT_DEP = { id: "wolfFeralInstinct", label: "Feral Instinct / Wild Heart", icon: "wolf_feralInstinct4", minRank: 0, maxRank: 5, iconFor: (r) => r >= 5 ? "wolf_wildHeart5" : "wolf_feralInstinct" + Math.max(r, 1), labelFor: (r) => r >= 5 ? "Wild Heart (+ Feral Instinct 4)" : "Feral Instinct" };
+// Brave Spirit's valor on the Wolf damage cards (user 2026-11-20): valor adds damageMod 0.02 + 0.02 x level (CharacterControl.cs:33969-33996),
+// which hit() multiplies into every hit through dmgAdjust (CharacterControl.cs:3546). Ranks 1-4 = Brave Spirit 1-4 (valor 1-4), rank 5 =
+// Glorious Spirit on Brave Spirit 4 (valor 6, Wolf.cs:20489), the merged "rank 5" pattern. The Buff / Debuff popup's Valor row is the one
+// source: getDepRank reads it and a click writes it (no double count). Cards: WOLF_VALOR_CARDS after the ToT C6 table; which damage takes
+// it: wolf-skill-reference.md, Brave Spirit, "Which damage takes valor".
+const WOLF_BRAVESPIRIT_DEP = { id: "wolfBraveSpirit", label: "Brave Spirit / Glorious Spirit", icon: "wolf_braveSpirit4", minRank: 0, maxRank: 5, defaultRank: 0, iconFor: (r) => r >= 5 ? "wolf_gloriousSpirit5" : "wolf_braveSpirit" + Math.max(r, 1), labelFor: (r) => r >= 5 ? "Glorious Spirit (+ Brave Spirit 4)" : "Brave Spirit" };
+const WOLF_VALOR_OF_RANK = [0, 1, 2, 3, 4, 6];
+const wolfValorRank = (lv) => lv >= 5 ? 5 : Math.max(0, lv | 0);   // the popup's Valor 5 and 7 (no single Wolf casts them) show as rank 5
 // Dark Edge status on: every Combo swing is RPC_AddEffectDamage (Wolf.cs:15267, :16098, :16801, :17517, :17835).
 const WOLF_DARKEDGE_DEP = { id: "wolfDarkEdgeOn", label: "Dark Edge", icon: "wolf_darkEdge4", minRank: 0, maxRank: 1, defaultRank: 0 };
 // getCritPlus (Wolf.cs:14044-14188): full set crit chance lckAdjust(12) Marshal (items 43/44) or lckAdjust(18) Champion (58), x1.8.
@@ -15824,9 +15484,11 @@ function formatChangeTags(s) {
     .replace(/\[(adjust|rework)\]/gi, '<span class="sk-tag-adjust">$1</span>')
     .replace(/\[fix\]/gi, '<span class="sk-tag-fix">FIX</span>');
 }
-// Loanwords Chrome's Thai line breaker does not know, so it splits them mid-word (ดา|เมจ, คูลดา|วน์).
-// Glued with a nowrap span, only in text between tags (never inside an attribute). Add a word here when a scan finds it.
-const NOBR_THAI = /(ดาเมจ|คูลดาวน์|สกิล)/g;
+// Loanwords Chrome's Thai line breaker does not know, so it splits them mid-word (ดา|เมจ, คูลดา|วน์), and compounds its dictionary
+// sees as two words that read wrong apart (ตัว|เอง on a phone short desc, user 2026-11-20; ได้|รับ, เป้า|หมาย, เสีย|หาย, ต่อ|เนื่อง, กับ|ดัก).
+// Glued with a nowrap span, only in text between tags (never inside an attribute). Add a word here when a scan finds it; keep each
+// word at 8 letters or fewer (vowel and tone marks not counted), or glueDescTails enters its span and the orphan guard stops working.
+const NOBR_THAI = /(ดาเมจ|คูลดาวน์|สกิล|ตัวเอง|ได้รับ|เป้าหมาย|เสียหาย|ต่อเนื่อง|กับดัก)/g;
 function glueThaiLoanwords(html) {
   return String(html).replace(/(^|>)([^<]+)/g, (m, gt, text) => gt + text.replace(NOBR_THAI, '<span class="sk-nobr">$1</span>'));
 }
@@ -21892,6 +21554,32 @@ function mountSkillCooldownLookup(root){
   function balanceHeroDesc(){ balanceDescCols(displayEl.querySelector(".sk-hero-desc")); }
   window.addEventListener("resize", balanceHeroDesc);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(balanceHeroDesc);
+  // Short desc (user 2026-11-20, variant C): no icon lines, no topic groups, no • bullet and at most 2 lines at the normal 12 px =
+  // .is-short (+ .is-short-2 for two lines), drawn centred at 16 / 15 px between the desc's gold hairlines (CSS after the head strip block).
+  // Short lead over icon lines (user 2026-11-20, Phantasm Blast: "the main explanation is short"): a lead of at most 2 lines with no
+  // • bullet, then only icon lines (no text after them, .sk-desc-after) = .is-short-lead: the lead alone centred and bigger, the icon
+  // lines keep their columns. The lead's lines are counted from its line boxes (it is inline). An icon line a toggle hides leaves the
+  // lead as it was, so a toggle never moves it. Measured with the classes off, so the bigger look never feeds back into the count;
+  // again on resize and when the fonts arrive, since the line count follows the width. renderHeroNow runs it before its fit measures the card.
+  function markHeroShortDesc(){
+    const d = displayEl.querySelector(".sk-hero > .sk-hero-head > .sk-hero-desc");
+    if (!d || typeof getComputedStyle !== "function") return;
+    d.classList.remove("is-short", "is-short-2", "is-short-lead");
+    if (d.classList.contains("sk-soon") || d.querySelector(".sk-desc-topics")) return;
+    const bullet = (el) => /(^|\n)\s*•/.test(el.innerText || "");
+    const mark = (lines, cls) => { if (lines >= 1 && lines <= 2){ d.classList.add(cls); if (lines === 2) d.classList.add("is-short-2"); } };
+    if (d.querySelector(".sk-desc-mods")){
+      const lead = d.querySelector(":scope > .sk-desc-lead");
+      if (!lead || d.querySelector(".sk-desc-after") || bullet(lead) || typeof lead.getClientRects !== "function") return;
+      return mark(new Set(Array.from(lead.getClientRects(), (r) => Math.round(r.top))).size, "is-short-lead");
+    }
+    if (bullet(d)) return;
+    const cs = getComputedStyle(d), lh = parseFloat(cs.lineHeight), pad = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+    if (!(lh > 0) || !(d.clientHeight > 0)) return;
+    mark(Math.round((d.clientHeight - pad) / lh), "is-short");
+  }
+  window.addEventListener("resize", markHeroShortDesc);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { markHeroShortDesc(); if (typeof fitStageToScreen === "function") fitStageToScreen(); });
   // Skill number boxes select their number on focus like the stat inputs, so a click is ready to type over (delegated: the boxes are re-rendered with the card).
   // Not a box the code focuses itself to keep the typing going (a dmgModes card redraws from its own box per digit, user 2026-11-09: selecting it made each digit replace the last).
   displayEl.addEventListener("focusin", (e) => { const el = e.target; if (el.dataset && "keepCaret" in el.dataset){ delete el.dataset.keepCaret; return; } if (el.matches && el.matches("input.sk-current-sp-input, input[data-role=supportLv]")) setTimeout(() => { if (document.activeElement === el) el.select(); }, 0); });
@@ -22919,6 +22607,7 @@ function mountSkillCooldownLookup(root){
     activePlayerMods.load(bd.pmod, MOD_DEFS);
     activeEnemyMods.load(bd.emod, MOD_DEFS);
     depRanks["amplifyDamage"] = activeEnemyMods.get("amplifyDamage") || 0;
+    depRanks[WOLF_BRAVESPIRIT_DEP.id] = wolfValorRank(activePlayerMods.get("valor") || 0);
     fill(activeFinalMultMods, bd.fmult, id => FINAL_MULT_MOD_IDS.includes(id));
     presetBdSeen = JSON.stringify(presetBd());
     updateBdButtons();
@@ -25420,6 +25109,11 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       }
       const r = activeEnemyMods ? (activeEnemyMods.get("amplifyDamage") || 0) : 0;
       if (typeof depRanks !== "undefined") depRanks["amplifyDamage"] = r;
+      return r;
+    }
+    if (dep.id === WOLF_BRAVESPIRIT_DEP.id) {   // the Buff / Debuff popup's Valor row is the one source (no double count)
+      const r = wolfValorRank(activePlayerMods ? (activePlayerMods.get("valor") || 0) : 0);
+      if (typeof depRanks !== "undefined") depRanks[dep.id] = r;
       return r;
     }
     if (!(dep.id in depRanks)) depRanks[dep.id] = (dep.defaultRank !== undefined) ? dep.defaultRank : dep.minRank;   // every skill dependency starts off (its minimum rank)
@@ -28585,6 +28279,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
       }
     });
 
+    markHeroShortDesc();   // the short desc look (variant C) changes the card's height, so before the fit below measures it
     const skillSwitched = idSeen !== (selected && selected.id);   // a new card always fits at once, even under the scale lock
     positionStatsPanel();
     placeTestPanel();
@@ -28608,6 +28303,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
         const min = Number(btn.dataset.depMinRank), max = Number(btn.dataset.depMaxRank);
         const cur = (btn.dataset.depId === "amplifyDamage")
           ? (activeEnemyMods.get("amplifyDamage") || 0)
+          : btn.dataset.depId === WOLF_BRAVESPIRIT_DEP.id ? wolfValorRank(activePlayerMods.get("valor") || 0)
           : depRanks[btn.dataset.depId];
         const next = cur >= max ? min : cur + 1;
         depRanks[btn.dataset.depId] = next;
@@ -28618,6 +28314,11 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
         const lvDep = SUMMON_LV_DEPS.find(d => d.id === btn.dataset.depId); if (lvDep) skillRanks[lvDep.rankOf] = next;   // and the summon card follows the toggle
         if (btn.dataset.depId === "amplifyDamage") {
           activeEnemyMods.set("amplifyDamage", next);
+          updateBdButtons();
+          if (bdOpen) renderBdPopup();
+        }
+        if (btn.dataset.depId === WOLF_BRAVESPIRIT_DEP.id) {   // the popup's Valor row follows (rank 5 = Valor 6)
+          activePlayerMods.set("valor", WOLF_VALOR_OF_RANK[next]);
           updateBdButtons();
           if (bdOpen) renderBdPopup();
         }
@@ -29457,6 +29158,7 @@ function rollOneHit(skill, rank, hitIndex, staged, groupIndex, opts){
     } else {
       map.set(id, lv);
       if (id === "amplifyDamage") depRanks["amplifyDamage"] = lv;
+      if (id === "valor") depRanks[WOLF_BRAVESPIRIT_DEP.id] = wolfValorRank(lv);
     }
     renderBdPopup(); updateBdButtons(); renderHero();
   });
@@ -29737,7 +29439,7 @@ function mountStatRoll(root) {
                 <span class="cls-picker-arrow">▾</span>
               </button>
               
-              <select class="sr-select cls-hidden-select" data-role="classSelect" tabindex="-1">
+              <select class="cls-hidden-select" data-role="classSelect" tabindex="-1">
                 <option value="" data-role="optPlaceholder">— เลือกคลาส —</option>
                 <option value="Wolf">หมาป่า</option>
                 <option value="Bison">ไบซัน</option>
@@ -29770,7 +29472,7 @@ function mountStatRoll(root) {
           </div>
           
           <div>
-            <div class="sr-metric-lbl" data-role="labelMaxStats" style="margin-bottom:6px;">สเตตัสที่ต้องการเน้น</div>
+            <div class="sr-metric-lbl" data-role="labelMaxStats" style="margin-bottom:6px;">สเตตัสที่ต้องการเน้น<i class="sr-rec-hint">เลือกได้หลายตัว · ตัวเลขใต้ชื่อ = ค่าที่สุ่มได้ของคลาสนี้</i></div>
             <div class="sr-rec-grid" data-role="recStatGrid"></div>
           </div>
 
@@ -29783,14 +29485,18 @@ function mountStatRoll(root) {
       <div class="sr-modal-backdrop" data-role="advModal" hidden>
         <div class="sr-card sr-modal" role="dialog" aria-label="Advanced">
           <div class="sr-card-head">
-            <div class="sr-card-title" data-role="labelTargets">ค่าสเตตัสขั้นต่ำที่ต้องการ</div>
+            <div class="sr-adv-titles">
+              <div class="sr-card-title" data-role="labelTargets">ค่าสเตตัสขั้นต่ำที่ต้องการ</div>
+              <div class="sr-adv-sub" data-role="advSub">เลือกค่าขั้นต่ำของแต่ละสเตตัส โอกาสคำนวณให้ทันที</div>
+            </div>
             <span>
+              <span class="sr-adv-cls" data-role="advCls"></span>
               <button type="button" class="sr-clear-btn" data-role="clearBtn">ล้างทั้งหมด</button>
               <button type="button" class="sr-clear-btn sr-modal-close" data-role="advClose" aria-label="Close">&times;</button>
             </span>
           </div>
-          <div class="sr-stat-grid" data-role="statGrid"></div>
-          <button type="button" class="sr-action-btn" data-role="calcBtn">คำนวณโอกาส</button>
+          <hr class="sr-adv-rule">
+          <div class="sr-adv-grid" data-role="statGrid"></div>
           <div data-role="output"></div>
         </div>
       </div>
@@ -29830,8 +29536,16 @@ function mountStatRoll(root) {
       calcBtn: 'Calculate probability',
       base: 'base',
       errNoClass: 'Please select a class first.',
-      errNoTarget: 'Enter at least one minimum stat target to calculate.',
-      impossibleTitle: 'Impossible target',
+      errNoTarget: 'Set a minimum for at least one stat.',
+      impossibleTitle: 'Impossible',
+      impossibleWhy: 'These minimums cannot all roll at once.',
+      advSub: 'Set a minimum for any stat; the chance updates as you go.',
+      advAny: 'any',
+      advInc: 'Raise',
+      advDec: 'Lower',
+      advProbLabel: 'chance to meet them all',
+      advRollsLabel: 'rolls on average',
+      advAlways: 'every roll meets it',
       impossibleSuffix: 'cannot be reached for',
       guaranteedTitle: 'Guaranteed',
       guaranteedBody: (cls) => `Every ${CLASS_NAMES.en[cls] || cls} creation meets this target. No rerolling needed.`,
@@ -29848,6 +29562,10 @@ function mountStatRoll(root) {
       tabMax: '★ Max',
       tabBalanced: '⚖ Recommended',
       tabEasy: '⚡ Easy',
+      hintMaxStats: 'pick any number · the numbers are what this class can roll',
+      sumPrefix: 'Sum',
+      rollsUnit: 'rolls on average',
+      targetLabel: 'Target',
       advTip: 'Advanced'
     },
     th: {
@@ -29860,8 +29578,16 @@ function mountStatRoll(root) {
       calcBtn: 'คำนวณโอกาส',
       base: 'ค่าเริ่มต้น',
       errNoClass: 'กรุณาเลือกคลาสก่อน',
-      errNoTarget: 'กรุณาใส่ค่าสเตตัสขั้นต่ำอย่างน้อยหนึ่งตัว',
-      impossibleTitle: 'เป้าหมายเป็นไปไม่ได้',
+      errNoTarget: 'เลือกค่าขั้นต่ำอย่างน้อย 1 สเตตัส',
+      impossibleTitle: 'เป็นไปไม่ได้',
+      impossibleWhy: 'ค่าที่เลือกสูงเกินกว่าที่จะสุ่มได้พร้อมกัน',
+      advSub: 'เลือกค่าขั้นต่ำของแต่ละสเตตัส โอกาสคำนวณให้ทันที',
+      advAny: 'ไม่กำหนด',
+      advInc: 'เพิ่ม',
+      advDec: 'ลด',
+      advProbLabel: 'โอกาสได้ครบทุกข้อ',
+      advRollsLabel: 'ครั้งที่ต้องสุ่มโดยเฉลี่ย',
+      advAlways: 'ได้ทุกครั้ง ไม่ต้องสุ่มใหม่',
       impossibleSuffix: 'ไม่สามารถทำได้สำหรับ',
       guaranteedTitle: 'รับประกัน',
       guaranteedBody: (cls) => `ทุกการสร้างตัวละคร ${CLASS_NAMES.th[cls] || cls} ผ่านเงื่อนไขนี้อยู่แล้ว ไม่จำเป็นต้อง reroll`,
@@ -29878,6 +29604,10 @@ function mountStatRoll(root) {
       tabMax: '★ สเตตัสสูงสุด',
       tabBalanced: '⚖ แนะนำ',
       tabEasy: '⚡ สบายๆ',
+      hintMaxStats: 'เลือกได้หลายตัว · ตัวเลขใต้ชื่อ = ค่าที่สุ่มได้ของคลาสนี้',
+      sumPrefix: 'ผลรวม',
+      rollsUnit: 'ครั้งโดยเฉลี่ย',
+      targetLabel: 'เป้าหมาย',
       advTip: 'ขั้นสูง'
     }
   };
@@ -29886,10 +29616,9 @@ function mountStatRoll(root) {
   let currentLang = 'th';
   let selectedStatsToMax = new Set();
 
-  // Cached recommendation builds for tab switching
+  // Cached recommendation builds (the three levels, shown side by side since 2026-11-20)
   let currentRecBuilds = [];
   let currentRecSelected = [];
-  let activeTabIdx = 0;
 
   const maxStat = (base) => Math.min(12, base + 4 + 1);
   const minStat = (base) => Math.max(3, base - 4 + 1);
@@ -29945,20 +29674,19 @@ function mountStatRoll(root) {
     const steps = [
       { el: () => recStatGrid, wide: true, tag: '1 / 3', title: 'Step 1: เลือกสเตตัสที่ต้องการเน้น',
         body: `เลือกได้หลายสเตตัส (เช่น TAL + AGI) ${gold('แนะนำเลือก 2 ถึง 5 สเตตัส')}` },
-      { el: () => recOutput, tab: 0, wide: true, tag: '2.1 / 3', title: 'Step 2.1: ★ สเตตัสสูงสุด',
+      { el: () => recTierEl(0), wide: true, tag: '2.1 / 3', title: 'Step 2.1: ★ สเตตัสสูงสุด',
         body: `${col('#ef4444', 'สุ่มยากมาก')} สำหรับผู้เล่นที่จริงจังมากๆ ${gold('เป้าหมายเป็นท็อปเซิร์ฟ')}` },
-      { el: () => recOutput, tab: 1, wide: true, tag: '2.2 / 3', title: 'Step 2.2: ⚖ แนะนำ',
+      { el: () => recTierEl(1), wide: true, tag: '2.2 / 3', title: 'Step 2.2: ⚖ แนะนำ',
         body: `${col('#60a5fa', 'สุ่มนานหน่อย')} สำหรับผู้เล่นจริงจังกลางๆ ${gold('สเตตัสเริ่มต้นที่ได้จะดีกว่าผู้เล่นทั่วไป')}` },
-      { el: () => recOutput, tab: 2, wide: true, tag: '2.3 / 3', title: 'Step 2.3: ⚡ สบายๆ',
+      { el: () => recTierEl(2), wide: true, tag: '2.3 / 3', title: 'Step 2.3: ⚡ สบายๆ',
         body: `${col('#4ade80', 'สุ่มง่าย')} สำหรับผู้เล่นที่ไม่ซีเรียสเรื่องสเตตัสตอนสร้างตัว` },
       { el: () => advBtn, tag: '3 / 3', title: 'Step 3: โหมดขั้นสูง (%)',
-        body: `ใช้กรอกค่าสเตตัสขั้นต่ำเองทีละตัว แล้วคำนวณโอกาสแบบเจาะจง ${col('#ef4444', 'ผู้เล่นทั่วไปไม่จำเป็นต้องใช้')}` }
+        body: `ตั้งค่าสเตตัสขั้นต่ำเองทีละตัวด้วยปุ่ม − / + แล้วดูโอกาสแบบเจาะจงทันที ${col('#ef4444', 'ผู้เล่นทั่วไปไม่จำเป็นต้องใช้')}` }
     ];
     const mk = (cls) => { const d = document.createElement('div'); d.className = cls; document.body.appendChild(d); return d; };
     const ov = mk('chm-guide-overlay'), sp = mk('chm-guide-spotlight'), pop = mk('chm-guide-popover sr-guide');
     let i = 0, autoPicked = false;
-    const origTab = activeTabIdx;
-    const showTab = (k) => { activeTabIdx = k; renderTabbedRecommender(); };
+    const recTierEl = (k) => recOutput.querySelector(`[data-rec-tier="${k}"]`) || recOutput;   // 2.x: that level's own column (all three show at once)
 
     function place() {
       const r = steps[i].el().getBoundingClientRect(), pad = 8;
@@ -29982,8 +29710,6 @@ function mountStatRoll(root) {
       // Steps 1-2 need a selection and a result on screen, so pre-select TAL + AGI if nothing is selected; undone on finish.
       if (!selectedStatsToMax.size) setAuto(true);
       const s = steps[n], last = n === steps.length - 1;
-      // 2.x steps flip the result to their tab so the difference is visible
-      if (s.tab !== undefined && s.tab < currentRecBuilds.length) showTab(s.tab);
       pop.innerHTML = `
         <div class="chm-guide-head"><span class="chm-guide-step-tag">ขั้นตอนที่ ${s.tag}</span></div>
         <h3 class="chm-guide-title">${s.title}</h3>
@@ -29996,8 +29722,6 @@ function mountStatRoll(root) {
       place(); setTimeout(place, 150); setTimeout(place, 350);
     }
     function end() {
-      // restore the tab before undoing the auto-selection, else stale builds would re-render
-      if (activeTabIdx !== origTab && origTab < currentRecBuilds.length) showTab(origTab);
       setAuto(false);
       [ov, sp, pop].forEach(e => e.remove());
       removeEventListener('resize', rePlace); removeEventListener('scroll', place);
@@ -30029,7 +29753,7 @@ function mountStatRoll(root) {
   const recStatGrid = root.querySelector('[data-role="recStatGrid"]');
   const output = root.querySelector('[data-role="output"]');
   const recOutput = root.querySelector('[data-role="recOutput"]');
-  const calcBtn = root.querySelector('[data-role="calcBtn"]');
+  const advClsEl = root.querySelector('[data-role="advCls"]');
   const clearBtn = root.querySelector('[data-role="clearBtn"]');
   const btnEN = root.querySelector('[data-role="btnEN"]');
   const btnTH = root.querySelector('[data-role="btnTH"]');
@@ -30114,32 +29838,51 @@ function mountStatRoll(root) {
     return 'bad';
   }
 
-  function buildGrid() {
-    statGrid.innerHTML = '';
-    for (let i = 0; i < 8; i++) {
-      const cell = document.createElement('div');
-      cell.className = 'sr-stat-cell';
-      cell.dataset.idx = i;
-      cell.style.setProperty('--sc', `var(--stat-${STAT_NAMES[i].toLowerCase()})`);
-      cell.innerHTML = `
-        <div class="sr-stat-top">
-          <span class="sr-stat-name">${STAT_NAMES[i]}</span>
-          <span class="sr-stat-range num hidden" data-stat-range="${i}"></span>
-        </div>
-        <input type="number" class="num" data-stat-input="${i}" min="3" max="12" placeholder="—">
-        <div class="sr-stat-bottom">
-          <span class="sr-stat-base" data-stat-base="${i}"></span>
+  // ---- Advanced pop-up (user 2026-11-20, mock B "steppers" of 4): a − / + stepper per stat over the values this class can roll (minStat + 1
+  // .. maxStat; lower minimums always hold), that stat's own chance under it, the combined chance live (no Calculate button), and an
+  // impossible mix said in words instead of 0 % / ∞. advTargets[i] = the minimum or null; a class change clears them.
+  let advTargets = Array(8).fill(null);
+  function renderAdv() {
+    const L = LANG[currentLang], cls = classSelect.value, base = BASE[cls];
+    const clsName = (CLASS_NAMES[currentLang] && CLASS_NAMES[currentLang][cls]) || cls;
+    advClsEl.innerHTML = base ? `<img src="${CLASS_HERO_ICONS[cls] || ''}" alt="">${clsName}` : '';
+    if (!base) { statGrid.innerHTML = ''; output.innerHTML = `<div class="sr-adv-res"><span class="sr-adv-msg">${L.errNoClass}</span></div>`; return; }
+    const own = (i, v) => { const t = Array(8).fill(null); t[i] = v; return calcProb(base, t); };
+    statGrid.innerHTML = STAT_NAMES.map((s, i) => {
+      const b = base[i], cur = advTargets[i], lo = minStat(b), hi = maxStat(b);
+      return `<div class="sr-adv-cell" style="--sc:var(--stat-${s.toLowerCase()})">
+          <div class="sr-adv-name">${s}<small class="num">${lo}–${hi}</small></div>
+          <div class="sr-adv-ctl">
+            <button type="button" class="sr-adv-step" data-adv-step="-1" data-adv-i="${i}"${cur === null ? ' disabled' : ''} aria-label="${L.advDec} ${s}">−</button>
+            <span class="sr-adv-val${cur === null ? ' off' : ''}">${cur === null ? '—' : cur}</span>
+            <button type="button" class="sr-adv-step" data-adv-step="1" data-adv-i="${i}"${cur === hi ? ' disabled' : ''} aria-label="${L.advInc} ${s}">+</button>
+          </div>
+          <div class="sr-adv-one num">${cur === null ? L.advAny : fmtRecPct(own(i, cur))}</div>
         </div>`;
-      
-      const inp = cell.querySelector('input');
-      cell.addEventListener('click', (e) => {
-        if (e.target !== inp) inp.focus();
-      });
-      inp.addEventListener('input', () => onStatInput(i));
-      statGrid.appendChild(cell);
-    }
+    }).join('');
+    const picked = advTargets.map((v, i) => v === null ? null : `<b style="color:var(--stat-${STAT_NAMES[i].toLowerCase()})">${STAT_NAMES[i]}</b> ≥ ${v}`).filter(Boolean);
+    if (!picked.length) { output.innerHTML = `<div class="sr-adv-res"><span class="sr-adv-msg">${L.errNoTarget}</span></div>`; return; }
+    const prob = calcProb(base, advTargets);
+    const sum = `<p class="sr-adv-sum">${clsName} · ${picked.join(' · ')}</p>`;
+    output.innerHTML = prob <= 0
+      ? `<div class="sr-adv-res"><div><div class="sr-adv-no">${L.impossibleTitle}</div><div class="sr-adv-why">${L.impossibleWhy}</div></div></div>${sum}`
+      : `<div class="sr-adv-res">
+          <div><div class="sr-adv-big ${rateColor(prob)}">${fmtRecPct(prob)}</div><div class="sr-adv-k">${prob >= 1 ? L.advAlways : L.advProbLabel}</div></div>
+          <div class="sr-adv-vr"></div>
+          <div><div class="sr-adv-big2">${prob >= 1 ? '1' : '~' + Math.round(1 / prob).toLocaleString()}</div><div class="sr-adv-k">${L.advRollsLabel}</div></div>
+        </div>${sum}`;
   }
-
+  function stepAdv(i, d, byKey) {
+    const b = BASE[classSelect.value][i], lo = minStat(b), hi = maxStat(b), cur = advTargets[i];
+    advTargets[i] = d > 0 ? (cur === null ? lo + 1 : Math.min(hi, cur + 1)) : (cur === null || cur <= lo + 1 ? null : cur - 1);
+    renderAdv();
+    // the rebuild drops the focus: after a key press give it back to the same stepper (or its twin once that one is disabled), so the keyboard
+    // can keep going; a mouse click leaves it, so no focus ring appears
+    const again = statGrid.querySelector(`[data-adv-step="${d}"][data-adv-i="${i}"]:not(:disabled)`) || statGrid.querySelector(`[data-adv-step="${-d}"][data-adv-i="${i}"]`);
+    if (byKey && again) again.focus({ preventScroll: true });
+  }
+  statGrid.addEventListener('click', (e) => { const b = e.target.closest('[data-adv-step]'); if (b && !b.disabled) stepAdv(+b.dataset.advI, +b.dataset.advStep, e.detail === 0); });   // detail 0 = Enter / Space
+  function clearAll() { advTargets = Array(8).fill(null); renderAdv(); }
   function buildRecGrid() {
     recStatGrid.innerHTML = '';
     for (let i = 0; i < 8; i++) {
@@ -30147,10 +29890,19 @@ function mountStatRoll(root) {
       cell.className = 'sr-rec-toggle' + (selectedStatsToMax.has(i) ? ' active' : '');
       cell.dataset.recIdx = i;
       cell.style.setProperty('--sc', `var(--stat-${STAT_NAMES[i].toLowerCase()})`);
-      cell.innerHTML = `<div class="sr-rec-name">${STAT_NAMES[i]}</div>`;
+      cell.innerHTML = `<div class="sr-rec-name">${STAT_NAMES[i]}</div><div class="sr-rec-range num" data-rec-range="${i}"></div><span class="sr-rec-bar"></span>`;
       cell.addEventListener('click', () => toggleStat(i));
       recStatGrid.appendChild(cell);
     }
+    updateRecRanges();
+  }
+  // under each stat's name, the range it can roll for the chosen class (minStat-maxStat; user 2026-11-20, mock A)
+  function updateRecRanges() {
+    const base = BASE[classSelect.value];
+    recStatGrid.querySelectorAll('[data-rec-range]').forEach(el => {
+      const i = +el.dataset.recRange;
+      el.textContent = base ? minStat(base[i]) + '–' + maxStat(base[i]) : '';
+    });
   }
 
   function toggleStat(i) {
@@ -30166,118 +29918,10 @@ function mountStatRoll(root) {
   }
 
   function onClassChange() {
-    const cls = classSelect.value;
-    output.innerHTML = '';
-    const L = LANG[currentLang];
-    for (let i = 0; i < 8; i++) {
-      const inp = statGrid.querySelector(`[data-stat-input="${i}"]`);
-      const bEl = statGrid.querySelector(`[data-stat-base="${i}"]`);
-      const rEl = statGrid.querySelector(`[data-stat-range="${i}"]`);
-      const cell = inp.closest('.sr-stat-cell');
-      inp.value = '';
-      cell.classList.remove('impossible');
-      if (cls && BASE[cls]) {
-        const base = BASE[cls][i];
-        bEl.textContent = L.base + ' ' + base;
-        rEl.textContent = minStat(base) + '–' + maxStat(base);
-        rEl.classList.remove('hidden');
-        inp.min = minStat(base);
-        inp.max = maxStat(base);
-      } else {
-        bEl.textContent = '';
-        rEl.classList.add('hidden');
-      }
-    }
+    advTargets = Array(8).fill(null);
+    renderAdv();
+    updateRecRanges();
     updateRecommender();
-  }
-
-  function onStatInput(i) {
-    const cls = classSelect.value;
-    if (!cls || !BASE[cls]) return;
-    const inp = statGrid.querySelector(`[data-stat-input="${i}"]`);
-    const cell = inp.closest('.sr-stat-cell');
-    const val = parseInt(inp.value);
-    const max = maxStat(BASE[cls][i]);
-    if (!isNaN(val) && val > max) {
-      cell.classList.add('impossible');
-    } else {
-      cell.classList.remove('impossible');
-    }
-  }
-
-  function clearAll() {
-    for (let i = 0; i < 8; i++) {
-      const inp = statGrid.querySelector(`[data-stat-input="${i}"]`);
-      inp.value = '';
-      inp.closest('.sr-stat-cell').classList.remove('impossible');
-    }
-    output.innerHTML = '';
-  }
-
-  function calculate() {
-    const cls = classSelect.value;
-    const L = LANG[currentLang];
-    if (!cls) {
-      output.innerHTML = `<div class="sr-err-msg">${L.errNoClass}</div>`;
-      return;
-    }
-
-    const base = BASE[cls];
-    const targets = [];
-    const impossibles = [];
-    let anySet = false;
-    const activeTags = [];
-
-    for (let i = 0; i < 8; i++) {
-      const raw = statGrid.querySelector(`[data-stat-input="${i}"]`).value;
-      if (raw === '' || parseInt(raw) <= 0) { targets.push(null); continue; }
-      const t = parseInt(raw);
-      const mx = maxStat(base[i]);
-      if (t > mx) { impossibles.push(`${STAT_NAMES[i]} ≥ ${t} (max: ${mx})`); targets.push(null); continue; }
-      if (t <= minStat(base[i])) { targets.push(null); continue; }
-      targets.push(t);
-      activeTags.push(`${STAT_NAMES[i]} ≥ ${t}`);
-      anySet = true;
-    }
-
-    if (impossibles.length > 0) {
-      output.innerHTML = `<div class="sr-err-msg"><strong>${L.impossibleTitle}</strong>${impossibles.map(s => `<span>${s} ${L.impossibleSuffix} ${cls}</span>`).join('<br>')}</div>`;
-      return;
-    }
-    if (!anySet) {
-      output.innerHTML = `<div class="sr-err-msg">${L.errNoTarget}</div>`;
-      return;
-    }
-
-    const prob = calcProb(base, targets);
-    const pct = (prob * 100).toFixed(4);
-    const expected = prob > 0 ? Math.round(1 / prob) : Infinity;
-    const colorClass = rateColor(prob);
-
-    if (prob >= 1) {
-      output.innerHTML = `<div class="sr-guaranteed-msg"><strong>${L.guaranteedTitle}</strong>${L.guaranteedBody(cls)}</div>`;
-      return;
-    }
-
-    const tagsHtml = activeTags.map(t => `<span class="sr-tag">${t}</span>`).join(' ');
-
-    output.innerHTML = `
-      <div class="sr-result-box">
-        <div class="sr-metric-row">
-          <div class="sr-metric">
-            <div class="sr-metric-lbl">${L.probLabel}</div>
-            <div class="sr-metric-val ${colorClass} num">${pct}%</div>
-          </div>
-          <div class="sr-metric">
-            <div class="sr-metric-lbl">${L.attemptsLabel}</div>
-            <div class="sr-metric-val ${colorClass} num">${expected.toLocaleString()}</div>
-          </div>
-        </div>
-        <div class="sr-summary-text">
-          ${L.summaryBody(cls, tagsHtml, expected.toLocaleString())}
-        </div>
-      </div>`;
-    if (typeof fitStageToScreen === 'function') fitStageToScreen();
   }
 
   // Exact distribution of the clamped sum of the selected stats (CharacterData.cs:538-624):
@@ -30336,61 +29980,42 @@ function mountStatRoll(root) {
 
     currentRecBuilds = bestBuilds;
     currentRecSelected = selected;
-    if (activeTabIdx >= bestBuilds.length) activeTabIdx = 0;
-
-    renderTabbedRecommender();
+    renderRecTiers();
   }
 
-  function renderTabbedRecommender() {
+  // Three levels side by side (user 2026-11-20, mock B): no tabs; each column shows its sum, chance, average rolls and a difficulty line
+  // on a log scale (0.001 % to 100 %). Chances read to about 3 significant digits (0.0143 %, 0.423 %, 4.86 %, 31.3 %).
+  function fmtRecPct(p) {
+    if (p >= 1) return '100%';
+    const v = p * 100;
+    return (v >= 10 ? v.toFixed(1) : v >= 1 ? v.toFixed(2) : v >= 0.1 ? v.toFixed(3) : v.toFixed(4)) + '%';
+  }
+  function renderRecTiers() {
     const L = LANG[currentLang];
     if (!currentRecBuilds || currentRecBuilds.length === 0) return;
-    const cls = classSelect.value;
-    const base = BASE[cls];
-
-    const tabLabels = [L.tabMax, L.tabBalanced, L.tabEasy];
-    let tabsHtml = '';
-    currentRecBuilds.forEach((build, idx) => {
-      const lbl = tabLabels[idx] || `#${idx + 1}`;
-      const activeCls = idx === activeTabIdx ? ' active' : '';
-      tabsHtml += `<button type="button" class="sr-rec-tab${activeCls}" data-rec-tab="${idx}">${lbl} <span class="num">(Σ${build.sum})</span></button>`;
-    });
-
-    const activeBuild = currentRecBuilds[activeTabIdx] || currentRecBuilds[0];
-
+    const tierLabels = [L.tabMax, L.tabBalanced, L.tabEasy];
     const statNames = currentRecSelected
       .map(i => `<span style="color:var(--stat-${STAT_NAMES[i].toLowerCase()})">${STAT_NAMES[i]}</span>`)
       .join(' + ');
-    const expected = Math.round(1 / activeBuild.prob);
-    const probPct = (activeBuild.prob * 100).toFixed(4);
-    const color = rateColor(activeBuild.prob);
-
+    const meter = (p) => Math.max(3, Math.min(100, (Math.log10(Math.max(p, 1e-6)) + 5) / 5 * 100));
+    const cols = currentRecBuilds.map((b, k) => {
+      const color = rateColor(b.prob);
+      const rolls = b.prob >= 1 ? '1' : '~' + Math.round(1 / b.prob).toLocaleString();
+      return `<div class="sr-rec-tier" data-rec-tier="${k}">
+          <div class="sr-rec-tier-name">${tierLabels[k] || '#' + (k + 1)}</div>
+          <div class="sr-rec-tier-sum"><small>${L.sumPrefix}</small>≥ ${b.sum}</div>
+          <div class="sr-rec-num ${color}">${fmtRecPct(b.prob)}</div>
+          <div class="sr-rec-tier-rolls">${rolls}<span>${L.rollsUnit}</span></div>
+          <div class="sr-rec-meter ${color}"><i style="width:${meter(b.prob).toFixed(1)}%"></i></div>
+        </div>`;
+    }).join('');
+    const b0 = currentRecBuilds[0];
     recOutput.innerHTML = `
       <div class="sr-result-box">
-        <div class="sr-rec-tab-bar">${tabsHtml}</div>
-        <div class="sr-rec-card">
-          <div class="sr-rec-target">${statNames} <span class="sr-rec-ge">≥</span> ${activeBuild.sum}</div>
-          <div class="sr-rec-hero">
-            <div class="sr-rec-fig">
-              <div class="sr-rec-num ${color}">${probPct}%</div>
-              <div class="sr-rec-lbl">${L.probLabel}</div>
-            </div>
-            <div class="sr-rec-fig">
-              <div class="sr-rec-num">~${expected.toLocaleString()}</div>
-              <div class="sr-rec-lbl">${L.attemptsLabel}</div>
-            </div>
-          </div>
-          <div class="sr-rec-foot">${L.sumLabel}<strong class="num">${activeBuild.sumMin}–${activeBuild.sumMax}</strong></div>
-        </div>
+        <div class="sr-rec-goal"><small>${L.targetLabel}</small><span class="sr-rec-names">${statNames}</span></div>
+        <div class="sr-rec-tiers">${cols}</div>
+        <div class="sr-rec-foot">${L.sumLabel}<strong class="num">${b0.sumMin}–${b0.sumMax}</strong></div>
       </div>`;
-
-    // Add tab click events
-    recOutput.querySelectorAll('[data-rec-tab]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        activeTabIdx = parseInt(btn.dataset.recTab);
-        renderTabbedRecommender();
-        if (typeof fitStageToScreen === 'function') fitStageToScreen();
-      });
-    });
     if (typeof fitStageToScreen === 'function') fitStageToScreen();
   }
 
@@ -30405,8 +30030,9 @@ function mountStatRoll(root) {
     root.querySelector('[data-role="optPlaceholder"]').textContent = L.optPlaceholder;
     root.querySelector('[data-role="labelTargets"]').textContent = L.labelTargets;
     root.querySelector('[data-role="clearBtn"]').textContent = L.clearBtn;
-    root.querySelector('[data-role="calcBtn"]').textContent = L.calcBtn;
+    root.querySelector('[data-role="advSub"]').textContent = L.advSub;
     root.querySelector('[data-role="titleRecommender"]').textContent = L.titleRecommender;
+    root.querySelector('[data-role="labelMaxStats"]').innerHTML = L.labelMaxStats + '<i class="sr-rec-hint">' + L.hintMaxStats + '</i>';
     advBtn.title = advBtn.ariaLabel = L.advTip;
     advBtn.innerHTML = '%<span class="sr-adv-lbl">' + L.advTip + '</span>';
 
@@ -30417,31 +30043,22 @@ function mountStatRoll(root) {
       openRollClassModal(false);
     }
 
-    const cls = classSelect.value;
-    if (cls && BASE[cls]) {
-      for (let i = 0; i < 8; i++) {
-        const bEl = statGrid.querySelector(`[data-stat-base="${i}"]`);
-        if (bEl && bEl.textContent) bEl.textContent = L.base + ' ' + BASE[cls][i];
-      }
-    }
-
     const names = CLASS_NAMES[lang];
     for (const opt of classSelect.options) {
       if (opt.value && names[opt.value]) opt.textContent = names[opt.value];
     }
 
-    output.innerHTML = '';
+    renderAdv();
     updateRecommender();
   }
 
   // Event Listeners
   classSelect.addEventListener('change', onClassChange);
-  calcBtn.addEventListener('click', calculate);
   clearBtn.addEventListener('click', clearAll);
   btnEN.addEventListener('click', () => setLang('en'));
   btnTH.addEventListener('click', () => setLang('th'));
 
-  buildGrid();
+  renderAdv();
   buildRecGrid();
   
   updateSrPickerTrigger(classSelect.value);
@@ -34213,6 +33830,20 @@ totC6Toggle("rabbit_contract", TTO_BOUNTYHUNT_DEP, "**Bounty Hunt:** ตอน�
 // (int)(ATK x coeff + talAdjust(...)) (TTO1118:Rabbit::GildedArray@0x1E31F50, called on every hit by Rabbit.<RPC_shootingArray>d__229::MoveNext@0x1E68EE0; GildedArrayBonus 0.35).
 const TTO_GILDED_DEP = ttoC6Dep("gildedTarget", "Coin Ricochet (เป้าติด Gilded)", "rabbit_coinRicochet5");
 totC6Toggle("rabbit_shootingArray", TTO_GILDED_DEP, "**Coin Ricochet:** ทุกนัดแรงขึ้น **×1.35** (ปัดลง) กับเป้าที่ติด [gilded] (ของกระต่ายตัวไหนก็ได้)", { dmgPostScale: () => getDepRank(TTO_GILDED_DEP) > 0 ? Math.fround(1.35) : 1, dmgPostScaleRound: "floor", dmgPostScaleLabel: () => "Gilded" }, "dmgControls", "tto");
+// Brave Spirit toggle (user 2026-11-20): every Wolf card whose shown damage goes through hit(), so valor's damageMod multiplies it (BB call
+// sites and the TTO1118 check: wolf-skill-reference.md, Brave Spirit, "Which damage takes valor"). Added to the base dmgControls and to every
+// server tab that has its own list. Left out: Provoke (its number is Hate), Counter / Impulse / Mirror Blade (Effect Damage, no damageMod;
+// their cards show none), Art Cancel / Art Breaker / Last Blade / Final Eclipse (no damage row), the mount attacks (the mount's own hit(), not traced).
+// On TTO the Combo's Dark Edge swings take it too since 1.7.0 (effectDmgAdjust on wolf_nAttack's TTO tab).
+const WOLF_VALOR_CARDS = ["wolf_nAttack", "wolf_cAttack", "wolf_skySlasher", "wolf_crusader", "wolf_lawBringer", "wolf_powerBreak", "wolf_armorBreak", "wolf_crossBreak", "wolf_grandCross", "wolf_bladeFang", "wolf_feralStrike", "wolf_bladeSong", "wolf_thirdRend", "wolf_feralAssault", "wolf_dualBrand", "wolf_twinResonance", "wolf_alphaHowl", "wolf_bladeSurge", "wolf_resonanceClaw"];
+for (const id of WOLF_VALOR_CARDS) {
+  const card = SKILLS.find(s => s.id === id);
+  if (!card) throw new Error("WOLF_VALOR_CARDS: no card " + id);
+  const add = (o) => { if (!o.dmgControls.includes(WOLF_BRAVESPIRIT_DEP)) o.dmgControls = [...o.dmgControls, WOLF_BRAVESPIRIT_DEP]; };
+  card.dmgControls = card.dmgControls || [];
+  add(card);
+  for (const o of Object.values(card.servers || {})) if (o && Array.isArray(o.dmgControls)) add(o);
+}
 // Links with no toggle: each Rabbit C6 card lists them, and the TTO tab of each original lists it back. Medic Turret applies the medical shots' statuses and
 // ignores Medical Enhancement (TTO1102:Rabbit::MedicTurretShotHit@0x1E092D0); Coin Ricochet and Bounty Hunt hit with the live ATK, so Extravagance counts.
 { const ttoLinkBack = (c6Id) => { const c6 = SKILLS.find(s => s.id === c6Id); for (const id of c6.compatSkills || []) { const card = SKILLS.find(s => s.id === id), servers = card.servers = card.servers || {}, tto = servers.tto = servers.tto || {}, list = tto.compatSkills || card.compatSkills || []; if (!list.includes(c6Id)) tto.compatSkills = [...list, c6Id]; if (tto.changeNote === undefined) tto.changeNote = ""; } };
@@ -40069,7 +39700,7 @@ function mountStatGain(root){
   let sgServer = "og"; // "og" (BigBug / No Cap), "tot" (Tales of Tail / Lv.95 Cap), "tto" (Tailstopia / No Cap, max Lv 100) or "reborn" (Tails Reborn / No Cap, max Lv 150)
 
   const STATS = ["ATK","DEF","AGI","VIT","INT","CHA","TAL","LCK"];
-  const COLOR = {ATK:"#c2503c",DEF:"#4f7fb8",AGI:"#5a9a63",VIT:"#c9a227",INT:"#b0568f",CHA:"#8a72b8",TAL:"#3f9a8c",LCK:"#a3862c"};
+  const COLOR = {ATK:"var(--stat-atk)",DEF:"var(--stat-def)",AGI:"var(--stat-agi)",VIT:"var(--stat-vit)",INT:"var(--stat-int)",CHA:"var(--stat-cha)",TAL:"var(--stat-tal)",LCK:"var(--stat-lck)"};   // the shared stat colours (user 2026-11-20; it had its own muted set)
 
   // base[i] per class, ATK..LCK
   const CLASSES = {
@@ -40087,6 +39718,11 @@ function mountStatGain(root){
       lblClass: "คลาส",
       lblCur: "เลเวลปัจจุบัน",
       lblTgt: "เลเวลเป้าหมาย",
+      lvMax: (n) => "สูงสุด " + n,
+      perLv: (r) => "≈ +" + r.toFixed(2) + " / เลเวล",
+      legendHave: (lv) => "มีอยู่แล้วที่เลเวล " + lv,
+      legendGain: (lv) => "ได้เพิ่มถึงเลเวล " + lv,
+      legendFull: (lv) => "แถบเต็ม = สเตตัสสูงสุดที่เลเวล " + lv,
       thStat: "สเตตัส",
       thCur: "ที่เลเวลปัจจุบัน",
       thTgt: "ที่เลเวลเป้าหมาย",
@@ -40140,28 +39776,19 @@ function mountStatGain(root){
             </div>
             <div>
               <label data-role="lblCur">เลเวลปัจจุบัน</label>
-              <input data-role="cur" type="number" min="1" max="95" step="1" value="1">
+              <input data-role="cur" type="number" inputmode="numeric" min="1" max="95" step="1" value="1">
             </div>
+            <span class="sg-arrow" aria-hidden="true">→</span>
             <div>
               <label data-role="lblTgt">เลเวลเป้าหมาย</label>
-              <input data-role="tgt" type="number" min="1" max="95" step="1" value="95">
+              <input data-role="tgt" type="number" inputmode="numeric" min="1" max="95" step="1" value="95">
             </div>
+            <span class="sg-cap" data-role="cap"></span>
           </div>
           <div class="sg-msg" data-role="msg"></div>
-
-          <div class="sg-results">
-            <table>
-              <thead>
-                <tr>
-                  <th data-role="thStat">สเตตัส</th>
-                  <th data-role="thCur">ที่เลเวลปัจจุบัน</th>
-                  <th data-role="thTgt">ที่เลเวลเป้าหมาย</th>
-                  <th data-role="thGain">ได้รับเพิ่ม</th>
-                </tr>
-              </thead>
-              <tbody data-role="rows"></tbody>
-            </table>
-          </div>
+          <p class="sg-note" data-role="totNote" hidden></p>
+          <div class="sg-legend" data-role="legend"></div>
+          <div class="sg-bars" data-role="rows"></div>
 
           <p class="sg-foot" data-role="foot">* ไม่รวมค่าสเตตัสสุ่มเริ่มต้นตอนสร้างตัวละคร, สกิลติดตัว (เช่น Stat Plus) และอุปกรณ์สวมใส่</p>
         </div>
@@ -40209,6 +39836,9 @@ function mountStatGain(root){
   const curEl    = $('[data-role="cur"]', root);
   const tgtEl    = $('[data-role="tgt"]', root);
   const rows     = $('[data-role="rows"]', root);
+  const legend   = $('[data-role="legend"]', root);
+  const capEl    = $('[data-role="cap"]', root);
+  const totNote  = $('[data-role="totNote"]', root);
   const msg      = $('[data-role="msg"]', root);
   const art      = $('[data-role="art"]', root);
   const body     = $(".sg-body", root);
@@ -40313,7 +39943,11 @@ function mountStatGain(root){
       art.style.maskImage = artUrl;
     }
 
+    capEl.textContent = L.lvMax(maxLv());
+    totNote.hidden = sgServer !== "tot";
+    if (!totNote.hidden && !totNote.innerHTML) totNote.innerHTML = L.totNerf.replace(/^•\s*/, "").replace(/\[nerf\]\s*/i, '<span class="sg-nerf">NERF</span>ToT: ');
     rows.innerHTML = "";
+    legend.innerHTML = "";
     if (!base || cur === null || tgt === null){
       msg.textContent = L.msgInvalid;
       return;
@@ -40324,18 +39958,22 @@ function mountStatGain(root){
     }
     msg.textContent = "";
 
+    // one bar per stat (mock B): faint = what the current level already has, colour = the gain; a full bar = the strongest stat at the top level
+    const top = Math.max(1, ...base.map(b => gain(maxLv(), b)));
+    const pct = (v) => (v / top * 100).toFixed(2) + "%";
+    legend.innerHTML = '<span><i style="background:color-mix(in srgb, var(--text) 28%, transparent)"></i>' + L.legendHave(cur) + '</span>'
+      + '<span><i style="background:var(--gold)"></i>' + L.legendGain(tgt) + '</span><span>' + L.legendFull(maxLv()) + '</span>';
+    let html = "";
     for (let i=0;i<8;i++){
       const s = STATS[i], b = base[i];
       const atCur = gain(cur, b), atTgt = gain(tgt, b), g = atTgt - atCur;
-      const tr = document.createElement("tr");
-      tr.innerHTML =
-        '<td class="sg-statcell"><span class="sg-tick" style="background:'+COLOR[s]+'"></span>'+
-          '<span class="sg-stat-abbr" style="color:'+COLOR[s]+'">'+s+'</span> <span class="sg-muted">'+L.full[s]+'</span></td>'+
-        '<td class="sg-muted num">'+atCur+'</td>'+
-        '<td class="sg-muted num">'+atTgt+'</td>'+
-        '<td class="num"><span class="sg-gain'+(g===0?' zero':'')+'" style="color:'+(g===0?'':COLOR[s])+'">'+(g>0?'+':'')+g+'</span></td>';
-      rows.appendChild(tr);
+      html += '<div class="sg-row" title="' + L.full[s] + '">'
+        + '<div class="sg-nm"><b style="color:' + COLOR[s] + '">' + s + '</b><small class="num">' + L.perLv((b + 3) * 0.083) + '</small></div>'
+        + '<div class="sg-track"><span class="a" style="width:' + pct(atCur) + '; background:' + COLOR[s] + '"></span><span class="b" style="left:' + pct(atCur) + '; width:' + pct(g) + '; background:' + COLOR[s] + '"></span></div>'
+        + '<div class="sg-gn' + (g === 0 ? ' zero' : '') + '"' + (g === 0 ? '' : ' style="color:' + COLOR[s] + '"') + '>' + (g > 0 ? '+' : '') + g + '</div>'
+        + '<div class="sg-rg num">' + atCur + ' → <b>' + atTgt + '</b></div></div>';
     }
+    rows.innerHTML = html;
     if (typeof fitStageToScreen === 'function') fitStageToScreen();
   }
 
@@ -41485,6 +41123,13 @@ mountMenuThanks($("#launch"));   // ขอบคุณผู้ร่วมส�
 const CHANGELOG_DATA = {
   recent30Days: CHANGELOG_ARCHIVE.recent30Days,
   entries: [
+    ["2026-11-20T18:14:37Z", "refactor(bible): ลบ CSS เก่าที่ไม่ได้ใช้แล้วของหน้าสุ่มค่าสเตตัส 474 บรรทัด (ช่องกรอก ปุ่มคำนวณ กล่องผลลัพธ์ของหน้าต่างขั้นสูงเดิม แท็บ พรีเซ็ต และกฎที่แบบไม่มีกล่องทับไว้หมดแล้ว) หน้าตาเหมือนเดิม"],
+    ["2026-11-20T15:36:27.507Z","feat(bible): หน้าต่างขั้นสูงของหน้าสุ่มค่าสเตตัสใช้ปุ่ม − / + ตั้งค่าขั้นต่ำทีละสเตตัส โอกาสคำนวณทันทีไม่ต้องกดปุ่ม บอกโอกาสของแต่ละสเตตัส และบอกว่าเป็นไปไม่ได้แทน 0% / ∞"],
+    ["2026-11-20T14:15:48.521Z","feat(bible): หน้าอัตราการเติบโตของค่าสเตตัสแบบไม่มีกล่อง ค่าสเตตัสเป็นแถบสี (ส่วนจาง = มีอยู่แล้ว ส่วนสี = ได้เพิ่ม) บอกอัตราต่อเลเวล และบน ToT มีบรรทัดบอกว่าสเตตัสหยุดโตที่เลเวล 95"],
+    ["2026-11-20T14:06:55.635Z","feat(bible): หน้าสุ่มค่าสเตตัสตอนสร้างตัวละครแบบไม่มีกล่อง ปุ่มสเตตัสเป็นตัวอักษรสีพร้อมช่วงค่าที่สุ่มได้ของคลาส และแสดง 3 ระดับเป้าหมายเทียบกันพร้อมกัน ไม่ต้องกดแท็บ"],
+    ["2026-11-20T14:06:54.635Z","feat(bible): ปุ่ม Brave Spirit / Glorious Spirit บนการ์ดหมาป่า 19 ใบที่ได้ผลจาก dmgMod ของ valor (ผูกกับแถว Valor ในหน้าต่าง Buff / Debuff) และบันทึกว่าบน TTO 1.7.0 มีแค่ Dark Edge ที่ดาเมจม่วงได้ dmgMod"],
+    ["2026-11-20T12:56:49.182Z","feat(bible): คำอธิบายสั้นที่มีบรรทัดไอคอนต่อท้าย (เช่น Phantasm Blast) ได้หน้าตาคำอธิบายสั้นด้วย บรรทัดหลักอยู่ตรงกลาง ตัวใหญ่ขึ้น และคำไทยอย่าง ตัวเอง ได้รับ เป้าหมาย ไม่ถูกตัดกลางคำตอนขึ้นบรรทัดใหม่"],
+    ["2026-11-20T11:36:32.127Z","feat(bible): คำอธิบายสกิลเลิกใช้กล่องและแถบทองซ้าย ใช้เส้นทองบางบนล่างแทน และคำอธิบายสั้น (ไม่เกิน 2 บรรทัด ไม่มีบรรทัดไอคอน) แสดงตรงกลาง ตัวใหญ่ขึ้น 16px (แบบ C จาก 6 แบบ)"],
     ["2026-11-20T09:44:31.734Z","fix(bible): สูตรฮีล Medic Turret (TTO) รวมค่าคงที่เป็นตัวเดียวไว้หน้าส่วน TAL (40 + 0.2TAL, แคปซูล 65 + 0.3TAL) เหมือนสูตรการ์ดอื่น"],
     ["2026-11-20T06:14:37.364Z","feat(bible): Sky Drill (Mole) เปิด Sky Shaker แล้วมีแถวดาเมจแผ่นดินไหวและช่องกรอกเวลาใต้ดินบนการ์ดด้วย"],
     ["2026-11-20T05:54:51.125Z","feat(bible): Sky Shaker (Mole) มีช่องกรอกเวลาใต้ดิน ดาเมจและ KO = 8 + วินาทีใต้ดิน (3-12) พร้อมวิธีนับเวลา และหมายเหตุคำอธิบายในเกมแยกตามเซิร์ฟ"],

@@ -1984,7 +1984,7 @@ if (RUN_DAMAGE_CHECKS) {
   const saved = { atk: inputs.atk.value, lck: inputs.lck.value };
   const setDeps = (o) => IDS.forEach(id => { deps[id] = o[id] || 0; });
   const select = (r) => { sandbox._skillRanks[sk.id] = r; sandbox._calcRangeFor = undefined; sandbox._finalRangeForRange = undefined; sandbox._selectSkill(sk); };
-  check("Combo card has critProc, effectDamageDep and dmgControls", !!(sk && sk.critProc && sk.effectDamageDep && sk.dmgControls && sk.dmgControls.length === 5));
+  check("Combo card has critProc, effectDamageDep and dmgControls", !!(sk && sk.critProc && sk.effectDamageDep && sk.dmgControls && sk.dmgControls.length === 6 && sk.dmgControls[5].id === "wolfBraveSpirit"));   // + Brave Spirit (WOLF_VALOR_CARDS, 2026-11-20)
   // Coefficients: one 0-5 toggle, rank 5 = Feral 4 + Wild Heart = level 5 -> 0.75 / 0.6 / 0.9 (Wolf.cs:15144, :17386, :17717).
   setDeps({ wolfFeralInstinct: 5 }); select(3);
   const coeffs = sk.dmgGroups.map(g => Math.round(sandbox._resolveGroupAtkCoeff(sk, g) * 1000) / 1000).join(",");
@@ -5683,7 +5683,8 @@ async function donateChildTests(env) {
             good(pw(4, () => at(9, 5, burst)) === 685 && pw(4, () => at(9, 0, sword)) === 748 && pw(1, () => at(9, 5, burst)) === 443 && pw(0, () => at(9, 5, burst)) === 403 && pw(3, sw600) === 3431 && pw(0, sw600) === 2640, "Royal Flush keeps Cat Power on TTO: Power Seven turns a 403 blast into 685 and the 440 sword into 748, Power One gives 443; float32 like the client (Power Three on a 2,640 sword = 3,431, not 3,432)");
             const lckIn = sandbox._statInputs.lck, lckSaved = lckIn.value, finAt = (p) => pw(p, () => { R.royalHand = 9; inputs.royalSpades = 5; lckIn.value = "100"; try { const h = heroOn("tto", rf); return { h, fin: sandbox._finalRangeForRange(sandbox._calcRangeFor("0")), rolls: Array.from({ length: 400 }, () => sandbox._rollOneHit(rf, 1, 0, false, 2)) }; } finally { lckIn.value = lckSaved; } });
             const p0 = finAt(0), p4 = finAt(4), inside = p4.rolls.every(v => v >= p4.fin[0] && v <= p4.fin[1]);
-            good(p4.h.includes('data-dep-id="catPower"') && p4.h.includes(">(Power Seven)</span>") && !p0.h.includes(">(Power Seven)</span>") && p4.h.includes("ของตัวเองลงท้ายด้วยเลข") && !p0.h.includes("ของตัวเองลงท้ายด้วยเลข") && p4.fin[1] > p0.fin[1] && inside, "Royal Flush on TTO: the Power toggle, and while it is on a Power Seven formula term, the Power line, a higher Final and Test rolls inside it (" + p4.fin.join("~") + " vs " + p0.fin.join("~") + ")"); }
+            const unglue = (h) => h.replace(/<span class="sk-nobr">([^<]*)<\/span>/g, "$1");   // NOBR_THAI wraps ตัวเอง in a nowrap span
+            good(p4.h.includes('data-dep-id="catPower"') && p4.h.includes(">(Power Seven)</span>") && !p0.h.includes(">(Power Seven)</span>") && unglue(p4.h).includes("ของตัวเองลงท้ายด้วยเลข") && !unglue(p0.h).includes("ของตัวเองลงท้ายด้วยเลข") &&p4.fin[1] > p0.fin[1] && inside, "Royal Flush on TTO: the Power toggle, and while it is on a Power Seven formula term, the Power line, a higher Final and Test rolls inside it (" + p4.fin.join("~") + " vs " + p0.fin.join("~") + ")"); }
           good([4, 4, 3, 3, 4, 5, 2, 2, 5, 5].every((m, h) => { R.royalHand = h; return rf.dmgInputs[0].max() === m; }) && at(4, 5, burst) === at(4, 4, burst), "Royal Flush spade box: at most the spades TTO1102:Cat::DealHand@0x1B805E0 can deal for the hand (5 only on the three Flush hands, 2 on Full House / Four of a Kind), and a stored 5 on a Straight counts as 4");
           good(burst.ko === "3" && last.ko === "10" && sword.ko === "20", "Royal Flush KO: 3 a blast, 10 the last, 20 the sword (TTO1102 hit() nKo)");
           R.royalHand = 7; good(burst.hitCount() === 3 && last.hitCount() === 1 && sword.hitCount() === 0, "Four of a Kind: 3 blasts + the last, no sword"); const noSword = heroOn("tto", rf); good(!noSword.includes("ดาบไพ่ Royal Flush</") && noSword.includes("Four of a Kind"), "the sword row shows on Royal Flush only");
@@ -7096,6 +7097,77 @@ console.log(`Verified ${checkedHue} damage number colour checks.`);
     errorCount++; blurHits++;
   }
   if (!blurHits) console.log("Verified no popup backdrop-filter blur.");
+}
+// Description frame and short desc look (user 2026-11-20, variant C): hairlines instead of the pull quote, and the short desc marker,
+// its call before the fit, the resize hook and the centred CSS stay together (bible-skill-page-ui "Description = gold hairlines" / "Short desc").
+{
+  const need = [
+    ["the desc frame without bar or wash", /\.sk-hero > \.sk-hero-head > \.sk-hero-desc\{position:relative; border-left:0; background:none;/],
+    ["the two hairlines", /\.sk-hero > \.sk-hero-head > \.sk-hero-desc::before,\s*\.sk-hero > \.sk-hero-head > \.sk-hero-desc::after\{content:""; position:absolute;[^}]*height:1px/],
+    ["markHeroShortDesc()", /function markHeroShortDesc\(\)\{(?=[\s\S]{0,1800}?lines <= 2)(?=[\s\S]{0,1800}?\.sk-desc-topics)(?=[\s\S]{0,1800}?"is-short-lead")/],
+    ["the centred short lead CSS (.is-short-lead)", /\.sk-hero > \.sk-hero-head > \.sk-hero-desc\.is-short-lead > \.sk-desc-lead\{display:block; text-align:center;[^}]*font-size:16px/],
+    ["the ตัวเอง word glue (NOBR_THAI)", /const NOBR_THAI = \/\([^)\n]*ตัวเอง/],
+    ["the call before renderHeroNow's fit", /markHeroShortDesc\(\);[^\n]*\r?\n\s*const skillSwitched = idSeen/],
+    ["the resize hook", /window\.addEventListener\("resize", markHeroShortDesc\)/],
+    ["the centred .is-short CSS", /\.sk-hero > \.sk-hero-head > \.sk-hero-desc\.is-short\{text-align:center;[^}]*font-size:16px/],
+  ];
+  let bad = 0;
+  for (const [what, re] of need) if (!re.test(html)) { console.error(`[SHORT DESC ERROR] missing ${what} (see bible-skill-page-ui "Short desc").`); errorCount++; bad++; }
+  if (!bad) console.log("Verified the desc frame and the short desc look.");
+}
+// Brave Spirit toggle (user 2026-11-20): on every Wolf card whose damage takes valor's damageMod (and every server tab with its own list),
+// never on the Hate or Effect Damage cards, and mirrored with the Buff / Debuff popup's Valor row (bible-skill-page-ui, "Shared Debuff State").
+{
+  const want = ["wolf_nAttack", "wolf_cAttack", "wolf_skySlasher", "wolf_crusader", "wolf_lawBringer", "wolf_powerBreak", "wolf_armorBreak", "wolf_crossBreak", "wolf_grandCross", "wolf_bladeFang", "wolf_feralStrike", "wolf_bladeSong", "wolf_thirdRend", "wolf_feralAssault", "wolf_dualBrand", "wolf_twinResonance", "wolf_alphaHowl", "wolf_bladeSurge", "wolf_resonanceClaw"];
+  const never = ["wolf_provoke", "wolf_counter", "wolf_impulse", "wolf_mirrorBlade", "wolf_braveSpirit"];
+  const has = (o) => Array.isArray(o && o.dmgControls) && o.dmgControls.some(d => d && d.id === "wolfBraveSpirit");
+  let bad = 0;
+  const fail = (m) => { console.error(`[VALOR TOGGLE ERROR] ${m}`); errorCount++; bad++; };
+  for (const id of want) {
+    const sk = skillById.get(id);
+    if (!sk) { fail(`no card ${id}`); continue; }
+    if (!has(sk)) fail(`${id} has no Brave Spirit toggle`);
+    for (const [srv, o] of Object.entries(sk.servers || {})) if (o && Array.isArray(o.dmgControls) && !has(o)) fail(`${id} on ${srv}: its own dmgControls lack the Brave Spirit toggle`);
+  }
+  for (const id of never) { const sk = skillById.get(id); if (sk && (has(sk) || Object.values(sk.servers || {}).some(has))) fail(`${id} must not have the Brave Spirit toggle`); }
+  const sync = [
+    ["getDepRank reading the popup's Valor", /if \(dep\.id === WOLF_BRAVESPIRIT_DEP\.id\) \{[^\n]*\r?\n\s*const r = wolfValorRank\(activePlayerMods/],
+    ["the card click writing the popup's Valor", /activePlayerMods\.set\("valor", WOLF_VALOR_OF_RANK\[next\]\)/],
+    ["rank 5 = Valor 6", /const WOLF_VALOR_OF_RANK = \[0, 1, 2, 3, 4, 6\];/],
+  ];
+  for (const [what, re] of sync) if (!re.test(html)) fail(`missing ${what}`);
+  if (!bad) console.log(`Verified the Brave Spirit toggle on ${want.length} Wolf damage cards, mirrored with the popup's Valor.`);
+}
+// Stat Roll containerless look (user 2026-11-20, mocks A + B; bible-hub-tools "Stat Roll"): no server surface on the hero, its result, the stat
+// toggles or EN / TH; the three levels side by side (no tabs); each stat's range for the class under its name.
+{
+  const ts = (html.match(/var THEME_SURFACES = \{[\s\S]*?\n  \};/) || [""])[0];
+  const need = [
+    ["the hero card out of the theme surfaces", () => ts.includes('".sr-card:not(.sr-hero)"') && !/"\.sr-card",/.test(ts)],
+    ["no theme surface on the stat toggles, EN / TH, the tab bar or the result card", () => !/"\.sr-(rec-toggle|lang-toggle|rec-tab-bar|rec-card)"/.test(ts) && !/"\.sr-result-box"/.test(ts)],
+    ["renderRecTiers() drawing the three level columns", () => /function renderRecTiers\(\) \{[\s\S]{0,1600}?data-rec-tier=[\s\S]{0,600}?sr-rec-meter/.test(html)],
+    ["no level tabs left", () => !/data-rec-tab=|function renderTabbedRecommender/.test(html)],
+    ["the stat ranges refreshed on class change", () => /updateRecRanges\(\);\r?\n\s*updateRecommender\(\);/.test(html) && /data-rec-range=/.test(html)],
+    ["the side-by-side CSS", () => /\.sr-rec-tiers \{ display: grid; grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/.test(html)],
+    ["the advanced pop-up's steppers, live (renderAdv, no Calculate button)", () => /function renderAdv\(\) \{[\s\S]{0,2400}?data-adv-step=[\s\S]{0,2400}?impossibleWhy/.test(html) && !/data-role="calcBtn"/.test(html) && !/"\.sr-stat-cell"/.test(ts)],
+  ];
+  let bad = 0;
+  for (const [what, ok] of need) if (!ok()) { console.error(`[STAT ROLL ERROR] missing ${what} (see bible-hub-tools "Stat Roll").`); errorCount++; bad++; }
+  if (!bad) console.log("Verified the Stat Roll containerless look (three levels side by side, ranges under the stats).");
+}
+// Stat Gain containerless bars (user 2026-11-20, mock B; bible-hub-tools "Stat Gain"): no surface on the controls or fields, one bar per stat, the
+// shared stat colours and the ToT line.
+{
+  const ts = (html.match(/var THEME_SURFACES = \{[\s\S]*?\n  \};/) || [""])[0];
+  const need = [
+    ["no theme surface on the controls, the level fields or a table head", () => !/"\.sg-(controls|controls select|controls input|results thead th)"/.test(ts)],
+    ["the bars render (sg-row with sg-track)", () => /class="sg-row"[\s\S]{0,400}?class="sg-track"/.test(html) && !/<table>\s*<thead>\s*<tr>\s*<th data-role="thStat">/.test(html)],
+    ["the shared stat colours", () => /const COLOR = \{ATK:"var\(--stat-atk\)"/.test(html)],
+    ["the ToT growth line", () => /totNote\.hidden = sgServer !== "tot"/.test(html) && /data-role="totNote"/.test(html)],
+  ];
+  let bad = 0;
+  for (const [what, ok] of need) if (!ok()) { console.error(`[STAT GAIN ERROR] missing ${what} (see bible-hub-tools "Stat Gain").`); errorCount++; bad++; }
+  if (!bad) console.log("Verified the Stat Gain containerless bars.");
 }
 // Font ban (user 2026-10-18: "Prompt looks better in all places"): the angular Chakra Petch was replaced by Prompt everywhere and must not come back.
 // Old changelog entries ("[<ISO date>", ...) may still name it; they are history.
